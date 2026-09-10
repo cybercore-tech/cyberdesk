@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{% block title %}cyberdesk{% endblock %}</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -36,8 +37,10 @@ a:hover { color: var(--acid); }
 /* ── sidebar ─────────────────────────────────────────────── */
 aside { border-right: 1px solid var(--line); background: var(--panel);
   display: flex; flex-direction: column; min-height: 0; }
-aside .brand { padding: .8rem 1rem; font-weight: 700; color: var(--acid);
-  letter-spacing: .06em; border-bottom: 1px solid var(--line); text-shadow: 0 0 14px var(--acid); }
+aside .brand { padding: .85rem 1rem .8rem; border-bottom: 1px solid var(--line); }
+aside .brand a { display: block; }
+aside .brand img { width: 186px; height: auto; display: block;
+  filter: drop-shadow(0 0 10px color-mix(in srgb, var(--acid) 45%, transparent)); }
 aside .navrow { display: flex; flex-wrap: wrap; gap: .35rem; padding: .55rem .7rem;
   border-bottom: 1px solid var(--line); }
 aside .navrow a { font-size: .76rem; padding: .22rem .6rem; border: 1px solid var(--line);
@@ -328,14 +331,14 @@ table.log .d { color: var(--muted); white-space: nowrap; font-size: .78rem; }
 {% set accents = ['var(--acid)', 'var(--cyan)', 'var(--pink)', 'var(--purple)', 'var(--orange)'] %}
 <div class="app">
 <aside>
-  <div class="brand">◈ cyberdesk</div>
+  <div class="brand"><a href="/" title="cyberdesk"><img src="/logo.svg" alt="cyberdesk"></a></div>
   <div class="navrow">
-    <a href="/" class="{{ 'on' if nav == 'portal' }}">portal</a>
-    <a href="/all" class="{{ 'on' if nav == 'all' }}">all</a>
-    <a href="/folders" class="{{ 'on' if nav == 'folders' }}">folders</a>
-    <a href="/templates" class="{{ 'on' if nav == 'templates' }}">templates</a>
-    <a href="/lint" class="{{ 'on' if nav == 'lint' }}">lint</a>
-    <a href="/repo" class="{{ 'on' if nav == 'repo' }}">repo</a>
+    <a href="/" class="{{ 'on' if nav == 'portal' }}">🖥 portal</a>
+    <a href="/all" class="{{ 'on' if nav == 'all' }}">📄 all</a>
+    <a href="/folders" class="{{ 'on' if nav == 'folders' }}">🗂 folders</a>
+    <a href="/templates" class="{{ 'on' if nav == 'templates' }}">🧩 templates</a>
+    <a href="/lint" class="{{ 'on' if nav == 'lint' }}">🩹 lint</a>
+    <a href="/repo" class="{{ 'on' if nav == 'repo' }}">🌿 repo</a>
   </div>
   <div class="tree">
     {% macro tnode(n, depth, accent) %}
@@ -521,6 +524,8 @@ table.log .d { color: var(--muted); white-space: nowrap; font-size: .78rem; }
   }
 
   var TITLES = {{ titles | default([]) | tojson }};
+  var CD_VAULT_REPO = {{ vault_repo | default('') | tojson }};
+  var CD_REPO_CHOICES = {{ repo_choices | default([]) | tojson }};
 
   // ── ＋ new: chip highlight + title→filename + path preview ─
   var tpls = g('tpls');
@@ -604,9 +609,23 @@ table.log .d { color: var(--muted); white-space: nowrap; font-size: .78rem; }
             if (['title', 'date', 'slug'].indexOf(k) === -1 && toks.indexOf(k) === -1) toks.push(k);
           }
           nfFieldsIn.innerHTML = '';
+          if (!document.getElementById('nf-repo-dl')) {
+            var dl = document.createElement('datalist');
+            dl.id = 'nf-repo-dl';
+            (CD_REPO_CHOICES || []).forEach(function (u) {
+              var o = document.createElement('option'); o.value = u; dl.appendChild(o);
+            });
+            nfFieldsIn.parentNode.appendChild(dl);
+          }
           toks.forEach(function (k) {
             var i = document.createElement('input');
             i.placeholder = k; i.dataset.k = k;
+            if (k === 'repo') {
+              i.setAttribute('list', 'nf-repo-dl');
+              i.value = CD_VAULT_REPO || '';
+              i.placeholder = 'https://github.com/owner/repo';
+            }
+            if (k === 'license') i.value = 'MIT';
             i.addEventListener('input', syncFields);
             nfFieldsIn.appendChild(i);
           });

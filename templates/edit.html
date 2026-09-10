@@ -7,10 +7,11 @@
       <i class="dot1"></i><i class="dot2"></i><i class="dot3"></i>
       <span style="margin-left:.4rem">✎ {{ rel }}{% if is_new %} <span class="muted">(new)</span>{% endif %}</span>
       <span style="flex:1"></span>
-      <span id="ef-lint" class="muted" style="font-size:.78rem;margin-right:.6rem"></span>
-      <a class="btn ghost" style="padding:.12rem .55rem" href="/n/{{ rel | safe }}">view</a>
-      <button class="btn" style="padding:.12rem .8rem;margin-left:.4rem">save</button>
+      <button type="button" id="ef-lint" class="ef-lint">checking…</button>
+      <a class="btn ghost" style="padding:.12rem .55rem;margin-left:.4rem" href="/n/{{ rel | safe }}">👁 view</a>
+      <button class="btn" style="padding:.12rem .8rem;margin-left:.4rem">💾 save</button>
     </div>
+    <div id="ef-fix" class="ef-fix" hidden></div>
     <div style="position:relative">
       <textarea id="ed" class="ed" name="content" spellcheck="false" autofocus>{{ content }}</textarea>
       <ul id="ac" style="display:none;position:absolute;z-index:40;background:var(--panel);
@@ -19,41 +20,122 @@
     </div>
   </div>
   <p class="muted" style="padding:.2rem 1.6rem">Ctrl/⌘+S saves · <code>[[</code> links a note ·
-    <code>#tag</code> completes tags · commits to git on save</p>
+    <code>#tag</code> completes tags · click the lint badge to auto-fix</p>
 </form>
+<style>
+.ef-lint { font: inherit; font-size: .78rem; border: 1px solid var(--line); background: var(--panel-2);
+  color: var(--muted); border-radius: var(--r); padding: .12rem .55rem; cursor: pointer; }
+.ef-lint.ok { color: var(--acid); border-color: color-mix(in srgb, var(--acid) 45%, var(--line)); }
+.ef-lint.warn { color: var(--orange); border-color: color-mix(in srgb, var(--orange) 55%, var(--line)); }
+.ef-fix { border-bottom: 1px solid var(--line); background: var(--panel); padding: .6rem .9rem; }
+.ef-fix .row { display: flex; align-items: center; gap: .6rem; padding: .22rem 0; font-size: .84rem; }
+.ef-fix .row .k { color: var(--orange); min-width: 8.5rem; }
+.ef-fix .row .k.adv { color: var(--muted); }
+.ef-fix .row .d { color: var(--fg); flex: 1; }
+.ef-fix .row button { font: inherit; font-size: .76rem; border: 1px solid var(--acid); color: var(--bg);
+  background: var(--acid); border-radius: var(--r); padding: .12rem .5rem; cursor: pointer; }
+.ef-fix .row button.adv { border-color: var(--line); background: transparent; color: var(--muted); cursor: default; }
+.ef-fix .hd { display: flex; gap: .6rem; align-items: center; margin-bottom: .3rem; }
+.ef-fix .hd b { color: var(--acid); font-size: .82rem; }
+.ef-fix .hd .all { font-size: .76rem; border: 1px solid var(--acid); background: var(--acid); color: var(--bg);
+  border-radius: var(--r); padding: .14rem .6rem; cursor: pointer; }
+</style>
 {% endblock %}
 
 {% block script %}
 <script>
 (function () {
   var form = document.getElementById('ef'), ta = document.getElementById('ed'), ac = document.getElementById('ac');
+  var badge = document.getElementById('ef-lint'), panel = document.getElementById('ef-fix');
   var NOTES = {{ titles | default([]) | tojson }};
   NOTES.forEach(function (n) { n.stem = n.rel.split('/').pop().replace(/\.md$/, ''); });
   var TAGS = {{ tags_all | default([]) | tojson }};
+  var FM_TITLE = {{ title | tojson }};
+  var cm = null, lintT;
 
-  function lintPoll(text) {
-    var el = document.getElementById('ef-lint');
-    var issues = [];
-    var lines = text.split('\n'), fence = false, h1 = 0, lastLvl = 0;
+  function getBuf() { return cm ? cm.getValue() : ta.value; }
+  function setBuf(v) {
+    if (cm) { var c = cm.getCursor(); cm.setValue(v); cm.setCursor(c); }
+    else { var s = ta.selectionStart; ta.value = v; ta.selectionStart = ta.selectionEnd = Math.min(s, v.length); }
+    runLint();
+  }
+
+  // ── lint: compute issues + fixers ───────────────────────
+  function titleGuess(text) {
+    var m = /^title:\s*"?([^"\n]+)"?\s*$/m.exec(text.split(/\n---/)[0] || '');
+    if (m && m[1].trim() && !/\{\{/.test(m[1])) return m[1].trim();
+    return FM_TITLE || 'Untitled';
+  }
+  function analyze(text) {
+    var out = [], lines = text.split('\n'), fence = false, h1 = 0, last = 0, jump = false;
     lines.forEach(function (l) {
       if (/^\s*(```|~~~)/.test(l)) { fence = !fence; return; }
       if (fence) return;
       var m = /^(#{1,6})\s+/.exec(l);
-      if (m) { var lvl = m[1].length; if (lvl === 1) h1++; if (lastLvl && lvl > lastLvl + 1) issues.push('heading jump'); lastLvl = lvl; }
-      if (/\s+$/.test(l)) issues.push('trailing ws');
+      if (m) { var lv = m[1].length; if (lv === 1) h1++; if (last && lv > last + 1) jump = true; last = lv; }
     });
-    if (h1 === 0) issues.push('no H1');
-    if (h1 > 1) issues.push(h1 + ' H1s');
-    if (/\r/.test(text)) issues.push('CRLF');
-    if (/\n{3,}/.test(text)) issues.push('blank runs');
-    var uniq = issues.filter(function (v, i) { return issues.indexOf(v) === i; });
-    el.textContent = uniq.length ? '⚠ ' + uniq.join(' · ') : '✓ clean';
-    el.style.color = uniq.length ? 'var(--orange)' : 'var(--acid)';
+    if (h1 === 0) out.push({ k: 'no H1', d: 'add “# ' + titleGuess(text) + '” after the frontmatter', fix: function (t) {
+      var i = t.indexOf('\n---\n', 3);
+      var at = (t.slice(0, 3) === '---' && i !== -1) ? i + 5 : 0;
+      return t.slice(0, at) + '\n# ' + titleGuess(t) + '\n\n' + t.slice(at).replace(/^\n+/, '');
+    } });
+    if (h1 > 1) out.push({ k: h1 + ' H1 headings', d: 'demote every H1 after the first to ##', fix: function (t) {
+      var seen = false, fen = false;
+      return t.split('\n').map(function (l) {
+        if (/^\s*(```|~~~)/.test(l)) { fen = !fen; return l; }
+        if (fen) return l;
+        if (/^#\s+/.test(l)) { if (seen) return l.replace(/^#\s+/, '## '); seen = true; }
+        return l;
+      }).join('\n');
+    } });
+    if (/[ \t]+$/m.test(text)) out.push({ k: 'trailing whitespace', d: 'strip spaces at line ends',
+      fix: function (t) { return t.split('\n').map(function (l) { return l.replace(/[ \t]+$/, ''); }).join('\n'); } });
+    if (/\r/.test(text)) out.push({ k: 'CRLF endings', d: 'convert to LF', fix: function (t) { return t.replace(/\r\n?/g, '\n'); } });
+    if (/\n{3,}/.test(text)) out.push({ k: 'blank-line runs', d: 'collapse 3+ blank lines to one',
+      fix: function (t) { return t.replace(/\n{3,}/g, '\n\n'); } });
+    if (jump) out.push({ k: 'heading level jump', d: 'a heading skips a level (e.g. ## → ####) — fix by hand', fix: null });
+    if (!/\n$/.test(text) && text.length) out.push({ k: 'no final newline', d: 'end the file with a newline',
+      fix: function (t) { return t.replace(/\n*$/, '\n'); } });
+    return out;
   }
+  var CUR = [];
+  function runLint() {
+    var text = getBuf();
+    CUR = analyze(text);
+    badge.textContent = CUR.length ? ('⚠ ' + CUR.length + ' issue' + (CUR.length > 1 ? 's' : '')) : '✓ clean';
+    badge.className = 'ef-lint ' + (CUR.length ? 'warn' : 'ok');
+    if (!panel.hidden) drawPanel();
+  }
+  function drawPanel() {
+    if (!CUR.length) { panel.hidden = true; return; }
+    var fixable = CUR.filter(function (i) { return i.fix; }).length;
+    var h = '<div class="hd"><b>lint · ' + CUR.length + '</b>' +
+      (fixable ? '<button type="button" class="all">apply ' + fixable + ' fix' + (fixable > 1 ? 'es' : '') + '</button>' : '') +
+      '<span class="muted" style="font-size:.76rem">click a fix, or edit by hand</span></div>';
+    CUR.forEach(function (i, ix) {
+      h += '<div class="row"><span class="k' + (i.fix ? '' : ' adv') + '">' + i.k + '</span>' +
+        '<span class="d">' + i.d + '</span>' +
+        (i.fix ? '<button type="button" data-ix="' + ix + '">apply</button>'
+               : '<button type="button" class="adv" disabled>manual</button>') + '</div>';
+    });
+    panel.innerHTML = h;
+    panel.hidden = false;
+  }
+  badge.addEventListener('click', function () { panel.hidden ? drawPanel() : (panel.hidden = true); });
+  panel.addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    if (b.classList.contains('all')) {
+      var t = getBuf();
+      CUR.forEach(function (i) { if (i.fix) t = i.fix(t); });
+      setBuf(t); return;
+    }
+    var ix = b.dataset.ix;
+    if (ix != null && CUR[ix] && CUR[ix].fix) setBuf(CUR[ix].fix(getBuf()));
+  });
 
-  // ── CodeMirror path ─────────────────────────────────────
+  // ── CodeMirror ──────────────────────────────────────────
   if (window.CodeMirror) {
-    var cm = CodeMirror.fromTextArea(ta, {
+    cm = CodeMirror.fromTextArea(ta, {
       lineNumbers: true, lineWrapping: true, indentUnit: 2, tabSize: 2,
       autoCloseBrackets: true, styleActiveLine: true,
       mode: (CodeMirror.overlayMode && CodeMirror.modes && CodeMirror.modes.gfm)
@@ -61,59 +143,38 @@
         : { name: 'markdown', fencedCodeBlockHighlighting: true },
       extraKeys: {
         'Ctrl-S': function () { form.submit(); }, 'Cmd-S': function () { form.submit(); },
-        'Ctrl-Space': function (c) { hint(c); }
+        'Ctrl-Space': hint
       }
     });
     cm.setSize('100%', 'calc(100vh - 150px)');
-
     function hint(c) {
       var cur = c.getCursor(), line = c.getLine(cur.line).slice(0, cur.ch), m;
       if ((m = /\[\[([^\]\n]*)$/.exec(line))) {
-        var q = m[1].toLowerCase();
         var list = NOTES.filter(function (n) {
+          var q = m[1].toLowerCase();
           return n.stem.toLowerCase().indexOf(q) !== -1 || n.title.toLowerCase().indexOf(q) !== -1;
-        }).slice(0, 40).map(function (n) {
-          return { text: '[[' + n.stem + ']]', displayText: n.stem + '  —  ' + n.title };
-        });
-        if (!list.length) return;
-        c.showHint({
-          completeSingle: false,
-          hint: function () {
-            return { list: list, from: CodeMirror.Pos(cur.line, cur.ch - m[1].length - 2), to: cur };
-          }
-        });
+        }).slice(0, 40).map(function (n) { return { text: '[[' + n.stem + ']]', displayText: n.stem + '  —  ' + n.title }; });
+        if (list.length) c.showHint({ completeSingle: false, hint: function () {
+          return { list: list, from: CodeMirror.Pos(cur.line, cur.ch - m[1].length - 2), to: cur }; } });
       } else if ((m = /(^|[\s,[])#([\w-]*)$/.exec(line))) {
-        var q2 = m[2].toLowerCase();
-        var list2 = TAGS.filter(function (t) { return t.toLowerCase().indexOf(q2) !== -1; })
+        var l2 = TAGS.filter(function (t) { return t.toLowerCase().indexOf(m[2].toLowerCase()) !== -1; })
           .slice(0, 40).map(function (t) { return { text: '#' + t, displayText: '#' + t }; });
-        if (!list2.length) return;
-        c.showHint({
-          completeSingle: false,
-          hint: function () {
-            return { list: list2, from: CodeMirror.Pos(cur.line, cur.ch - m[2].length - 1), to: cur };
-          }
-        });
+        if (l2.length) c.showHint({ completeSingle: false, hint: function () {
+          return { list: l2, from: CodeMirror.Pos(cur.line, cur.ch - m[2].length - 1), to: cur }; } });
       }
     }
-    var t;
-    cm.on('inputRead', function (c, ch) {
-      if (ch.text && /[\[#\w-]/.test(ch.text[0])) hint(c);
-    });
-    cm.on('change', function () {
-      clearTimeout(t);
-      t = setTimeout(function () { lintPoll(cm.getValue()); }, 400);
-    });
-    lintPoll(cm.getValue());
+    cm.on('inputRead', function (c, ch) { if (ch.text && /[\[#\w-]/.test(ch.text[0])) hint(c); });
+    cm.on('change', function () { clearTimeout(lintT); lintT = setTimeout(runLint, 350); });
+    runLint();
     return;
   }
 
-  // ── plain-textarea fallback (no CodeMirror) ─────────────
+  // ── plain-textarea fallback ─────────────────────────────
   var items = [], sel = 0, tokStart = 0;
   function hide() { ac.style.display = 'none'; items = []; }
   function place() {
     var lineNo = ta.value.slice(0, ta.selectionStart).split('\n').length - 1;
-    ac.style.left = '14px';
-    ac.style.top = Math.max(8, 22 + lineNo * 21 - ta.scrollTop) + 'px';
+    ac.style.left = '14px'; ac.style.top = Math.max(8, 22 + lineNo * 21 - ta.scrollTop) + 'px';
   }
   function render() {
     ac.innerHTML = '';
@@ -133,16 +194,15 @@
     var v = ta.value, s = ta.selectionStart;
     ta.value = v.slice(0, tokStart) + it.insert + v.slice(s);
     ta.selectionStart = ta.selectionEnd = tokStart + it.insert.length;
-    hide(); ta.focus();
+    hide(); ta.focus(); runLint();
   }
   function scan() {
     var s = ta.selectionStart, v = ta.value, line = v.slice(v.lastIndexOf('\n', s - 1) + 1, s), m;
     if ((m = /\[\[([^\]\n]*)$/.exec(line))) {
       tokStart = s - m[1].length - 2;
       var q = m[1].toLowerCase();
-      items = NOTES.filter(function (n) {
-        return n.stem.toLowerCase().indexOf(q) !== -1 || n.title.toLowerCase().indexOf(q) !== -1;
-      }).map(function (n) { return { label: n.stem + '  —  ' + n.title, insert: '[[' + n.stem + ']]' }; });
+      items = NOTES.filter(function (n) { return n.stem.toLowerCase().indexOf(q) !== -1 || n.title.toLowerCase().indexOf(q) !== -1; })
+        .map(function (n) { return { label: n.stem + '  —  ' + n.title, insert: '[[' + n.stem + ']]' }; });
     } else if ((m = /(^|[\s,[])#([\w-]*)$/.exec(line))) {
       tokStart = s - m[2].length - 1;
       var q2 = m[2].toLowerCase();
@@ -151,7 +211,7 @@
     } else { return hide(); }
     sel = 0; render();
   }
-  ta.addEventListener('input', function () { scan(); clearTimeout(window.__lt); window.__lt = setTimeout(function () { lintPoll(ta.value); }, 400); });
+  ta.addEventListener('input', function () { scan(); clearTimeout(lintT); lintT = setTimeout(runLint, 350); });
   ta.addEventListener('click', hide);
   ta.addEventListener('keydown', function (e) {
     if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') { e.preventDefault(); form.submit(); return; }
@@ -161,7 +221,7 @@
     else if (e.key === 'Enter' || e.key === 'Tab') { e.preventDefault(); accept(sel); }
     else if (e.key === 'Escape') { hide(); }
   });
-  lintPoll(ta.value);
+  runLint();
 })();
 </script>
 {% endblock %}

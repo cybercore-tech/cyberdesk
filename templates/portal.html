@@ -1,37 +1,37 @@
 {% extends "base.html" %}
 {% block body %}
 <div class="wrap">
-  <h1>portal</h1>
+  <h1>🖥 portal</h1>
 
   <section class="sect sect--portal">
-    <h2>▸ sections</h2>
+    <h2>🧭 sections</h2>
     <div class="grid">
       <a class="card" href="/all">
-        <div class="muted">notes</div><div class="stat">{{ total }}</div>
+        <div class="muted">📝 notes</div><div class="stat">{{ total }}</div>
         <div class="pop-info"><span class="t">notes</span>every markdown file in the vault.
           <div><a href="/all">browse all</a> <a href="/folders">by folder</a> <a href="/search?q=">search</a></div></div>
       </a>
       <a class="card" href="/tag/needs-review">
-        <div class="muted">needs review</div>
+        <div class="muted">🔎 needs review</div>
         <div class="stat" style="color:var(--orange)">{{ needs_review }}</div>
         <div class="pop-info"><span class="t">needs review</span>imports whose title/heading looked
           auto-generated. Open, fix the title, drop the tag.
           <div><a href="/tag/needs-review">list</a> <a href="/lint?kind=pathy_title">lint: pathy titles</a></div></div>
       </a>
       <a class="card" href="/templates">
-        <div class="muted">templates</div><div class="stat">{{ n_templates }}</div>
+        <div class="muted">🧩 templates</div><div class="stat">{{ n_templates }}</div>
         <div class="pop-info"><span class="t">templates</span>skeletons in <code>_templates/</code>
           used by <b>＋ new</b>. <code>{{ '{{title}}' }}</code> / <code>{{ '{{date}}' }}</code> / <code>{{ '{{slug}}' }}</code> are filled in.
           <div><a href="/templates">view / preview</a> <a href="/e/_templates/note.md">edit “note”</a> <a href="/e/_templates/gfm.md">edit “gfm”</a></div></div>
       </a>
       <a class="card" href="/folders">
-        <div class="muted">folders</div><div class="stat">{{ n_folders }}</div>
+        <div class="muted">🗂 folders</div><div class="stat">{{ n_folders }}</div>
         <div class="pop-info"><span class="t">folders</span>top-level categories. New notes land in
           the folder you pick in <b>＋ new</b>; move one by editing its path.
           <div><a href="/folders">folder index</a> <a href="/all">all notes</a></div></div>
       </a>
       <a class="card" href="/lint">
-        <div class="muted">lint</div>
+        <div class="muted">🩹 lint</div>
         <div class="stat" style="color:{{ 'var(--acid)' if issue_notes == 0 else 'var(--pink)' }}">{{ issue_notes }}</div>
         <div class="pop-info"><span class="t">lint</span>notes with problems: bad titles, missing/duplicate
           H1, redundant bodies, broken <code>[[links]]</code>, whitespace. Mechanical fixes are one click.
@@ -42,7 +42,7 @@
 
   {% if tags %}
   <section class="sect sect--tags">
-    <h2>▸ tags <span class="muted" style="font-size:.85rem">{{ tags | length }}</span></h2>
+    <h2>🏷 tags <span class="muted" style="font-size:.85rem">{{ tags | length }}</span></h2>
     <div class="tagcloud">
       {% for t in tags | sort(attribute='count', reverse=true) %}
       <a href="/tag/{{ t.tag | safe }}" class="{{ 'rev' if t.tag == 'needs-review' }}">{{ t.tag }}<span class="n">{{ t.count }}</span></a>
@@ -52,7 +52,7 @@
   {% endif %}
 
   <section class="sect sect--recent">
-    <h2>▸ recent</h2>
+    <h2>🕘 recent</h2>
     <ul style="margin:0">
       {% for r in recent %}
       <li><a href="/n/{{ r.rel | safe }}">{{ r.title }}</a> &nbsp;<span class="muted" style="font-size:.8rem">{{ r.rel }}</span></li>

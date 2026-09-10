@@ -46,6 +46,7 @@ fn html_escape(s: &str) -> String {
 /// the search datalist).
 fn shell(st: &AppState) -> Value {
     let root = &st.cfg.root;
+    let (vault_repo, repo_choices) = repo_info(root);
     context! {
         tree => vault::tree_nested(root),
         templates => vault::templates(root),
@@ -57,7 +58,25 @@ fn shell(st: &AppState) -> Value {
         themes => theme::names(),
         theme_default => theme::active_name(),
         repo_url => REPO_URL,
+        vault_repo => vault_repo,
+        repo_choices => repo_choices,
     }
+}
+
+/// The vault's own GitHub URL (from its git remote) + a short pick-list for the
+/// `＋ new` dialog's `repo:` field.
+fn repo_info(root: &std::path::Path) -> (Option<String>, Vec<String>) {
+    let detected = git::head_info(root).1;
+    let mut choices = vec![
+        "https://github.com/darkstardevx/darknotes".to_string(),
+        "https://github.com/darkstardevx/cyberdesk".to_string(),
+    ];
+    if let Some(w) = &detected {
+        if !choices.contains(w) {
+            choices.insert(0, w.clone());
+        }
+    }
+    (detected, choices)
 }
 
 fn page(st: &AppState, name: &str, ctx: Value, nav: &str) -> Response {
@@ -683,6 +702,25 @@ pub async fn cm_css() -> impl IntoResponse {
         ],
         include_str!("../assets/cm.bundle.css"),
     )
+}
+
+fn svg(body: &'static str) -> impl IntoResponse {
+    (
+        [
+            (header::CONTENT_TYPE, "image/svg+xml; charset=utf-8"),
+            (header::CACHE_CONTROL, "public, max-age=86400"),
+        ],
+        body,
+    )
+}
+pub async fn logo_svg() -> impl IntoResponse {
+    svg(include_str!("../assets/logo/cyberdesk-logo.svg"))
+}
+pub async fn mark_svg() -> impl IntoResponse {
+    svg(include_str!("../assets/logo/cyberdesk-mark.svg"))
+}
+pub async fn favicon_svg() -> impl IntoResponse {
+    svg(include_str!("../assets/logo/favicon.svg"))
 }
 
 pub async fn healthz() -> &'static str {
