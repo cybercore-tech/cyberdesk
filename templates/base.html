@@ -283,17 +283,14 @@ table.log .d { color: var(--muted); white-space: nowrap; font-size: .78rem; }
 /* ── pop-up file editor — HUD panel ──────────────────────── */
 #fed, #fed input, #fed select, #fed button { font-family: var(--font-mono); }
 .tbtn { font: inherit; font-size: .64rem; font-weight: 600; text-transform: uppercase; letter-spacing: .04em;
-  color: var(--muted); background: linear-gradient(180deg, var(--panel-2), color-mix(in srgb, var(--panel-2) 70%, #000));
-  border: 1px solid var(--line); border-left: 2px solid color-mix(in srgb, var(--cyan) 55%, var(--line));
-  border-radius: 0; padding: .26rem .44rem; cursor: pointer; white-space: nowrap;
-  transition: transform .1s, color .12s, background .12s, border-color .12s, box-shadow .12s; }
-.tbtn:hover { color: #0a0a12; background: var(--cyan); border-color: var(--cyan);
-  box-shadow: 0 0 14px -2px var(--cyan); transform: translateY(-1px); }
-.tbtn:active { transform: translateY(1px) scale(.96); }
-.tbtn.on { color: #0a0a12; background: var(--acid); border-color: var(--acid); box-shadow: 0 0 14px -3px var(--acid); }
-.tbtn.warn { border-left-color: color-mix(in srgb, var(--pink) 65%, var(--line)); }
-.tbtn.warn:hover { color: #0a0a12; background: var(--pink); border-color: var(--pink);
-  box-shadow: 0 0 16px -2px var(--pink); }
+  color: var(--muted); background: var(--panel-2);
+  border: 1px solid var(--line); border-radius: 0; padding: .28rem .5rem; cursor: pointer; white-space: nowrap;
+  transition: color .12s, background .12s, border-color .12s; }
+.tbtn:hover { color: var(--fg); background: color-mix(in srgb, var(--panel) 55%, var(--bg));
+  border-color: color-mix(in srgb, var(--pink) 55%, var(--line)); }
+.tbtn:active { background: color-mix(in srgb, var(--pink) 20%, var(--panel)); }
+.tbtn.on { color: #0a0a12; background: var(--acid); border-color: var(--acid); }
+.tbtn.warn:hover { color: #0a0a12; background: var(--pink); border-color: var(--pink); }
 
 #fed { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center;
   background: color-mix(in srgb, #000 70%, transparent); backdrop-filter: blur(3px);
@@ -329,10 +326,8 @@ table.log .d { color: var(--muted); white-space: nowrap; font-size: .78rem; }
 .fed-open { width: 292px; border-right: 1px solid var(--cyan); display: flex; flex-direction: column;
   background: color-mix(in srgb, var(--bg) 88%, var(--panel)); }
 .fed-open input { margin: .5rem; background: var(--bg); color: var(--fg);
-  border: 1px solid var(--line); border-bottom: 2px solid color-mix(in srgb, var(--cyan) 55%, var(--line));
-  border-radius: 0; padding: .4rem .5rem; font: inherit; font-size: .78rem; }
-.fed-open input:focus { outline: 0; border-bottom-color: var(--cyan);
-  box-shadow: 0 2px 12px -6px var(--cyan); }
+  border: 1px solid var(--line); border-radius: 0; padding: .4rem .5rem; font: inherit; font-size: .78rem; }
+.fed-open input:focus { outline: 0; border-color: color-mix(in srgb, var(--pink) 55%, var(--line)); }
 .fed-open ul { flex: 1; overflow: auto; margin: 0; padding: 0 .25rem .5rem; list-style: none;
   font-size: .74rem; }
 .fed-open li { padding: .3rem .5rem; border-radius: 0; cursor: pointer; white-space: nowrap;
@@ -391,9 +386,9 @@ table.log .d { color: var(--muted); white-space: nowrap; font-size: .78rem; }
 .fed-sa-box label { display: block; color: var(--muted); font-size: .66rem; margin: .5rem 0 .2rem;
   text-transform: uppercase; letter-spacing: .08em; }
 .fed-sa-box select, .fed-sa-box input { width: 100%; background: var(--bg); color: var(--fg);
-  border: 1px solid var(--line); border-bottom: 2px solid color-mix(in srgb, var(--cyan) 55%, var(--line));
-  border-radius: 0; padding: .4rem; font: inherit; font-size: .82rem; }
-.fed-sa-box select:focus, .fed-sa-box input:focus { outline: 0; border-bottom-color: var(--cyan); }
+  border: 1px solid var(--line); border-radius: 0; padding: .4rem; font: inherit; font-size: .82rem; }
+.fed-sa-box select:focus, .fed-sa-box input:focus { outline: 0;
+  border-color: color-mix(in srgb, var(--pink) 55%, var(--line)); }
 .fed-sa-act { display: flex; justify-content: flex-end; gap: .5rem; margin-top: 1rem; }
 </style>
 </head>
