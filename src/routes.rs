@@ -474,6 +474,32 @@ pub async fn api_save(State(st): State<AppState>, axum::Json(f): axum::Json<ApiS
     }
 }
 
+#[derive(Deserialize)]
+pub struct ApiDelete {
+    rel: String,
+}
+
+/// Delete a file from the pop-up editor (with a git commit). JSON in/out.
+pub async fn api_delete(State(st): State<AppState>, axum::Json(f): axum::Json<ApiDelete>) -> Response {
+    let root = &st.cfg.root;
+    let rel = f.rel.trim();
+    match vault::delete(root, rel) {
+        Ok(()) => {
+            git::commit(root, &format!("note: remove — {rel}"));
+            if st.cfg.auto_push {
+                let r = root.clone();
+                tokio::task::spawn_blocking(move || git::push(&r));
+            }
+            axum::Json(serde_json::json!({ "ok": true, "rel": rel })).into_response()
+        }
+        Err(e) => (
+            StatusCode::BAD_REQUEST,
+            axum::Json(serde_json::json!({ "ok": false, "error": e.to_string() })),
+        )
+            .into_response(),
+    }
+}
+
 pub async fn healthz() -> &'static str {
     "ok"
 }

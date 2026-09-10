@@ -42,9 +42,11 @@
 
   {% if tags %}
   <section class="sect sect--tags">
-    <h2>▸ tags</h2>
-    <div class="row">
-      {% for t in tags %}<a href="/tag/{{ t.tag | safe }}" class="pill {{ 'rev' if t.tag == 'needs-review' }}">{{ t.tag }} · {{ t.count }}</a>{% endfor %}
+    <h2>▸ tags <span class="muted" style="font-size:.85rem">{{ tags | length }}</span></h2>
+    <div class="tagcloud">
+      {% for t in tags | sort(attribute='count', reverse=true) %}
+      <a href="/tag/{{ t.tag | safe }}" class="{{ 'rev' if t.tag == 'needs-review' }}">{{ t.tag }}<span class="n">{{ t.count }}</span></a>
+      {% endfor %}
     </div>
   </section>
   {% endif %}
