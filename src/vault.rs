@@ -174,6 +174,7 @@ pub fn create_note(root: &Path, opts: &NewNote) -> Result<String> {
     for (k, v) in opts.fields {
         filled = filled.replace(&format!("{{{{{k}}}}}"), v);
     }
+    filled = strip_placeholders(&filled);
     if !opts.tags.is_empty() {
         let list = opts.tags.join(", ");
         filled = filled
@@ -225,6 +226,32 @@ pub fn rename(root: &Path, from: &str, to: &str) -> Result<String> {
     }
     std::fs::rename(&src, &dst)?;
     Ok(to)
+}
+
+/// Drop any `{{identifier}}` placeholders a template still has after
+/// substitution (e.g. a `repo:` field the user left blank).
+fn strip_placeholders(s: &str) -> String {
+    let mut out = String::with_capacity(s.len());
+    let mut rest = s;
+    while let Some(i) = rest.find("{{") {
+        out.push_str(&rest[..i]);
+        let after = &rest[i + 2..];
+        match after.find("}}") {
+            Some(j)
+                if after[..j]
+                    .chars()
+                    .all(|c| c.is_ascii_alphanumeric() || c == '_' || c == ' ') =>
+            {
+                rest = &after[j + 2..];
+            }
+            _ => {
+                out.push_str("{{");
+                rest = after;
+            }
+        }
+    }
+    out.push_str(rest);
+    out
 }
 
 /// Lower-cased, ascii-alphanumeric, dash-separated slug.
