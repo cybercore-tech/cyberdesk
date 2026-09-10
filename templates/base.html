@@ -25,6 +25,11 @@
   --r: 2px;                 /* global corner radius — small on purpose */
   --font-ui: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  /* hotter, more electric than the theme's stock pink — used across the chrome */
+  --pink: #ff2ecb;
+  --pink-soft: color-mix(in srgb, var(--pink) 22%, transparent);
+  --scroll-thumb: color-mix(in srgb, var(--pink) 55%, var(--purple));
+  --scroll-thumb-hover: var(--pink);
 }
 * { box-sizing: border-box; }
 html, body { height: 100%; }
@@ -33,6 +38,27 @@ body { margin: 0; background: var(--bg); color: var(--fg);
 a { color: var(--cyan); text-decoration: none; }
 a:hover { color: var(--acid); }
 .app { display: grid; grid-template-columns: 264px 1fr; height: 100%; }
+
+/* ── scrollbars — thin neon, matches the grid ─────────────── */
+* { scrollbar-width: thin; scrollbar-color: var(--scroll-thumb) transparent; }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: color-mix(in srgb, var(--bg) 70%, #000); }
+::-webkit-scrollbar-thumb { background: var(--scroll-thumb); border-radius: 0;
+  border: 2px solid color-mix(in srgb, var(--bg) 70%, #000); }
+::-webkit-scrollbar-thumb:hover { background: var(--scroll-thumb-hover);
+  box-shadow: inset 0 0 8px color-mix(in srgb, #fff 40%, transparent); }
+::-webkit-scrollbar-corner { background: transparent; }
+
+/* ── terminal-style chrome: uppercase mono everywhere but body copy ── */
+.navrow a, .btn, .tbtn, h1, h2, .win .tt, .sect > h2, .card .muted,
+.tree .fold > summary, .tree a.f, .fed-tt, .fed-foot, .fed-sa-box h3,
+.fed-sa-box label, .fed-open li, .nf-lbl, table.log th, .ef-lint,
+.backlinks h3, .bar .btn, details.new > summary {
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  font-family: var(--font-mono);
+}
+h1 { letter-spacing: .08em; }
 
 /* ── sidebar ─────────────────────────────────────────────── */
 aside { border-right: 1px solid var(--line); background: var(--panel);
@@ -51,23 +77,25 @@ aside .navrow a:hover { color: var(--bg); background: var(--cyan); border-color:
 aside .navrow a.on { color: var(--bg); background: var(--acid); border-color: var(--acid);
   box-shadow: 0 0 14px -3px var(--acid); }
 
-aside .tree { flex: 1; overflow: auto; padding: .45rem 0 1rem; font-size: .86rem; }
+aside .tree { flex: 1; overflow: auto; padding: .45rem 0 1rem; font-size: .82rem; }
 .tree .fold > summary { list-style: none; cursor: pointer; color: var(--purple); white-space: nowrap;
-  padding: .12rem 1rem .12rem calc(.5rem + var(--d,0) * .7rem); overflow: hidden; text-overflow: ellipsis;
+  padding: .14rem 1rem .14rem calc(.5rem + var(--d,0) * .7rem); overflow: hidden; text-overflow: ellipsis;
   border-left: 2px solid transparent; transition: background .12s, color .12s, border-color .12s; }
 .tree .fold > summary::-webkit-details-marker { display: none; }
-.tree .fold > summary::before { content: "▸"; color: var(--muted); margin-right: .35rem;
-  display: inline-block; transition: transform .12s; }
-.tree .fold[open] > summary::before { transform: rotate(90deg); color: var(--accent, var(--acid)); }
+.tree .fold > summary::before { content: "📁"; margin-right: .38rem; font-size: .92em;
+  display: inline-block; filter: saturate(.85); }
+.tree .fold[open] > summary::before { content: "📂"; }
 .tree .fold > summary:hover { background: rgba(255,255,255,.045);
   color: var(--accent, var(--acid)); border-left-color: var(--accent, var(--acid)); }
 .tree .fold > summary .c { color: var(--muted); font-size: .72em; border: 1px solid var(--line);
-  border-radius: var(--r); padding: 0 .4rem; margin-left: .3rem; }
+  border-radius: var(--r); padding: 0 .4rem; margin-left: .3rem; text-transform: none; letter-spacing: 0; }
 .tree a.f { display: block; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  padding: .09rem 1rem .09rem calc(1.15rem + var(--d,0) * .7rem);
+  padding: .11rem 1rem .11rem calc(1.05rem + var(--d,0) * .7rem);
   border-left: 2px solid transparent; transition: background .12s, color .12s, border-color .12s; }
+.tree a.f::before { content: "📄"; margin-right: .34rem; opacity: .6; font-size: .88em; }
 .tree a.f:hover { color: var(--fg); background: rgba(255,255,255,.055); border-left-color: var(--cyan);
   text-shadow: 0 0 12px color-mix(in srgb, var(--cyan) 55%, transparent); }
+.tree a.f:hover::before { opacity: 1; }
 .tree a.f.here { color: var(--bg); background: var(--acid); border-left-color: var(--acid); }
 
 aside .foot { border-top: 1px solid var(--line); padding: .6rem .8rem;
@@ -99,16 +127,18 @@ main { overflow: auto; }
 .sac li.on .r, .sac li:hover .r { color: var(--bg); }
 
 .btn { position: relative; overflow: hidden; isolation: isolate; display: inline-block;
-  background: linear-gradient(135deg, var(--pink), color-mix(in srgb, var(--pink) 55%, var(--purple)));
-  color: var(--bg); font-weight: 700; padding: .3rem .75rem; border-radius: var(--r); border: 0;
-  cursor: pointer; font: inherit; letter-spacing: .02em;
-  box-shadow: 0 0 16px -6px var(--pink), inset 0 0 0 1px color-mix(in srgb, #fff 22%, transparent);
+  background: linear-gradient(135deg, var(--pink), color-mix(in srgb, var(--pink) 45%, var(--purple)));
+  color: #0a0a12; font-weight: 700; padding: .3rem .8rem; border-radius: var(--r);
+  border: 1px solid color-mix(in srgb, var(--pink) 80%, #fff); cursor: pointer; font: inherit;
+  box-shadow: 0 0 20px -5px var(--pink), 0 0 40px -14px var(--pink),
+    inset 0 0 0 1px color-mix(in srgb, #fff 30%, transparent);
   transition: transform .12s cubic-bezier(.2,.8,.2,1), box-shadow .15s, filter .15s; }
 .btn::after { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
   background: linear-gradient(115deg, transparent 32%, rgba(255,255,255,.5) 50%, transparent 68%);
   transform: translateX(-130%); transition: transform .55s ease; }
 .btn:hover { transform: translateY(-1px);
-  box-shadow: 0 0 26px -4px var(--pink), 0 6px 18px -6px #000, inset 0 0 0 1px rgba(255,255,255,.35); }
+  box-shadow: 0 0 30px -2px var(--pink), 0 0 60px -10px var(--pink), 0 6px 18px -6px #000,
+    inset 0 0 0 1px rgba(255,255,255,.45); }
 .btn:hover::after { transform: translateX(130%); }
 .btn:active { transform: translateY(1px) scale(.97); filter: brightness(.92); }
 .btn:focus-visible { outline: 2px solid var(--acid); outline-offset: 2px; }
@@ -127,9 +157,12 @@ main { overflow: auto; }
   background: var(--panel); border-bottom: 1px solid var(--line); color: var(--muted); }
 .win .tt i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
 .dot1 { background: var(--red); } .dot2 { background: var(--orange); } .dot3 { background: var(--acid); }
-h1 { font-size: 1.4rem; margin: .2rem 0 1rem; color: var(--fg); }
+h1 { font-size: 1.35rem; margin: .2rem 0 1rem; color: var(--fg);
+  text-shadow: 0 0 18px color-mix(in srgb, var(--acid) 35%, transparent); }
 h2, h3 { color: var(--acid); }
 .md :is(h1,h2,h3,h4) { margin-top: 1.6rem; }
+/* rendered note content keeps its own casing/spacing */
+.md :is(h1,h2,h3,h4,h5,h6), .md * { text-transform: none; letter-spacing: normal; }
 .md pre { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); padding: .8rem 1rem; overflow: auto; }
 .md code { background: var(--panel); padding: .05rem .3rem; border-radius: var(--r); }
 .md pre code { background: none; padding: 0; }
@@ -247,41 +280,66 @@ table.log .h { color: var(--orange); white-space: nowrap; }
 table.log .a { color: var(--muted); white-space: nowrap; }
 table.log .d { color: var(--muted); white-space: nowrap; font-size: .78rem; }
 
-/* ── pop-up file editor ──────────────────────────────────── */
-#fed, #fed input, #fed select, #fed button, .fed-open li { font-family: var(--font-ui); }
-.tbtn { font: inherit; font-size: .76rem; color: var(--muted); background: var(--panel-2);
-  border: 1px solid var(--line); border-radius: var(--r); padding: .2rem .55rem; cursor: pointer;
+/* ── pop-up file editor — HUD panel ──────────────────────── */
+#fed, #fed input, #fed select, #fed button { font-family: var(--font-mono); }
+.tbtn { font: inherit; font-size: .64rem; font-weight: 600; text-transform: uppercase; letter-spacing: .04em;
+  color: var(--muted); background: linear-gradient(180deg, var(--panel-2), color-mix(in srgb, var(--panel-2) 70%, #000));
+  border: 1px solid var(--line); border-left: 2px solid color-mix(in srgb, var(--cyan) 55%, var(--line));
+  border-radius: 0; padding: .26rem .44rem; cursor: pointer; white-space: nowrap;
   transition: transform .1s, color .12s, background .12s, border-color .12s, box-shadow .12s; }
-.tbtn:hover { color: var(--bg); background: var(--cyan); border-color: var(--cyan);
-  box-shadow: 0 0 12px -3px var(--cyan); transform: translateY(-1px); }
+.tbtn:hover { color: #0a0a12; background: var(--cyan); border-color: var(--cyan);
+  box-shadow: 0 0 14px -2px var(--cyan); transform: translateY(-1px); }
 .tbtn:active { transform: translateY(1px) scale(.96); }
-.tbtn.on { color: var(--bg); background: var(--acid); border-color: var(--acid); }
-.tbtn.warn:hover { background: var(--red); border-color: var(--red); box-shadow: 0 0 12px -3px var(--red); }
+.tbtn.on { color: #0a0a12; background: var(--acid); border-color: var(--acid); box-shadow: 0 0 14px -3px var(--acid); }
+.tbtn.warn { border-left-color: color-mix(in srgb, var(--pink) 65%, var(--line)); }
+.tbtn.warn:hover { color: #0a0a12; background: var(--pink); border-color: var(--pink);
+  box-shadow: 0 0 16px -2px var(--pink); }
 
 #fed { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center;
-  background: color-mix(in srgb, #000 62%, transparent); backdrop-filter: blur(2px);
+  background: color-mix(in srgb, #000 70%, transparent); backdrop-filter: blur(3px);
   animation: fedIn .14s ease; }
 #fed[hidden], #fed-open[hidden], .fed-sa[hidden], #fed-diff[hidden] { display: none; }
 @keyframes fedIn { from { opacity: 0; } }
-.fed-box { width: min(1160px, 95vw); height: min(86vh, 940px); display: flex; flex-direction: column;
-  background: var(--bg); border: 1px solid var(--cyan); border-radius: 4px; overflow: hidden;
-  box-shadow: 0 40px 120px -20px #000, 0 0 0 1px color-mix(in srgb, var(--cyan) 25%, transparent); }
-.fed-tt { display: flex; gap: .38rem; align-items: center; padding: .5rem .7rem; flex-wrap: wrap;
-  background: var(--panel); border-bottom: 1px solid var(--line); }
-.fed-tt i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
-.fed-tt .nm { margin-left: .5rem; color: var(--fg); font-size: .84rem; font-family: var(--font-mono); }
-.fed-tt .dirty { color: var(--orange); opacity: 0; transition: opacity .12s; }
+.fed-box { position: relative; width: min(1180px, 95vw); height: min(88vh, 960px);
+  display: flex; flex-direction: column; overflow: hidden; border-radius: 3px;
+  background:
+    repeating-linear-gradient(0deg, transparent 0 2px, color-mix(in srgb, var(--cyan) 4%, transparent) 2px 3px),
+    var(--bg);
+  border: 1px solid var(--cyan);
+  box-shadow: 0 40px 140px -20px #000, 0 0 0 1px color-mix(in srgb, var(--pink) 20%, transparent),
+    0 0 60px -20px color-mix(in srgb, var(--cyan) 60%, transparent); }
+/* corner brackets */
+.fed-box::before, .fed-box::after { content: ""; position: absolute; width: 18px; height: 18px;
+  border: 2px solid var(--pink); pointer-events: none; }
+.fed-box::before { top: 5px; left: 5px; border-right: 0; border-bottom: 0; }
+.fed-box::after { bottom: 5px; right: 5px; border-left: 0; border-top: 0; }
+.fed-tt { display: flex; gap: .34rem; align-items: center; padding: .5rem .7rem; flex-wrap: wrap;
+  background: linear-gradient(180deg, var(--panel), var(--panel-2));
+  border-bottom: 1px solid var(--cyan);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--cyan) 45%, transparent), 0 8px 20px -14px var(--cyan); }
+.fed-tt i { width: 9px; height: 9px; border-radius: 50%; display: inline-block;
+  box-shadow: 0 0 8px -1px currentColor; }
+.fed-tt .dot1 { color: var(--red); } .fed-tt .dot2 { color: var(--orange); } .fed-tt .dot3 { color: var(--acid); }
+.fed-tt .nm { margin-left: .5rem; color: var(--acid); font-size: .8rem; letter-spacing: .04em;
+  text-transform: none; text-shadow: 0 0 12px color-mix(in srgb, var(--acid) 45%, transparent); }
+.fed-tt .dirty { color: var(--pink); opacity: 0; transition: opacity .12s; text-shadow: 0 0 10px var(--pink); }
 .fed-tt.is-dirty .dirty { opacity: 1; }
 .fed-tt .sp { flex: 1; }
 .fed-body { flex: 1; display: flex; min-height: 0; position: relative; }
-.fed-open { width: 300px; border-right: 1px solid var(--line); display: flex; flex-direction: column;
-  background: var(--panel-2); }
-.fed-open input { margin: .5rem; background: var(--bg); color: var(--fg); border: 1px solid var(--line);
-  border-radius: var(--r); padding: .38rem .5rem; font: inherit; }
-.fed-open ul { flex: 1; overflow: auto; margin: 0; padding: 0 .3rem .5rem; list-style: none; font-size: .8rem; }
-.fed-open li { padding: .3rem .5rem; border-radius: var(--r); cursor: pointer; white-space: nowrap;
-  overflow: hidden; text-overflow: ellipsis; color: var(--muted); }
-.fed-open li:hover, .fed-open li.on { background: var(--acid); color: var(--bg); }
+.fed-open { width: 292px; border-right: 1px solid var(--cyan); display: flex; flex-direction: column;
+  background: color-mix(in srgb, var(--bg) 88%, var(--panel)); }
+.fed-open input { margin: .5rem; background: var(--bg); color: var(--fg);
+  border: 1px solid var(--line); border-bottom: 2px solid color-mix(in srgb, var(--cyan) 55%, var(--line));
+  border-radius: 0; padding: .4rem .5rem; font: inherit; font-size: .78rem; }
+.fed-open input:focus { outline: 0; border-bottom-color: var(--cyan);
+  box-shadow: 0 2px 12px -6px var(--cyan); }
+.fed-open ul { flex: 1; overflow: auto; margin: 0; padding: 0 .25rem .5rem; list-style: none;
+  font-size: .74rem; }
+.fed-open li { padding: .3rem .5rem; border-radius: 0; cursor: pointer; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis; color: var(--muted); border-left: 2px solid transparent;
+  text-transform: none; letter-spacing: 0; }
+.fed-open li:hover { color: var(--fg); background: rgba(255,255,255,.04); border-left-color: var(--cyan); }
+.fed-open li.on { color: #0a0a12; background: var(--acid); border-left-color: var(--acid); }
 #fed-ta { flex: 1; min-width: 0; background: var(--bg); color: var(--fg); border: 0; outline: 0;
   padding: 1rem 1.2rem; font: 13px/1.65 var(--font-mono); resize: none; caret-color: var(--acid); tab-size: 2; }
 .fed-body > .CodeMirror { flex: 1; min-width: 0; height: 100%; }
@@ -312,18 +370,30 @@ table.log .d { color: var(--muted); white-space: nowrap; font-size: .78rem; }
 #fed-diff .dl.add { background: color-mix(in srgb, var(--acid) 15%, transparent); color: var(--acid); }
 #fed-diff .dl.del { background: color-mix(in srgb, var(--red) 15%, transparent); color: var(--red); }
 #fed-diff .dl.ctx { color: var(--muted); }
-#fed-diff .hint { padding: .4rem 1rem; color: var(--muted); font-family: var(--font-ui); }
-.fed-foot { display: flex; gap: 1.2rem; align-items: center; padding: .35rem .8rem;
-  border-top: 1px solid var(--line); background: var(--panel); font-size: .76rem; color: var(--muted); }
-.fed-foot .ok { color: var(--acid); } .fed-foot .bad { color: var(--red); }
+#fed-diff .hint { padding: .4rem 1rem; color: var(--cyan); font-size: .72rem;
+  text-transform: uppercase; letter-spacing: .06em; }
+.fed-foot { display: flex; gap: 1rem; align-items: center; padding: .38rem .8rem;
+  border-top: 1px solid var(--cyan); background: linear-gradient(0deg, var(--panel), var(--panel-2));
+  box-shadow: 0 -1px 0 color-mix(in srgb, var(--cyan) 40%, transparent);
+  font-size: .68rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.fed-foot .ok { color: var(--acid); text-shadow: 0 0 10px color-mix(in srgb, var(--acid) 40%, transparent); }
+.fed-foot .bad { color: var(--pink); text-shadow: 0 0 10px color-mix(in srgb, var(--pink) 40%, transparent); }
+.fed-foot #fed-msg { margin-left: auto; text-transform: none; letter-spacing: .02em; }
 .fed-sa { position: absolute; inset: 0; display: grid; place-items: center;
-  background: color-mix(in srgb, #000 55%, transparent); z-index: 6; }
-.fed-sa-box { width: 380px; background: var(--panel); border: 1px solid var(--cyan); border-radius: 3px;
-  padding: 1rem 1.1rem; box-shadow: 0 30px 80px -18px #000; }
-.fed-sa-box h3 { margin: 0 0 .7rem; color: var(--acid); font-size: .95rem; }
-.fed-sa-box label { display: block; color: var(--muted); font-size: .76rem; margin: .5rem 0 .2rem; }
+  background: color-mix(in srgb, #000 62%, transparent); backdrop-filter: blur(2px); z-index: 6; }
+.fed-sa-box { position: relative; width: 380px; background: var(--panel); border: 1px solid var(--cyan);
+  border-radius: 3px; padding: 1rem 1.1rem;
+  box-shadow: 0 30px 90px -18px #000, 0 0 0 1px color-mix(in srgb, var(--pink) 22%, transparent); }
+.fed-sa-box::before { content: ""; position: absolute; top: 5px; left: 5px; width: 16px; height: 16px;
+  border: 2px solid var(--pink); border-right: 0; border-bottom: 0; }
+.fed-sa-box h3 { margin: 0 0 .7rem; color: var(--acid); font-size: .82rem;
+  text-transform: uppercase; letter-spacing: .1em; }
+.fed-sa-box label { display: block; color: var(--muted); font-size: .66rem; margin: .5rem 0 .2rem;
+  text-transform: uppercase; letter-spacing: .08em; }
 .fed-sa-box select, .fed-sa-box input { width: 100%; background: var(--bg); color: var(--fg);
-  border: 1px solid var(--line); border-radius: var(--r); padding: .38rem; font: inherit; }
+  border: 1px solid var(--line); border-bottom: 2px solid color-mix(in srgb, var(--cyan) 55%, var(--line));
+  border-radius: 0; padding: .4rem; font: inherit; font-size: .82rem; }
+.fed-sa-box select:focus, .fed-sa-box input:focus { outline: 0; border-bottom-color: var(--cyan); }
 .fed-sa-act { display: flex; justify-content: flex-end; gap: .5rem; margin-top: 1rem; }
 </style>
 </head>
@@ -376,7 +446,7 @@ table.log .d { color: var(--muted); white-space: nowrap; font-size: .78rem; }
       <ul id="sac" class="sac" hidden></ul>
     </form>
     <details class="new">
-      <summary class="btn">＋ new</summary>
+      <summary class="btn">＋ new note</summary>
       <div class="pop">
         <form method="post" action="/new" id="nf">
           <div class="nf-row">
@@ -429,7 +499,7 @@ table.log .d { color: var(--muted); white-space: nowrap; font-size: .78rem; }
         </form>
       </div>
     </details>
-    <button type="button" class="btn ghost" id="fed-open-btn" title="pop-up file editor (Ctrl/⌘+E)">✎ files</button>
+    <button type="button" class="btn ghost" id="fed-open-btn" title="pop-up file editor (Ctrl/⌘+E)">📁 files</button>
   </div>
   {% block body %}{% endblock %}
 </main>
@@ -442,49 +512,49 @@ table.log .d { color: var(--muted); white-space: nowrap; font-size: .78rem; }
       <i class="dot1"></i><i class="dot2"></i><i class="dot3"></i>
       <span class="nm" id="fed-nm">— no file —</span><span class="dirty">●</span>
       <span class="sp"></span>
-      <button class="tbtn" data-act="open">open</button>
-      <button class="tbtn" data-act="save">save</button>
-      <button class="tbtn" data-act="saveas">save as</button>
-      <button class="tbtn" data-act="tidy" title="mechanical lint: whitespace, CRLF, blank runs, title">tidy</button>
-      <button class="tbtn" data-act="diff" id="fed-diff-btn">diff</button>
-      <button class="tbtn" data-act="selall">select all</button>
-      <button class="tbtn" data-act="copy">copy</button>
-      <button class="tbtn" data-act="cut">cut</button>
-      <button class="tbtn" data-act="paste">paste</button>
-      <button class="tbtn" data-act="rename">rename</button>
-      <button class="tbtn warn" data-act="delete">delete</button>
-      <button class="tbtn warn" data-act="close">✕ close</button>
+      <button class="tbtn" data-act="open">📂 open</button>
+      <button class="tbtn" data-act="save">💾 save</button>
+      <button class="tbtn" data-act="saveas">📥 save as</button>
+      <button class="tbtn" data-act="tidy" title="mechanical lint: whitespace, CRLF, blank runs, title">🧹 tidy</button>
+      <button class="tbtn" data-act="diff" id="fed-diff-btn">🔀 diff</button>
+      <button class="tbtn" data-act="selall">🔲 select all</button>
+      <button class="tbtn" data-act="copy">📋 copy</button>
+      <button class="tbtn" data-act="cut">✂️ cut</button>
+      <button class="tbtn" data-act="paste">📌 paste</button>
+      <button class="tbtn" data-act="rename">🏷️ rename</button>
+      <button class="tbtn warn" data-act="delete">🗑️ delete</button>
+      <button class="tbtn warn" data-act="close">✖ close</button>
     </div>
     <div class="fed-body">
       <div class="fed-open" id="fed-open" hidden>
-        <input type="text" id="fed-filter" placeholder="filter files…" autocomplete="off">
+        <input type="text" id="fed-filter" placeholder="🔎 filter files…" autocomplete="off">
         <ul id="fed-list"></ul>
       </div>
       <textarea id="fed-ta" spellcheck="false" placeholder="open a file, or start typing and “save as”…"></textarea>
       <div id="fed-diff" hidden></div>
     </div>
     <div class="fed-foot">
-      <span id="fed-pos">L1 · C1</span>
+      <span id="fed-pos">📍 L1 · C1</span>
       <span id="fed-cnt">0 words · 0 chars</span>
       <span id="fed-lang" class="muted"></span>
       <label style="display:inline-flex;align-items:center;gap:.3rem;cursor:pointer">
-        <input type="checkbox" id="fed-tidy" style="accent-color:var(--acid)"> tidy on save</label>
+        <input type="checkbox" id="fed-tidy" style="accent-color:var(--acid)"> 🧹 tidy on save</label>
       <span id="fed-msg"></span>
     </div>
     <div class="fed-sa" id="fed-sa" hidden>
       <div class="fed-sa-box">
-        <h3 id="fed-sa-title">save as</h3>
-        <label for="fed-sa-folder">folder</label>
+        <h3 id="fed-sa-title">📥 save as</h3>
+        <label for="fed-sa-folder">📁 folder</label>
         <select id="fed-sa-folder">
           <option value="">(vault root)</option>
           <option value="Inbox">Inbox</option>
           {% for f in folders | default([]) %}<option value="{{ f }}">{{ f }}</option>{% endfor %}
         </select>
-        <label for="fed-sa-name">file name</label>
+        <label for="fed-sa-name">🏷️ file name</label>
         <input type="text" id="fed-sa-name" placeholder="my-note.md" autocomplete="off">
         <div class="fed-sa-act">
-          <button class="tbtn" data-act="sa-cancel">cancel</button>
-          <button class="btn" data-act="sa-ok" id="fed-sa-ok">save</button>
+          <button class="tbtn" data-act="sa-cancel">✖ cancel</button>
+          <button class="btn" data-act="sa-ok" id="fed-sa-ok">💾 save</button>
         </div>
       </div>
     </div>
@@ -834,7 +904,7 @@ table.log .d { color: var(--muted); white-space: nowrap; font-size: .78rem; }
 
   function stats() {
     var v = buf.get(), c = buf.cursor();
-    g('fed-pos').textContent = 'L' + c.line + ' · C' + c.col;
+    g('fed-pos').textContent = '📍 L' + c.line + ' · C' + c.col;
     var w = v.trim() ? v.trim().split(/\s+/).length : 0;
     g('fed-cnt').textContent = w + ' word' + (w === 1 ? '' : 's') + ' · ' + v.length +
       ' chars · ' + v.split('\n').length + ' lines';
@@ -925,8 +995,8 @@ table.log .d { color: var(--muted); white-space: nowrap; font-size: .78rem; }
     saMode = mode;
     var base = (cur || 'untitled.md').split('/').pop();
     var dir = (cur && cur.indexOf('/') !== -1) ? cur.slice(0, cur.lastIndexOf('/')) : '';
-    g('fed-sa-title').textContent = mode === 'rename' ? 'rename / move' : 'save as';
-    g('fed-sa-ok').textContent = mode === 'rename' ? 'rename' : 'save';
+    g('fed-sa-title').textContent = mode === 'rename' ? '🏷️ rename / move' : '📥 save as';
+    g('fed-sa-ok').textContent = mode === 'rename' ? '🏷️ rename' : '💾 save';
     saName.value = base;
     saFolder.value = [].some.call(saFolder.options, function (o) { return o.value === dir; }) ? dir : '';
     sa.hidden = false; saName.focus();
