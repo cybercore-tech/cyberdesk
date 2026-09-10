@@ -185,19 +185,68 @@ pub struct NewForm {
     template: String,
     #[serde(default = "inbox")]
     folder: String,
+    /// used when `folder == "__new__"`
+    #[serde(default)]
+    new_folder: String,
     title: String,
+    /// explicit file stem — blank => slug of the title
+    #[serde(default)]
+    filename: String,
+    /// comma / whitespace separated
+    #[serde(default)]
+    tags: String,
+    /// checkbox: "on" adds the `needs-review` tag
+    #[serde(default)]
+    needs_review: String,
+    /// checkbox: "on" runs the mechanical linter on the new file
+    #[serde(default)]
+    tidy: String,
+    /// "popup" opens the new note in the pop-up editor, else the full page
+    #[serde(default)]
+    open_in: String,
 }
 fn inbox() -> String {
     "Inbox".into()
+}
+fn on(s: &str) -> bool {
+    matches!(s.trim(), "on" | "true" | "1" | "yes")
 }
 
 pub async fn create(State(st): State<AppState>, Form(f): Form<NewForm>) -> Response {
     let root = &st.cfg.root;
     let template = if f.template.trim().is_empty() { "note" } else { f.template.trim() };
-    match vault::create_from_template(root, template, &f.folder, &f.title) {
+    let folder = if f.folder == "__new__" { f.new_folder.trim() } else { f.folder.trim() };
+
+    let mut tags: Vec<String> = f
+        .tags
+        .split([',', ' ', '\t', '\n'])
+        .map(|t| t.trim().trim_start_matches('#').to_string())
+        .filter(|t| !t.is_empty())
+        .collect();
+    if on(&f.needs_review) && !tags.iter().any(|t| t == "needs-review") {
+        tags.push("needs-review".into());
+    }
+    tags.dedup();
+
+    let filename = (!f.filename.trim().is_empty()).then(|| f.filename.trim());
+    match vault::create_note(root, template, folder, f.title.trim(), filename, &tags) {
         Ok(rel) => {
+            if on(&f.tidy) {
+                if let Some(clean) = lint::apply_mechanical(root, &rel) {
+                    let _ = vault::write_raw(root, &rel, &clean);
+                }
+            }
             git::commit(root, &format!("note: new — {rel}"));
-            Redirect::to(&format!("/e/{rel}")).into_response()
+            if st.cfg.auto_push {
+                let r = root.clone();
+                tokio::task::spawn_blocking(move || git::push(&r));
+            }
+            let dest = if f.open_in.trim() == "popup" {
+                format!("/#fed:{rel}")
+            } else {
+                format!("/e/{rel}")
+            };
+            Redirect::to(&dest).into_response()
         }
         Err(e) => err(e),
     }
@@ -440,14 +489,25 @@ pub async fn api_raw(State(st): State<AppState>, Path(rel): Path<String>) -> Res
     }
 }
 
+fn stem_of(rel: &str) -> &str {
+    std::path::Path::new(rel)
+        .file_stem()
+        .and_then(|s| s.to_str())
+        .unwrap_or("note")
+}
+
 #[derive(Deserialize)]
 pub struct ApiSave {
     rel: String,
     content: String,
+    /// run the mechanical linter on `content` before writing
+    #[serde(default)]
+    tidy: bool,
 }
 
 /// Save (or save-as) from the pop-up editor. Creates the file + parent dirs if
-/// missing, commits, and optionally pushes. Returns JSON.
+/// missing, commits, and optionally pushes. Returns JSON incl. the final
+/// `content` (which may differ from the input when `tidy` is set).
 pub async fn api_save(State(st): State<AppState>, axum::Json(f): axum::Json<ApiSave>) -> Response {
     let root = &st.cfg.root;
     let mut rel = f.rel.trim().trim_start_matches('/').to_string();
@@ -455,7 +515,12 @@ pub async fn api_save(State(st): State<AppState>, axum::Json(f): axum::Json<ApiS
         rel.push_str(".md");
     }
     let existed = vault::exists(root, &rel);
-    match vault::write_raw(root, &rel, &f.content) {
+    let content = if f.tidy {
+        lint::tidy_str(&f.content, stem_of(&rel))
+    } else {
+        f.content.clone()
+    };
+    match vault::write_raw(root, &rel, &content) {
         Ok(()) => {
             let verb = if existed { "note" } else { "note: new —" };
             git::commit(root, &format!("{verb} {rel}"));
@@ -463,8 +528,10 @@ pub async fn api_save(State(st): State<AppState>, axum::Json(f): axum::Json<ApiS
                 let r = root.clone();
                 tokio::task::spawn_blocking(move || git::push(&r));
             }
-            axum::Json(serde_json::json!({ "ok": true, "rel": rel, "created": !existed }))
-                .into_response()
+            axum::Json(serde_json::json!({
+                "ok": true, "rel": rel, "created": !existed, "content": content
+            }))
+            .into_response()
         }
         Err(e) => (
             StatusCode::BAD_REQUEST,
@@ -472,6 +539,22 @@ pub async fn api_save(State(st): State<AppState>, axum::Json(f): axum::Json<ApiS
         )
             .into_response(),
     }
+}
+
+#[derive(Deserialize)]
+pub struct ApiTidy {
+    #[serde(default)]
+    rel: String,
+    content: String,
+}
+
+/// Mechanically lint `content` without touching the filesystem — the editor's
+/// "tidy" button. Returns `{ content, changed }`.
+pub async fn api_tidy(axum::Json(f): axum::Json<ApiTidy>) -> Response {
+    let stem = if f.rel.trim().is_empty() { "note" } else { stem_of(f.rel.trim()) };
+    let out = lint::tidy_str(&f.content, stem);
+    let changed = out != f.content;
+    axum::Json(serde_json::json!({ "content": out, "changed": changed })).into_response()
 }
 
 #[derive(Deserialize)]

@@ -63,6 +63,7 @@ async fn main() -> anyhow::Result<()> {
         .route("/api/titles", get(routes::api_titles))
         .route("/api/raw/*path", get(routes::api_raw))
         .route("/api/save", post(routes::api_save))
+        .route("/api/tidy", post(routes::api_tidy))
         .route("/api/delete", post(routes::api_delete))
         .route("/new", post(routes::create))
         .route("/n/*path", get(routes::view))

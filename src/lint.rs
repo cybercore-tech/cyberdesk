@@ -236,15 +236,15 @@ fn regex_lite_wikilinks(body: &str) -> Vec<String> {
 
 /// Apply the mechanical fixes for one note. Returns the new raw text, or None if
 /// nothing changed.
-pub fn apply_mechanical(root: &Path, rel: &str) -> Option<String> {
-    let raw = vault::read_raw(root, rel).ok()?;
+/// Mechanical cleanup on raw text: CRLF→LF, strip trailing whitespace, collapse
+/// 3+ blank lines, fill an empty/pathy frontmatter title from `stem`, ensure a
+/// single trailing newline. Pure — no filesystem.
+pub fn tidy_str(raw: &str, stem: &str) -> String {
     let mut t = raw.replace("\r\n", "\n").replace('\r', "\n");
     t = t.split('\n').map(|l| l.trim_end()).collect::<Vec<_>>().join("\n");
     while t.contains("\n\n\n") {
         t = t.replace("\n\n\n", "\n\n");
     }
-    // fill an empty/pathy title from the filename
-    let stem = Path::new(rel).file_stem().and_then(|s| s.to_str()).unwrap_or("note");
     let human = stem.replace(['-', '_'], " ");
     if let Some(rest) = t.strip_prefix("---\n") {
         if let Some(end) = rest.find("\n---") {
@@ -269,5 +269,12 @@ pub fn apply_mechanical(root: &Path, rel: &str) -> Option<String> {
     if !t.ends_with('\n') {
         t.push('\n');
     }
+    t
+}
+
+pub fn apply_mechanical(root: &Path, rel: &str) -> Option<String> {
+    let raw = vault::read_raw(root, rel).ok()?;
+    let stem = Path::new(rel).file_stem().and_then(|s| s.to_str()).unwrap_or("note");
+    let t = tidy_str(&raw, stem);
     (t != raw).then_some(t)
 }

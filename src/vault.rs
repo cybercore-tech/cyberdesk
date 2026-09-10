@@ -128,16 +128,21 @@ pub fn exists(root: &Path, rel: &str) -> bool {
 }
 
 /// Create a note from `_templates/<template>.md`, substituting `{{title}}`,
-/// `{{date}}`, `{{slug}}`. Returns the new note's rel path.
-pub fn create_from_template(
+/// `{{date}}`, `{{slug}}`. `filename` overrides the derived slug when given
+/// (it is still slugified for safety); `tags` are written into a `tags: []`
+/// frontmatter line if the template has one. Returns the new note's rel path.
+pub fn create_note(
     root: &Path,
     template: &str,
     folder: &str,
     title: &str,
+    filename: Option<&str>,
+    tags: &[String],
 ) -> Result<String> {
-    let slug = slugify(title);
+    let stem_src = filename.map(str::trim).filter(|s| !s.is_empty()).unwrap_or(title);
+    let slug = slugify(stem_src.trim_end_matches(".md"));
     if slug.is_empty() {
-        bail!("empty title");
+        bail!("need a title or file name");
     }
     let folder = folder.trim_matches('/');
     if folder.contains("..") {
@@ -157,20 +162,27 @@ pub fn create_from_template(
     let tpl = std::fs::read_to_string(&tpl_path)
         .unwrap_or_else(|_| "---\ntitle: \"{{title}}\"\ntags: []\ncreated: {{date}}\n---\n\n# {{title}}\n\n".into());
     let today = chrono::Local::now().format("%Y-%m-%d").to_string();
-    let filled = tpl
+    let mut filled = tpl
         .replace("{{title}}", title)
         .replace("{{date}}", &today)
         .replace("{{slug}}", &slug);
+    if !tags.is_empty() {
+        let list = tags.join(", ");
+        filled = filled
+            .replacen("tags: []", &format!("tags: [{list}]"), 1)
+            .replacen("tags:  []", &format!("tags: [{list}]"), 1);
+    }
     write_raw(root, &rel, &filled)?;
     Ok(rel)
 }
 
+/// Lower-cased, ascii-alphanumeric, dash-separated slug.
 pub fn slugify(s: &str) -> String {
     let mut out = String::new();
     let mut dash = false;
     for ch in s.trim().chars() {
         if ch.is_ascii_alphanumeric() {
-            out.push(ch);
+            out.extend(ch.to_lowercase());
             dash = false;
         } else if !dash && !out.is_empty() {
             out.push('-');

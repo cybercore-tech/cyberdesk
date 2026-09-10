@@ -191,7 +191,24 @@ details.new { position: relative; }
 details.new > summary { list-style: none; cursor: pointer; }
 details.new > summary::-webkit-details-marker { display: none; }
 details.new .pop { position: absolute; right: 0; top: 2.3rem; background: var(--panel);
-  border: 1px solid var(--line); border-radius: var(--r); padding: 1rem; width: 340px; z-index: 20; box-shadow: 0 10px 40px -10px #000; }
+  border: 1px solid var(--line); border-radius: var(--r); padding: 1.1rem 1.2rem; width: 470px;
+  max-width: calc(100vw - 40px); max-height: 82vh; overflow: auto; z-index: 20;
+  box-shadow: 0 22px 60px -14px #000; }
+.nf-row { display: block; margin: .6rem 0 0; }
+.nf-row .nf-lbl, .nf-opts .nf-lbl { display: block; color: var(--muted); font-size: .68rem;
+  letter-spacing: .05em; margin-bottom: .18rem; text-transform: uppercase; }
+.nf-file { display: flex; align-items: stretch; }
+.nf-file input { border-radius: var(--r) 0 0 var(--r); }
+.nf-file .nf-ext { display: flex; align-items: center; padding: 0 .55rem; border: 1px solid var(--line);
+  border-left: 0; background: var(--panel-2); color: var(--muted); font-size: .8rem; border-radius: 0 var(--r) var(--r) 0; }
+.nf-path { margin: .7rem 0 .1rem; font-size: .8rem; }
+.nf-path code { background: var(--panel-2); border: 1px solid var(--line); border-radius: var(--r);
+  padding: .05rem .4rem; color: var(--acid); word-break: break-all; }
+.nf-opts { display: flex; flex-wrap: wrap; gap: .35rem 1rem; align-items: center; margin-top: .6rem;
+  font-size: .82rem; color: var(--muted); }
+.nf-opts label { display: inline-flex; align-items: center; gap: .32rem; cursor: pointer; }
+.nf-opts b { color: var(--orange); font-weight: 600; }
+.nf-opts input { accent-color: var(--acid); }
 .chip { display: inline-block; border: 1px solid var(--line); border-radius: var(--r);
   padding: .15rem .5rem; margin: .15rem .15rem 0 0; cursor: pointer; color: var(--muted);
   transition: transform .1s, color .12s, background .12s, border-color .12s, box-shadow .12s; }
@@ -364,21 +381,40 @@ table.log .d { color: var(--muted); white-space: nowrap; font-size: .78rem; }
     <details class="new">
       <summary class="btn">＋ new</summary>
       <div class="pop">
-        <form method="post" action="/new">
-          <div class="muted" style="font-size:.78rem">template</div>
-          <div id="tpls">
-            {% for t in templates | default([]) %}
-            <label class="chip"><input type="radio" name="template" value="{{ t }}" style="display:none" {{ 'checked' if loop.first }}>{{ t }}</label>
-            {% endfor %}
+        <form method="post" action="/new" id="nf">
+          <div class="nf-row">
+            <span class="nf-lbl">template</span>
+            <div id="tpls">
+              {% for t in templates | default([]) %}
+              <label class="chip"><input type="radio" name="template" value="{{ t }}" hidden {{ 'checked' if loop.first }}>{{ t }}</label>
+              {% endfor %}
+            </div>
           </div>
-          <div class="muted" style="font-size:.78rem;margin-top:.55rem">folder</div>
-          <select name="folder" class="fld">
-            <option value="Inbox">Inbox</option>
-            {% for f in folders | default([]) %}<option value="{{ f }}">{{ f }}</option>{% endfor %}
-          </select>
-          <div class="muted" style="font-size:.78rem;margin-top:.55rem">title</div>
-          <input name="title" required class="fld">
-          <button class="btn" style="margin-top:.75rem;width:100%">create &amp; edit</button>
+          <label class="nf-row"><span class="nf-lbl">title</span>
+            <input name="title" id="nf-title" required class="fld" placeholder="My Great Note" autocomplete="off"></label>
+          <label class="nf-row"><span class="nf-lbl">file name</span>
+            <span class="nf-file"><input name="filename" id="nf-file" class="fld" placeholder="my-great-note" autocomplete="off"><span class="nf-ext">.md</span></span></label>
+          <label class="nf-row"><span class="nf-lbl">folder</span>
+            <select name="folder" id="nf-folder" class="fld">
+              <option value="Inbox">Inbox</option>
+              {% for f in folders | default([]) %}<option value="{{ f }}">{{ f }}</option>{% endfor %}
+              <option value="__new__">＋ new folder…</option>
+            </select></label>
+          <label class="nf-row" id="nf-newfolder-row" hidden><span class="nf-lbl">new folder path</span>
+            <input name="new_folder" id="nf-newfolder" class="fld" placeholder="Guides/Networking" autocomplete="off"></label>
+          <label class="nf-row"><span class="nf-lbl">tags</span>
+            <input name="tags" id="nf-tags" class="fld" placeholder="setup, arch   (comma separated)" autocomplete="off"></label>
+          <div class="nf-path"><span class="muted">creates&nbsp;</span><code id="nf-preview">Inbox/untitled.md</code></div>
+          <div class="nf-opts">
+            <label><input type="checkbox" name="needs_review"> mark <b>needs-review</b></label>
+            <label><input type="checkbox" name="tidy" checked> tidy new file</label>
+          </div>
+          <div class="nf-opts">
+            <span class="nf-lbl">open in</span>
+            <label><input type="radio" name="open_in" value="editor" checked> full editor</label>
+            <label><input type="radio" name="open_in" value="popup"> pop-up</label>
+          </div>
+          <button class="btn" style="margin-top:.8rem;width:100%">create &amp; edit</button>
         </form>
       </div>
     </details>
@@ -398,6 +434,7 @@ table.log .d { color: var(--muted); white-space: nowrap; font-size: .78rem; }
       <button class="tbtn" data-act="open">open</button>
       <button class="tbtn" data-act="save">save</button>
       <button class="tbtn" data-act="saveas">save as</button>
+      <button class="tbtn" data-act="tidy" title="mechanical lint: whitespace, CRLF, blank runs, title">tidy</button>
       <button class="tbtn" data-act="diff" id="fed-diff-btn">diff</button>
       <button class="tbtn" data-act="selall">select all</button>
       <button class="tbtn" data-act="copy">copy</button>
@@ -418,6 +455,8 @@ table.log .d { color: var(--muted); white-space: nowrap; font-size: .78rem; }
       <span id="fed-pos">L1 · C1</span>
       <span id="fed-cnt">0 words · 0 chars</span>
       <span id="fed-lang" class="muted"></span>
+      <label style="display:inline-flex;align-items:center;gap:.3rem;cursor:pointer">
+        <input type="checkbox" id="fed-tidy" style="accent-color:var(--acid)"> tidy on save</label>
       <span id="fed-msg"></span>
     </div>
     <div class="fed-sa" id="fed-sa" hidden>
@@ -472,7 +511,7 @@ table.log .d { color: var(--muted); white-space: nowrap; font-size: .78rem; }
     if (cf) { cf.classList.add('here'); cf.scrollIntoView({ block: 'center' }); }
   }
 
-  // ── ＋ new: highlight the chosen template chip ────────────
+  // ── ＋ new: chip highlight + title→filename + path preview ─
   var tpls = g('tpls');
   if (tpls) {
     var mark = function () {
@@ -482,6 +521,34 @@ table.log .d { color: var(--muted); white-space: nowrap; font-size: .78rem; }
     };
     tpls.querySelectorAll('.chip input').forEach(function (r) { r.addEventListener('change', mark); });
     mark();
+  }
+  var nf = g('nf');
+  if (nf) {
+    var nfSlug = function (s) {
+      return String(s).trim().toLowerCase().replace(/\.md$/, '')
+        .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+    };
+    var nfT = g('nf-title'), nfF = g('nf-file'), nfSel = g('nf-folder'),
+        nfNewRow = g('nf-newfolder-row'), nfNew = g('nf-newfolder'), nfPrev = g('nf-preview');
+    var fileDirty = false;
+    var folderVal = function () {
+      return (nfSel.value === '__new__' ? nfNew.value : nfSel.value).trim().replace(/\/+$/, '');
+    };
+    var nfRefresh = function () {
+      if (!fileDirty) nfF.value = nfSlug(nfT.value);
+      var stem = nfSlug(nfF.value) || nfSlug(nfT.value) || 'untitled';
+      var fv = folderVal();
+      nfPrev.textContent = (fv ? fv + '/' : '') + stem + '.md';
+    };
+    nfT.addEventListener('input', nfRefresh);
+    nfF.addEventListener('input', function () { fileDirty = nfF.value.trim() !== ''; nfRefresh(); });
+    nfSel.addEventListener('change', function () {
+      nfNewRow.hidden = nfSel.value !== '__new__';
+      if (!nfNewRow.hidden) nfNew.focus();
+      nfRefresh();
+    });
+    nfNew.addEventListener('input', nfRefresh);
+    nfRefresh();
   }
 
   // ── themed search autocomplete ──────────────────────────
@@ -699,23 +766,45 @@ table.log .d { color: var(--muted); white-space: nowrap; font-size: .78rem; }
       if (cm) setTimeout(function () { cm.refresh(); cm.scrollTo(0, 0); }, 0);
     }).catch(function () { msg('could not open ' + rel, 'bad'); });
   }
+  var tidyChk = g('fed-tidy');
+  if (tidyChk) {
+    try { tidyChk.checked = localStorage.getItem('cyberdesk.fed.tidy') === '1'; } catch (e) {}
+    tidyChk.addEventListener('change', function () {
+      try { localStorage.setItem('cyberdesk.fed.tidy', tidyChk.checked ? '1' : '0'); } catch (e) {}
+    });
+  }
   function doSave(rel) {
     var payload = buf.get();
+    var wantTidy = !!(tidyChk && tidyChk.checked);
     msg('saving…');
     fetch('/api/save', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ rel: rel, content: payload })
+      body: JSON.stringify({ rel: rel, content: payload, tidy: wantTidy })
     }).then(function (r) { return r.json(); }).then(function (j) {
       if (!j.ok) { msg(j.error || 'save failed', 'bad'); return; }
       var wasNew = j.created && j.rel !== cur;
-      cur = j.rel; orig = payload; setName(); setDirty(false); buf.setModeFor(j.rel);
-      msg((j.created ? 'created · ' : 'saved · ') + j.rel, 'ok');
+      var finalC = (typeof j.content === 'string') ? j.content : payload;
+      if (finalC !== buf.get()) buf.set(finalC);
+      cur = j.rel; orig = finalC; setName(); setDirty(false); buf.setModeFor(j.rel);
+      msg((j.created ? 'created · ' : 'saved · ') + j.rel + (finalC !== payload ? '  (tidied)' : ''), 'ok');
       if (FILES && wasNew && !FILES.some(function (x) { return x.rel === j.rel; })) {
         FILES.push({ rel: j.rel, title: j.rel });
         FILES.sort(function (a, b) { return a.rel < b.rel ? -1 : 1; });
       }
       drawList(filterEl.value);
     }).catch(function () { msg('save failed (network)', 'bad'); });
+  }
+  function doTidy() {
+    var before = buf.get();
+    msg('tidying…');
+    fetch('/api/tidy', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rel: cur || '', content: before })
+    }).then(function (r) { return r.json(); }).then(function (j) {
+      if (typeof j.content !== 'string') { msg('tidy failed', 'bad'); return; }
+      if (j.changed) { buf.set(j.content); setDirty(true); stats(); msg('tidied — review the diff, then save', 'ok'); }
+      else msg('already tidy', 'ok');
+    }).catch(function () { msg('tidy failed (network)', 'bad'); });
   }
   function openSaveAs() {
     var base = (cur || 'untitled.md').split('/').pop();
@@ -818,6 +907,7 @@ table.log .d { color: var(--muted); white-space: nowrap; font-size: .78rem; }
     },
     save: function () { cur ? doSave(cur) : openSaveAs(); },
     saveas: openSaveAs,
+    tidy: doTidy,
     diff: function () { diffOn ? hideDiff() : showDiff(); },
     selall: function () { buf.selectAll(); },
     copy: function () { clip('copy'); },
@@ -858,7 +948,8 @@ table.log .d { color: var(--muted); white-space: nowrap; font-size: .78rem; }
 
   var ob = g('fed-open-btn');
   if (ob) ob.addEventListener('click', function () { openModal(); });
-  if (/^#fed(open)?$/.test(location.hash)) openModal();
+  var fh = location.hash.match(/^#fed(?:open)?(?::(.+))?$/);
+  if (fh) openModal(fh[1] ? decodeURIComponent(fh[1]) : undefined);
   document.addEventListener('click', function (e) {
     var d = e.target.closest('[data-fed-open]');
     if (d) { e.preventDefault(); openModal(d.getAttribute('data-fed-open') || undefined); }
