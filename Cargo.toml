@@ -1,0 +1,33 @@
+[package]
+name = "cyberdesk"
+version = "0.1.0"
+edition = "2021"
+description = "A local, git-backed markdown notes portal + editor for the darknotes vault."
+license = "MIT"
+
+[[bin]]
+name = "cyberdesk"
+path = "src/main.rs"
+
+[dependencies]
+axum = { version = "0.7", features = ["macros"] }
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "net", "signal", "fs"] }
+tower-http = { version = "0.5", features = ["trace", "catch-panic"] }
+
+minijinja = { version = "2", features = ["loader"] }
+comrak = "0.29"
+
+serde = { version = "1", features = ["derive"] }
+serde_urlencoded = "0.7"
+chrono = "0.4"
+walkdir = "2"
+
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
+anyhow = "1"
+
+cybercore = { path = "../cybercore" }
+
+[profile.release]
+strip = true
+lto = "thin"

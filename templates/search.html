@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}search: {{ q }} · cyberdesk{% endblock %}
+{% block body %}
+<div class="wrap">
+  <h1>search: {{ q }} <span class="muted" style="font-size:1rem">{{ n }} hit{{ '' if n == 1 else 's' }}</span></h1>
+  {% for h in hits %}
+  <div class="card" style="margin-bottom:.6rem">
+    <a href="/n/{{ h.rel | safe }}"><strong>{{ h.title }}</strong></a>
+    &nbsp;<span class="muted" style="font-size:.8rem">{{ h.rel }}</span>
+    {% if h.snippet %}<div class="muted" style="margin-top:.35rem">{{ h.snippet }}</div>{% endif %}
+  </div>
+  {% else %}
+  <p class="muted">nothing matched.</p>
+  {% endfor %}
+</div>
+{% endblock %}

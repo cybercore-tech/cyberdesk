@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}cyberdesk{% endblock %}</title>
+<style>
+{{ css|safe }}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--bg); color: var(--fg);
+  font: 14px/1.6 ui-monospace, "JetBrains Mono", Menlo, Consolas, monospace; }
+a { color: var(--cyan); text-decoration: none; }
+a:hover { color: var(--acid); }
+.app { display: grid; grid-template-columns: 262px 1fr; height: 100%; }
+aside { border-right: 1px solid var(--line); overflow: auto; background: var(--panel); }
+aside .brand { padding: .8rem 1rem; font-weight: 700; color: var(--acid);
+  letter-spacing: .06em; border-bottom: 1px solid var(--line); text-shadow: 0 0 14px var(--acid); }
+aside nav { padding: .4rem 0 2rem; }
+aside a { display: block; padding: .12rem 1rem; color: var(--muted);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+aside a:hover { color: var(--fg); background: rgba(255,255,255,.03); }
+aside .d { color: var(--purple); font-weight: 600; margin-top: .35rem; }
+main { overflow: auto; }
+.bar { display: flex; gap: .6rem; align-items: center; padding: .5rem .9rem;
+  border-bottom: 1px solid var(--line); background: var(--panel); position: sticky; top: 0; z-index: 5; }
+.bar input[type=search] { flex: 1; background: var(--bg); border: 1px solid var(--line);
+  color: var(--fg); border-radius: 6px; padding: .32rem .6rem; font: inherit; }
+.btn { display: inline-block; background: var(--pink); color: var(--bg); font-weight: 700;
+  padding: .3rem .75rem; border-radius: 6px; border: 0; cursor: pointer; font: inherit;
+  box-shadow: 0 0 16px -4px var(--pink); }
+.btn.ghost { background: transparent; color: var(--cyan); border: 1px solid var(--line); box-shadow: none; }
+.btn.danger { background: var(--red); color: #fff; }
+.wrap { padding: 1.2rem 1.6rem; max-width: 900px; }
+.win { border: 1px solid var(--line); border-radius: 8px; overflow: hidden; margin: 1rem 1.6rem;
+  box-shadow: 0 0 50px -34px var(--cyan); }
+.win .tt { display: flex; gap: .4rem; align-items: center; padding: .4rem .7rem;
+  background: var(--panel); border-bottom: 1px solid var(--line); color: var(--muted); }
+.win .tt i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.dot1 { background: var(--red); } .dot2 { background: var(--orange); } .dot3 { background: var(--acid); }
+h1 { font-size: 1.4rem; margin: .2rem 0 1rem; color: var(--fg); }
+h2, h3 { color: var(--acid); }
+.md :is(h1,h2,h3,h4) { margin-top: 1.6rem; }
+.md pre { background: var(--panel); border: 1px solid var(--line); border-radius: 6px;
+  padding: .8rem 1rem; overflow: auto; }
+.md code { background: var(--panel); padding: .05rem .3rem; border-radius: 4px; }
+.md pre code { background: none; padding: 0; }
+.md table { border-collapse: collapse; }
+.md th, .md td { border: 1px solid var(--line); padding: .3rem .6rem; }
+.md blockquote { border-left: 3px solid var(--purple); margin: 0; padding-left: 1rem; color: var(--muted); }
+.md a { text-decoration: underline; }
+.pill { font-size: .75rem; border: 1px solid var(--line); border-radius: 999px;
+  padding: .05rem .5rem; color: var(--muted); }
+.pill.rev { color: var(--orange); border-color: var(--orange); }
+textarea.ed { width: 100%; height: calc(100vh - 150px); background: var(--bg); color: var(--fg);
+  border: 0; outline: 0; padding: 1rem 1.2rem; font: 13px/1.65 ui-monospace, monospace;
+  resize: none; caret-color: var(--acid); }
+.muted { color: var(--muted); }
+.row { display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; }
+details.new { position: relative; }
+details.new > summary { list-style: none; cursor: pointer; }
+details.new > summary::-webkit-details-marker { display: none; }
+details.new .pop { position: absolute; right: 0; top: 2.3rem; background: var(--panel);
+  border: 1px solid var(--line); border-radius: 8px; padding: 1rem; width: 340px; z-index: 20;
+  box-shadow: 0 10px 40px -10px #000; }
+.chip { display: inline-block; border: 1px solid var(--line); border-radius: 6px;
+  padding: .15rem .5rem; margin: .15rem .15rem 0 0; cursor: pointer; color: var(--muted); }
+.chip.on { color: var(--bg); background: var(--acid); border-color: var(--acid); }
+.fld { width: 100%; background: var(--bg); color: var(--fg); border: 1px solid var(--line);
+  border-radius: 6px; padding: .35rem; font: inherit; }
+.grid { display: grid; gap: .8rem; grid-template-columns: repeat(auto-fill, minmax(200px,1fr)); }
+.card { border: 1px solid var(--line); border-radius: 8px; padding: .8rem; background: var(--panel); }
+.stat { font-size: 1.8rem; font-weight: 800; color: var(--cyan); text-shadow: 0 0 22px currentColor; }
+ul { padding-left: 1.2rem; }
+</style>
+</head>
+<body>
+<div class="app">
+<aside>
+  <div class="brand">◈ cyberdesk</div>
+  <nav>
+    <a href="/" style="color:var(--fg)">▸ portal</a>
+    {% for it in tree %}
+      {% if it.is_dir %}
+        <span class="d" style="display:block;padding:.12rem 1rem;padding-left:{{ 0.6 + it.depth * 0.8 }}rem">{{ it.name }}/</span>
+      {% else %}
+        <a href="/n/{{ it.rel | safe }}" style="padding-left:{{ 0.9 + it.depth * 0.8 }}rem">{{ it.name }}</a>
+      {% endif %}
+    {% endfor %}
+  </nav>
+</aside>
+<main>
+  <div class="bar">
+    <form action="/search" method="get" style="flex:1;display:flex">
+      <input type="search" name="q" placeholder="search notes…" value="{{ q | default('') }}">
+    </form>
+    <details class="new">
+      <summary class="btn">＋ new</summary>
+      <div class="pop">
+        <form method="post" action="/new">
+          <div class="muted" style="font-size:.78rem">template</div>
+          <div id="tpls">
+            {% for t in templates | default([]) %}
+            <label class="chip"><input type="radio" name="template" value="{{ t }}" style="display:none" {{ 'checked' if loop.first }}>{{ t }}</label>
+            {% endfor %}
+          </div>
+          <div class="muted" style="font-size:.78rem;margin-top:.55rem">folder</div>
+          <select name="folder" class="fld">
+            <option value="Inbox">Inbox</option>
+            {% for f in folders | default([]) %}<option value="{{ f }}">{{ f }}</option>{% endfor %}
+          </select>
+          <div class="muted" style="font-size:.78rem;margin-top:.55rem">title</div>
+          <input name="title" required class="fld">
+          <button class="btn" style="margin-top:.75rem;width:100%">create &amp; edit</button>
+        </form>
+      </div>
+    </details>
+  </div>
+  {% block body %}{% endblock %}
+</main>
+</div>
+<script>
+(function () {
+  var tpls = document.getElementById('tpls');
+  if (!tpls) return;
+  var mark = function () {
+    tpls.querySelectorAll('.chip').forEach(function (c) {
+      c.classList.toggle('on', c.querySelector('input').checked);
+    });
+  };
+  tpls.querySelectorAll('.chip input').forEach(function (r) { r.addEventListener('change', mark); });
+  mark();
+})();
+</script>
+</body>
+</html>

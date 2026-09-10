@@ -1,0 +1,52 @@
+//! MiniJinja environment (templates embedded) + a small page renderer.
+
+use axum::response::Html;
+use minijinja::{context, Environment, Value};
+
+macro_rules! tpl {
+    ($env:expr, $name:literal) => {
+        $env.add_template($name, include_str!(concat!("../templates/", $name)))
+            .expect(concat!("template ", $name, " failed to parse"));
+    };
+}
+
+pub fn build_env() -> Environment<'static> {
+    let mut env = Environment::new();
+    tpl!(env, "base.html");
+    tpl!(env, "portal.html");
+    tpl!(env, "view.html");
+    tpl!(env, "edit.html");
+    tpl!(env, "search.html");
+    env
+}
+
+#[derive(Clone)]
+pub struct Renderer {
+    env: std::sync::Arc<Environment<'static>>,
+    pub css: String,
+    pub theme: String,
+}
+
+impl Renderer {
+    pub fn new() -> Self {
+        Self {
+            env: std::sync::Arc::new(build_env()),
+            css: crate::theme::css(),
+            theme: crate::theme::active_name().to_string(),
+        }
+    }
+
+    pub fn page(&self, name: &str, ctx: Value, nav: &str) -> Result<Html<String>, minijinja::Error> {
+        let t = self.env.get_template(name)?;
+        let merged = context! { ..ctx, ..context! {
+            css => self.css, theme => self.theme, nav => nav,
+        }};
+        Ok(Html(t.render(merged)?))
+    }
+}
+
+impl Default for Renderer {
+    fn default() -> Self {
+        Self::new()
+    }
+}

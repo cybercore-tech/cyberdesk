@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}✎ {{ title }} · cyberdesk{% endblock %}
+{% block body %}
+<form method="post" action="/e/{{ rel | safe }}">
+  <div class="win" style="margin-bottom:.2rem">
+    <div class="tt">
+      <i class="dot1"></i><i class="dot2"></i><i class="dot3"></i>
+      <span style="margin-left:.4rem">✎ {{ rel }}{% if is_new %} <span class="muted">(new)</span>{% endif %}</span>
+      <span style="flex:1"></span>
+      <a class="btn ghost" style="padding:.12rem .55rem" href="/n/{{ rel | safe }}">view</a>
+      <button class="btn" style="padding:.12rem .8rem;margin-left:.4rem">save</button>
+    </div>
+    <textarea class="ed" name="content" spellcheck="false" autofocus>{{ content }}</textarea>
+  </div>
+  <p class="muted" style="padding:.2rem 1.6rem">Ctrl/⌘+S to save · commits to git on save</p>
+</form>
+<script>
+addEventListener('keydown', function (e) {
+  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') {
+    e.preventDefault();
+    document.querySelector('form').submit();
+  }
+});
+</script>
+{% endblock %}

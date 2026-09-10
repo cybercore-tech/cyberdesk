@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="wrap">
+  <h1>portal</h1>
+
+  <div class="grid" style="margin-bottom:1.6rem">
+    <div class="card"><div class="muted">notes</div><div class="stat">{{ total }}</div></div>
+    <div class="card"><div class="muted">needs review</div>
+      <div class="stat" style="color:var(--orange)">{{ needs_review_n }}</div></div>
+    <div class="card"><div class="muted">templates</div><div class="stat">{{ templates | length }}</div></div>
+    <div class="card"><div class="muted">folders</div><div class="stat">{{ folders | length }}</div></div>
+  </div>
+
+  <h2>recent</h2>
+  <ul>
+    {% for r in recent %}
+    <li><a href="/n/{{ r.rel | safe }}">{{ r.title }}</a> &nbsp;<span class="muted" style="font-size:.8rem">{{ r.rel }}</span></li>
+    {% else %}<li class="muted">nothing yet</li>{% endfor %}
+  </ul>
+
+  {% if needs_review %}
+  <h2 style="color:var(--orange)">needs review <span class="pill rev">{{ needs_review_n }}</span></h2>
+  <ul>
+    {% for r in needs_review %}
+    <li><a href="/e/{{ r.rel | safe }}">{{ r.title }}</a> &nbsp;<span class="muted" style="font-size:.8rem">{{ r.rel }}</span></li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+</div>
+{% endblock %}
