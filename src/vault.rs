@@ -127,24 +127,29 @@ pub fn exists(root: &Path, rel: &str) -> bool {
     safe_rel(rel).ok().map(|r| root.join(r).is_file()).unwrap_or(false)
 }
 
+/// Options for [`create_note`].
+pub struct NewNote<'a> {
+    pub template: &'a str,
+    pub folder: &'a str,
+    pub title: &'a str,
+    /// explicit file stem — slugified for safety; blank => slug of the title
+    pub filename: Option<&'a str>,
+    pub tags: &'a [String],
+    /// extra `{{key}}` substitutions declared by a template
+    pub fields: &'a std::collections::HashMap<String, String>,
+    /// appended after the filled template body (e.g. pasted text)
+    pub body: &'a str,
+}
+
 /// Create a note from `_templates/<template>.md`, substituting `{{title}}`,
-/// `{{date}}`, `{{slug}}`. `filename` overrides the derived slug when given
-/// (it is still slugified for safety); `tags` are written into a `tags: []`
-/// frontmatter line if the template has one. Returns the new note's rel path.
-pub fn create_note(
-    root: &Path,
-    template: &str,
-    folder: &str,
-    title: &str,
-    filename: Option<&str>,
-    tags: &[String],
-) -> Result<String> {
-    let stem_src = filename.map(str::trim).filter(|s| !s.is_empty()).unwrap_or(title);
+/// `{{date}}`, `{{slug}}` and any `opts.fields`. Returns the new note's rel path.
+pub fn create_note(root: &Path, opts: &NewNote) -> Result<String> {
+    let stem_src = opts.filename.map(str::trim).filter(|s| !s.is_empty()).unwrap_or(opts.title);
     let slug = slugify(stem_src.trim_end_matches(".md"));
     if slug.is_empty() {
         bail!("need a title or file name");
     }
-    let folder = folder.trim_matches('/');
+    let folder = opts.folder.trim_matches('/');
     if folder.contains("..") {
         bail!("bad folder");
     }
@@ -158,22 +163,68 @@ pub fn create_note(
         bail!("a note named {rel} already exists");
     }
 
-    let tpl_path = root.join("_templates").join(format!("{}.md", slugify(template)));
+    let tpl_path = root.join("_templates").join(format!("{}.md", slugify(opts.template)));
     let tpl = std::fs::read_to_string(&tpl_path)
         .unwrap_or_else(|_| "---\ntitle: \"{{title}}\"\ntags: []\ncreated: {{date}}\n---\n\n# {{title}}\n\n".into());
     let today = chrono::Local::now().format("%Y-%m-%d").to_string();
     let mut filled = tpl
-        .replace("{{title}}", title)
+        .replace("{{title}}", opts.title)
         .replace("{{date}}", &today)
         .replace("{{slug}}", &slug);
-    if !tags.is_empty() {
-        let list = tags.join(", ");
+    for (k, v) in opts.fields {
+        filled = filled.replace(&format!("{{{{{k}}}}}"), v);
+    }
+    if !opts.tags.is_empty() {
+        let list = opts.tags.join(", ");
         filled = filled
             .replacen("tags: []", &format!("tags: [{list}]"), 1)
             .replacen("tags:  []", &format!("tags: [{list}]"), 1);
     }
+    let body = opts.body.trim();
+    if !body.is_empty() {
+        if !filled.ends_with('\n') {
+            filled.push('\n');
+        }
+        if !filled.ends_with("\n\n") {
+            filled.push('\n');
+        }
+        filled.push_str(body);
+        filled.push('\n');
+    }
     write_raw(root, &rel, &filled)?;
     Ok(rel)
+}
+
+/// Move/rename a note within the vault. The final path segment is slugified
+/// (folders keep their casing); returns the new rel path.
+pub fn rename(root: &Path, from: &str, to: &str) -> Result<String> {
+    let from = safe_rel(from)?;
+    let raw = to.trim().trim_start_matches('/').trim_end_matches(".md");
+    let (dir, stem) = match raw.rsplit_once('/') {
+        Some((d, s)) => (format!("{}/", d.trim_matches('/')), s),
+        None => (String::new(), raw),
+    };
+    let stem = slugify(stem);
+    if stem.is_empty() {
+        bail!("destination needs a file name");
+    }
+    let to = safe_rel(&format!("{dir}{stem}.md"))?;
+    if from == to {
+        bail!("source and destination are the same");
+    }
+    let src = root.join(&from);
+    let dst = root.join(&to);
+    if !src.is_file() {
+        bail!("no such note: {from}");
+    }
+    if dst.exists() {
+        bail!("{to} already exists");
+    }
+    if let Some(parent) = dst.parent() {
+        std::fs::create_dir_all(parent)?;
+    }
+    std::fs::rename(&src, &dst)?;
+    Ok(to)
 }
 
 /// Lower-cased, ascii-alphanumeric, dash-separated slug.

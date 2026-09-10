@@ -9,31 +9,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/mode/overlay.min.js"></script>
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/mode/simple.min.js"></script>
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/mode/loadmode.min.js"></script>
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/meta.min.js"></script>
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/selection/active-line.min.js"></script>
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/xml/xml.min.js"></script>
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/css/css.min.js"></script>
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/htmlmixed/htmlmixed.min.js"></script>
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/clike/clike.min.js"></script>
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/rust/rust.min.js"></script>
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/go/go.min.js"></script>
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/shell/shell.min.js"></script>
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/yaml/yaml.min.js"></script>
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/sql/sql.min.js"></script>
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/ruby/ruby.min.js"></script>
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/php/php.min.js"></script>
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/dockerfile/dockerfile.min.js"></script>
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/toml/toml.min.js"></script>
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/markdown/markdown.min.js"></script>
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/gfm/gfm.min.js"></script>
+<link rel="stylesheet" href="/vendor/cm.css">
+<script defer src="/vendor/cm.js"></script>
 
 <style>
 {{ css|safe }}
@@ -209,6 +186,19 @@ details.new .pop { position: absolute; right: 0; top: 2.3rem; background: var(--
 .nf-opts label { display: inline-flex; align-items: center; gap: .32rem; cursor: pointer; }
 .nf-opts b { color: var(--orange); font-weight: 600; }
 .nf-opts input { accent-color: var(--acid); }
+.nf-dup { color: var(--red); font-size: .78rem; }
+#nf-fields-in { display: grid; gap: .35rem; }
+#nf-fields-in input { width: 100%; background: var(--bg); color: var(--fg); border: 1px solid var(--line);
+  border-radius: var(--r); padding: .3rem .4rem; font: inherit; font-size: .82rem; }
+.nf-more { margin-top: .6rem; border: 1px solid var(--line); border-radius: var(--r); background: var(--panel-2); }
+.nf-more > summary { cursor: pointer; padding: .35rem .6rem; font-size: .76rem; color: var(--muted); list-style: none; }
+.nf-more > summary::-webkit-details-marker { display: none; }
+.nf-more > summary::before { content: "▸ "; }
+.nf-more[open] > summary::before { content: "▾ "; }
+.nf-clip { display: flex; align-items: center; gap: .5rem; padding: 0 .6rem .4rem; }
+.nf-tpl-preview { margin: 0; padding: .6rem; border-top: 1px solid var(--line); background: var(--bg);
+  font: 11.5px/1.5 var(--font-mono); color: var(--muted); max-height: 220px; overflow: auto; white-space: pre-wrap; }
+.btn.is-bad { filter: grayscale(.6) brightness(.8); }
 .chip { display: inline-block; border: 1px solid var(--line); border-radius: var(--r);
   padding: .15rem .5rem; margin: .15rem .15rem 0 0; cursor: pointer; color: var(--muted);
   transition: transform .1s, color .12s, background .12s, border-color .12s, box-shadow .12s; }
@@ -239,6 +229,10 @@ a.card:hover { border-color: var(--cyan); box-shadow: 0 0 26px -10px var(--cyan)
 #cardpop a { display: inline-block; margin: .3rem .45rem 0 0; }
 
 ul { padding-left: 1.2rem; }
+.backlinks { margin-top: 2rem; border-top: 1px solid var(--line); padding-top: 1rem; }
+.backlinks h3 { color: var(--purple); font-size: .95rem; margin: 0 0 .5rem; }
+.backlinks ul { margin: 0; }
+.backlinks li { margin: .2rem 0; }
 .diff { font-size: .82rem; }
 .diff .o { color: var(--red); } .diff .n { color: var(--acid); }
 
@@ -404,17 +398,31 @@ table.log .d { color: var(--muted); white-space: nowrap; font-size: .78rem; }
             <input name="new_folder" id="nf-newfolder" class="fld" placeholder="Guides/Networking" autocomplete="off"></label>
           <label class="nf-row"><span class="nf-lbl">tags</span>
             <input name="tags" id="nf-tags" class="fld" placeholder="setup, arch   (comma separated)" autocomplete="off"></label>
-          <div class="nf-path"><span class="muted">creates&nbsp;</span><code id="nf-preview">Inbox/untitled.md</code></div>
+          <div class="nf-row" id="nf-fields" hidden><span class="nf-lbl">template fields</span><div id="nf-fields-in"></div></div>
+          <input type="hidden" name="fields_json" id="nf-fields-json">
+          <div class="nf-path"><span class="muted">creates&nbsp;</span><code id="nf-preview">Inbox/untitled.md</code>
+            <span id="nf-dup" class="nf-dup" hidden>· already exists</span></div>
           <div class="nf-opts">
             <label><input type="checkbox" name="needs_review"> mark <b>needs-review</b></label>
             <label><input type="checkbox" name="tidy" checked> tidy new file</label>
+            <label><input type="checkbox" id="nf-datep"> date&nbsp;prefix</label>
+            <input type="hidden" name="date_prefix" id="nf-datep-h">
           </div>
+          <details class="nf-more">
+            <summary>template preview · paste body</summary>
+            <div class="nf-clip">
+              <button type="button" class="tbtn" id="nf-paste">＋ body from clipboard</button>
+              <span id="nf-clip-n" class="muted"></span>
+              <textarea name="body" id="nf-body" hidden></textarea>
+            </div>
+            <pre id="nf-tpl-preview" class="nf-tpl-preview">select a template…</pre>
+          </details>
           <div class="nf-opts">
             <span class="nf-lbl">open in</span>
             <label><input type="radio" name="open_in" value="editor" checked> full editor</label>
             <label><input type="radio" name="open_in" value="popup"> pop-up</label>
           </div>
-          <button class="btn" style="margin-top:.8rem;width:100%">create &amp; edit</button>
+          <button class="btn" id="nf-submit" style="margin-top:.8rem;width:100%">create &amp; edit</button>
         </form>
       </div>
     </details>
@@ -440,6 +448,7 @@ table.log .d { color: var(--muted); white-space: nowrap; font-size: .78rem; }
       <button class="tbtn" data-act="copy">copy</button>
       <button class="tbtn" data-act="cut">cut</button>
       <button class="tbtn" data-act="paste">paste</button>
+      <button class="tbtn" data-act="rename">rename</button>
       <button class="tbtn warn" data-act="delete">delete</button>
       <button class="tbtn warn" data-act="close">✕ close</button>
     </div>
@@ -461,7 +470,7 @@ table.log .d { color: var(--muted); white-space: nowrap; font-size: .78rem; }
     </div>
     <div class="fed-sa" id="fed-sa" hidden>
       <div class="fed-sa-box">
-        <h3>save as</h3>
+        <h3 id="fed-sa-title">save as</h3>
         <label for="fed-sa-folder">folder</label>
         <select id="fed-sa-folder">
           <option value="">(vault root)</option>
@@ -472,7 +481,7 @@ table.log .d { color: var(--muted); white-space: nowrap; font-size: .78rem; }
         <input type="text" id="fed-sa-name" placeholder="my-note.md" autocomplete="off">
         <div class="fed-sa-act">
           <button class="tbtn" data-act="sa-cancel">cancel</button>
-          <button class="btn" data-act="sa-ok">save</button>
+          <button class="btn" data-act="sa-ok" id="fed-sa-ok">save</button>
         </div>
       </div>
     </div>
@@ -511,6 +520,8 @@ table.log .d { color: var(--muted); white-space: nowrap; font-size: .78rem; }
     if (cf) { cf.classList.add('here'); cf.scrollIntoView({ block: 'center' }); }
   }
 
+  var TITLES = {{ titles | default([]) | tojson }};
+
   // ── ＋ new: chip highlight + title→filename + path preview ─
   var tpls = g('tpls');
   if (tpls) {
@@ -525,34 +536,118 @@ table.log .d { color: var(--muted); white-space: nowrap; font-size: .78rem; }
   var nf = g('nf');
   if (nf) {
     var nfSlug = function (s) {
-      return String(s).trim().toLowerCase().replace(/\.md$/, '')
+      return String(s || '').trim().toLowerCase().replace(/\.md$/, '')
         .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
     };
+    var today = new Date().toISOString().slice(0, 10);
+    var RF_KEY = 'cyberdesk.recentFolders';
     var nfT = g('nf-title'), nfF = g('nf-file'), nfSel = g('nf-folder'),
-        nfNewRow = g('nf-newfolder-row'), nfNew = g('nf-newfolder'), nfPrev = g('nf-preview');
+        nfNewRow = g('nf-newfolder-row'), nfNew = g('nf-newfolder'), nfPrev = g('nf-preview'),
+        nfDup = g('nf-dup'), nfDateP = g('nf-datep'), nfDatePH = g('nf-datep-h'),
+        nfSubmit = g('nf-submit'), nfTpl = g('nf-tpl-preview'),
+        nfFieldsRow = g('nf-fields'), nfFieldsIn = g('nf-fields-in'), nfFieldsJson = g('nf-fields-json'),
+        nfPaste = g('nf-paste'), nfBody = g('nf-body'), nfClipN = g('nf-clip-n');
     var fileDirty = false;
+
+    // recent folders — prepend to the select
+    try {
+      var rf = JSON.parse(localStorage.getItem(RF_KEY) || '[]');
+      rf.slice(0, 5).reverse().forEach(function (name) {
+        if (!name || [].some.call(nfSel.options, function (o) { return o.value === name; })) return;
+        var o = document.createElement('option');
+        o.value = name; o.textContent = '★ ' + name;
+        nfSel.insertBefore(o, nfSel.firstChild);
+      });
+    } catch (e) {}
+
     var folderVal = function () {
       return (nfSel.value === '__new__' ? nfNew.value : nfSel.value).trim().replace(/\/+$/, '');
     };
+    var stemVal = function () {
+      var s = nfSlug(nfF.value) || nfSlug(nfT.value) || 'untitled';
+      if (nfDateP.checked) s = today + '-' + s;
+      return s;
+    };
+    var targetRel = function () {
+      var fv = folderVal();
+      return (fv ? fv + '/' : '') + stemVal() + '.md';
+    };
     var nfRefresh = function () {
       if (!fileDirty) nfF.value = nfSlug(nfT.value);
-      var stem = nfSlug(nfF.value) || nfSlug(nfT.value) || 'untitled';
-      var fv = folderVal();
-      nfPrev.textContent = (fv ? fv + '/' : '') + stem + '.md';
+      var rel = targetRel();
+      nfPrev.textContent = rel;
+      var dup = TITLES.some(function (t) { return t.rel === rel; });
+      nfDup.hidden = !dup;
+      nfSubmit.classList.toggle('is-bad', dup);
+      nfDatePH.value = nfDateP.checked ? 'on' : '';
     };
     nfT.addEventListener('input', nfRefresh);
     nfF.addEventListener('input', function () { fileDirty = nfF.value.trim() !== ''; nfRefresh(); });
+    nfDateP.addEventListener('change', nfRefresh);
     nfSel.addEventListener('change', function () {
       nfNewRow.hidden = nfSel.value !== '__new__';
       if (!nfNewRow.hidden) nfNew.focus();
       nfRefresh();
     });
     nfNew.addEventListener('input', nfRefresh);
+
+    // template preview + declared {{fields}}
+    function loadTemplate(name) {
+      if (!name) return;
+      fetch('/api/raw/' + encodeURIComponent('_templates/' + name + '.md'))
+        .then(function (r) { return r.json(); }).then(function (j) {
+          var body = j.content || '';
+          nfTpl.textContent = body || '(empty template)';
+          var toks = [], re = /\{\{\s*([a-z0-9_]+)\s*\}\}/gi, m;
+          while ((m = re.exec(body))) {
+            var k = m[1].toLowerCase();
+            if (['title', 'date', 'slug'].indexOf(k) === -1 && toks.indexOf(k) === -1) toks.push(k);
+          }
+          nfFieldsIn.innerHTML = '';
+          toks.forEach(function (k) {
+            var i = document.createElement('input');
+            i.placeholder = k; i.dataset.k = k;
+            i.addEventListener('input', syncFields);
+            nfFieldsIn.appendChild(i);
+          });
+          nfFieldsRow.hidden = !toks.length;
+          syncFields();
+        }).catch(function () { nfTpl.textContent = '(could not load template)'; });
+    }
+    function syncFields() {
+      var o = {};
+      nfFieldsIn.querySelectorAll('input').forEach(function (i) { if (i.value.trim()) o[i.dataset.k] = i.value; });
+      nfFieldsJson.value = Object.keys(o).length ? JSON.stringify(o) : '';
+    }
+    tpls.querySelectorAll('.chip input').forEach(function (r) {
+      r.addEventListener('change', function () { if (r.checked) loadTemplate(r.value); });
+    });
+    var firstTpl = tpls.querySelector('.chip input:checked');
+    if (firstTpl) loadTemplate(firstTpl.value);
+
+    // paste body from clipboard
+    if (nfPaste) nfPaste.addEventListener('click', function () {
+      if (!navigator.clipboard || !navigator.clipboard.readText) { nfClipN.textContent = 'clipboard unavailable'; return; }
+      navigator.clipboard.readText().then(function (t) {
+        nfBody.value = t || '';
+        nfClipN.textContent = t ? (t.length + ' chars attached') : 'clipboard empty';
+      }, function () { nfClipN.textContent = 'clipboard blocked'; });
+    });
+
+    // remember the folder on submit
+    nf.addEventListener('submit', function () {
+      var fv = folderVal();
+      if (fv) try {
+        var cur = JSON.parse(localStorage.getItem(RF_KEY) || '[]').filter(function (x) { return x !== fv; });
+        cur.unshift(fv);
+        localStorage.setItem(RF_KEY, JSON.stringify(cur.slice(0, 6)));
+      } catch (e) {}
+    });
+
     nfRefresh();
   }
 
   // ── themed search autocomplete ──────────────────────────
-  var TITLES = {{ titles | default([]) | tojson }};
   var q = g('q'), sac = g('sac');
   var rows = [], sel = -1;
   function sacHide() { sac.hidden = true; rows = []; sel = -1; }
@@ -806,12 +901,36 @@ table.log .d { color: var(--muted); white-space: nowrap; font-size: .78rem; }
       else msg('already tidy', 'ok');
     }).catch(function () { msg('tidy failed (network)', 'bad'); });
   }
-  function openSaveAs() {
+  var saMode = 'saveas';
+  function openSaveDialog(mode) {
+    saMode = mode;
     var base = (cur || 'untitled.md').split('/').pop();
     var dir = (cur && cur.indexOf('/') !== -1) ? cur.slice(0, cur.lastIndexOf('/')) : '';
+    g('fed-sa-title').textContent = mode === 'rename' ? 'rename / move' : 'save as';
+    g('fed-sa-ok').textContent = mode === 'rename' ? 'rename' : 'save';
     saName.value = base;
     saFolder.value = [].some.call(saFolder.options, function (o) { return o.value === dir; }) ? dir : '';
-    sa.hidden = false; saName.focus(); saName.select();
+    sa.hidden = false; saName.focus();
+    var dot = saName.value.lastIndexOf('.');
+    saName.setSelectionRange(0, dot > 0 ? dot : saName.value.length);
+  }
+  function openSaveAs() { openSaveDialog('saveas'); }
+  function doMove(to) {
+    if (!cur) { msg('open a file first', 'bad'); return; }
+    msg('renaming…');
+    fetch('/api/move', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ from: cur, to: to })
+    }).then(function (r) { return r.json(); }).then(function (j) {
+      if (!j.ok) { msg(j.error || 'rename failed', 'bad'); return; }
+      if (FILES) {
+        FILES = FILES.filter(function (x) { return x.rel !== cur; });
+        FILES.push({ rel: j.to, title: j.to });
+        FILES.sort(function (a, b) { return a.rel < b.rel ? -1 : 1; });
+      }
+      msg(cur + '  →  ' + j.to, 'ok');
+      cur = j.to; setName(); buf.setModeFor(j.to); drawList(filterEl.value);
+    }).catch(function () { msg('rename failed (network)', 'bad'); });
   }
   function doDelete() {
     if (!cur) { msg('nothing open to delete', 'bad'); return; }
@@ -907,6 +1026,7 @@ table.log .d { color: var(--muted); white-space: nowrap; font-size: .78rem; }
     },
     save: function () { cur ? doSave(cur) : openSaveAs(); },
     saveas: openSaveAs,
+    rename: function () { cur ? openSaveDialog('rename') : msg('open a file first', 'bad'); },
     tidy: doTidy,
     diff: function () { diffOn ? hideDiff() : showDiff(); },
     selall: function () { buf.selectAll(); },
@@ -920,8 +1040,9 @@ table.log .d { color: var(--muted); white-space: nowrap; font-size: .78rem; }
       var name = saName.value.trim();
       if (!name) { saName.focus(); msg('name required', 'bad'); return; }
       var dir = saFolder.value;
+      var rel = dir ? dir + '/' + name : name;
       sa.hidden = true;
-      doSave(dir ? dir + '/' + name : name);
+      if (saMode === 'rename') doMove(rel); else doSave(rel);
     }
   };
   fed.addEventListener('click', function (e) {

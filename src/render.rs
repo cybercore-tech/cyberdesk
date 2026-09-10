@@ -29,6 +29,24 @@ pub fn wikilinks(html: &str, resolve: &impl Fn(&str) -> Option<String>) -> Strin
     out
 }
 
+/// Every `[[target]]` / `[[target|label]]` target in raw markdown (trimmed,
+/// label and `.md` stripped). Used for the backlinks panel.
+pub fn wikilink_targets(md: &str) -> Vec<String> {
+    let mut out = Vec::new();
+    let mut rest = md;
+    while let Some(i) = rest.find("[[") {
+        rest = &rest[i + 2..];
+        let Some(j) = rest.find("]]") else { break };
+        let inner = &rest[..j];
+        rest = &rest[j + 2..];
+        let target = inner.split('|').next().unwrap_or("").trim().trim_end_matches(".md");
+        if !target.is_empty() {
+            out.push(target.to_string());
+        }
+    }
+    out
+}
+
 pub fn html(md: &str) -> String {
     let mut o = ComrakOptions::default();
     o.extension.strikethrough = true;

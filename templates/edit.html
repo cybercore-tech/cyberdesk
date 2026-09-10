@@ -1,23 +1,24 @@
 {% extends "base.html" %}
 {% block title %}✎ {{ title }} · cyberdesk{% endblock %}
 {% block body %}
-<form method="post" action="/e/{{ rel | safe }}">
+<form method="post" action="/e/{{ rel | safe }}" id="ef">
   <div class="win" style="margin-bottom:.2rem">
     <div class="tt">
       <i class="dot1"></i><i class="dot2"></i><i class="dot3"></i>
       <span style="margin-left:.4rem">✎ {{ rel }}{% if is_new %} <span class="muted">(new)</span>{% endif %}</span>
       <span style="flex:1"></span>
+      <span id="ef-lint" class="muted" style="font-size:.78rem;margin-right:.6rem"></span>
       <a class="btn ghost" style="padding:.12rem .55rem" href="/n/{{ rel | safe }}">view</a>
       <button class="btn" style="padding:.12rem .8rem;margin-left:.4rem">save</button>
     </div>
     <div style="position:relative">
       <textarea id="ed" class="ed" name="content" spellcheck="false" autofocus>{{ content }}</textarea>
       <ul id="ac" style="display:none;position:absolute;z-index:40;background:var(--panel);
-        border:1px solid var(--cyan);border-radius:6px;padding:.2rem;margin:0;list-style:none;
+        border:1px solid var(--cyan);border-radius:var(--r);padding:.2rem;margin:0;list-style:none;
         max-height:240px;overflow:auto;font-size:.82rem;box-shadow:0 12px 40px -8px #000"></ul>
     </div>
   </div>
-  <p class="muted" style="padding:.2rem 1.6rem">Ctrl/⌘+S saves · <code>[[</code> to link a note ·
+  <p class="muted" style="padding:.2rem 1.6rem">Ctrl/⌘+S saves · <code>[[</code> links a note ·
     <code>#tag</code> completes tags · commits to git on save</p>
 </form>
 {% endblock %}
@@ -25,29 +26,101 @@
 {% block script %}
 <script>
 (function () {
-  var ed = document.getElementById('ed'), ac = document.getElementById('ac');
+  var form = document.getElementById('ef'), ta = document.getElementById('ed'), ac = document.getElementById('ac');
   var NOTES = {{ titles | default([]) | tojson }};
   NOTES.forEach(function (n) { n.stem = n.rel.split('/').pop().replace(/\.md$/, ''); });
   var TAGS = {{ tags_all | default([]) | tojson }};
-  var items = [], sel = 0, mode = null, tokStart = 0;
 
-  function hide() { ac.style.display = 'none'; items = []; mode = null; }
-  function place() {
-    // rough caret position via a mirror div
-    var r = ed.getBoundingClientRect();
-    ac.style.left = '12px';
-    ac.style.top = (Math.min(ed.scrollTop + 24 + lineOf() * 21, r.height - 40)) + 'px';
+  function lintPoll(text) {
+    var el = document.getElementById('ef-lint');
+    var issues = [];
+    var lines = text.split('\n'), fence = false, h1 = 0, lastLvl = 0;
+    lines.forEach(function (l) {
+      if (/^\s*(```|~~~)/.test(l)) { fence = !fence; return; }
+      if (fence) return;
+      var m = /^(#{1,6})\s+/.exec(l);
+      if (m) { var lvl = m[1].length; if (lvl === 1) h1++; if (lastLvl && lvl > lastLvl + 1) issues.push('heading jump'); lastLvl = lvl; }
+      if (/\s+$/.test(l)) issues.push('trailing ws');
+    });
+    if (h1 === 0) issues.push('no H1');
+    if (h1 > 1) issues.push(h1 + ' H1s');
+    if (/\r/.test(text)) issues.push('CRLF');
+    if (/\n{3,}/.test(text)) issues.push('blank runs');
+    var uniq = issues.filter(function (v, i) { return issues.indexOf(v) === i; });
+    el.textContent = uniq.length ? '⚠ ' + uniq.join(' · ') : '✓ clean';
+    el.style.color = uniq.length ? 'var(--orange)' : 'var(--acid)';
   }
-  function lineOf() {
-    return ed.value.slice(0, ed.selectionStart).split('\n').length - 1 - ed.scrollTop / 21 | 0;
+
+  // ── CodeMirror path ─────────────────────────────────────
+  if (window.CodeMirror) {
+    var cm = CodeMirror.fromTextArea(ta, {
+      lineNumbers: true, lineWrapping: true, indentUnit: 2, tabSize: 2,
+      autoCloseBrackets: true, styleActiveLine: true,
+      mode: (CodeMirror.overlayMode && CodeMirror.modes && CodeMirror.modes.gfm)
+        ? { name: 'gfm', fencedCodeBlockHighlighting: true }
+        : { name: 'markdown', fencedCodeBlockHighlighting: true },
+      extraKeys: {
+        'Ctrl-S': function () { form.submit(); }, 'Cmd-S': function () { form.submit(); },
+        'Ctrl-Space': function (c) { hint(c); }
+      }
+    });
+    cm.setSize('100%', 'calc(100vh - 150px)');
+
+    function hint(c) {
+      var cur = c.getCursor(), line = c.getLine(cur.line).slice(0, cur.ch), m;
+      if ((m = /\[\[([^\]\n]*)$/.exec(line))) {
+        var q = m[1].toLowerCase();
+        var list = NOTES.filter(function (n) {
+          return n.stem.toLowerCase().indexOf(q) !== -1 || n.title.toLowerCase().indexOf(q) !== -1;
+        }).slice(0, 40).map(function (n) {
+          return { text: '[[' + n.stem + ']]', displayText: n.stem + '  —  ' + n.title };
+        });
+        if (!list.length) return;
+        c.showHint({
+          completeSingle: false,
+          hint: function () {
+            return { list: list, from: CodeMirror.Pos(cur.line, cur.ch - m[1].length - 2), to: cur };
+          }
+        });
+      } else if ((m = /(^|[\s,[])#([\w-]*)$/.exec(line))) {
+        var q2 = m[2].toLowerCase();
+        var list2 = TAGS.filter(function (t) { return t.toLowerCase().indexOf(q2) !== -1; })
+          .slice(0, 40).map(function (t) { return { text: '#' + t, displayText: '#' + t }; });
+        if (!list2.length) return;
+        c.showHint({
+          completeSingle: false,
+          hint: function () {
+            return { list: list2, from: CodeMirror.Pos(cur.line, cur.ch - m[2].length - 1), to: cur };
+          }
+        });
+      }
+    }
+    var t;
+    cm.on('inputRead', function (c, ch) {
+      if (ch.text && /[\[#\w-]/.test(ch.text[0])) hint(c);
+    });
+    cm.on('change', function () {
+      clearTimeout(t);
+      t = setTimeout(function () { lintPoll(cm.getValue()); }, 400);
+    });
+    lintPoll(cm.getValue());
+    return;
+  }
+
+  // ── plain-textarea fallback (no CodeMirror) ─────────────
+  var items = [], sel = 0, tokStart = 0;
+  function hide() { ac.style.display = 'none'; items = []; }
+  function place() {
+    var lineNo = ta.value.slice(0, ta.selectionStart).split('\n').length - 1;
+    ac.style.left = '14px';
+    ac.style.top = Math.max(8, 22 + lineNo * 21 - ta.scrollTop) + 'px';
   }
   function render() {
     ac.innerHTML = '';
     items.slice(0, 40).forEach(function (it, i) {
       var li = document.createElement('li');
       li.textContent = it.label;
-      li.style.padding = '.2rem .5rem';
-      li.style.cursor = 'pointer';
+      li.style.padding = '.2rem .5rem'; li.style.cursor = 'pointer';
       if (i === sel) { li.style.background = 'var(--acid)'; li.style.color = 'var(--bg)'; }
       li.addEventListener('mousedown', function (e) { e.preventDefault(); accept(i); });
       ac.appendChild(li);
@@ -57,39 +130,38 @@
   }
   function accept(i) {
     var it = items[i]; if (!it) return hide();
-    var v = ed.value, s = ed.selectionStart;
-    ed.value = v.slice(0, tokStart) + it.insert + v.slice(s);
-    var pos = tokStart + it.insert.length;
-    ed.selectionStart = ed.selectionEnd = pos;
-    hide(); ed.focus();
+    var v = ta.value, s = ta.selectionStart;
+    ta.value = v.slice(0, tokStart) + it.insert + v.slice(s);
+    ta.selectionStart = ta.selectionEnd = tokStart + it.insert.length;
+    hide(); ta.focus();
   }
   function scan() {
-    var s = ed.selectionStart, v = ed.value, line = v.slice(v.lastIndexOf('\n', s - 1) + 1, s);
-    var m;
+    var s = ta.selectionStart, v = ta.value, line = v.slice(v.lastIndexOf('\n', s - 1) + 1, s), m;
     if ((m = /\[\[([^\]\n]*)$/.exec(line))) {
-      mode = 'link'; tokStart = s - m[1].length - 2;
+      tokStart = s - m[1].length - 2;
       var q = m[1].toLowerCase();
       items = NOTES.filter(function (n) {
-        return n.stem.toLowerCase().includes(q) || n.title.toLowerCase().includes(q);
+        return n.stem.toLowerCase().indexOf(q) !== -1 || n.title.toLowerCase().indexOf(q) !== -1;
       }).map(function (n) { return { label: n.stem + '  —  ' + n.title, insert: '[[' + n.stem + ']]' }; });
-    } else if ((m = /(^|[\s,\[])#([\w-]*)$/.exec(line))) {
-      mode = 'tag'; tokStart = s - m[2].length - 1;
+    } else if ((m = /(^|[\s,[])#([\w-]*)$/.exec(line))) {
+      tokStart = s - m[2].length - 1;
       var q2 = m[2].toLowerCase();
-      items = TAGS.filter(function (t) { return t.toLowerCase().includes(q2); })
+      items = TAGS.filter(function (t) { return t.toLowerCase().indexOf(q2) !== -1; })
         .map(function (t) { return { label: '#' + t, insert: '#' + t }; });
     } else { return hide(); }
     sel = 0; render();
   }
-  ed.addEventListener('input', scan);
-  ed.addEventListener('click', hide);
-  ed.addEventListener('keydown', function (e) {
-    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') { e.preventDefault(); ed.form.submit(); return; }
+  ta.addEventListener('input', function () { scan(); clearTimeout(window.__lt); window.__lt = setTimeout(function () { lintPoll(ta.value); }, 400); });
+  ta.addEventListener('click', hide);
+  ta.addEventListener('keydown', function (e) {
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') { e.preventDefault(); form.submit(); return; }
     if (ac.style.display === 'none') return;
     if (e.key === 'ArrowDown') { e.preventDefault(); sel = (sel + 1) % items.length; render(); }
     else if (e.key === 'ArrowUp') { e.preventDefault(); sel = (sel - 1 + items.length) % items.length; render(); }
     else if (e.key === 'Enter' || e.key === 'Tab') { e.preventDefault(); accept(sel); }
     else if (e.key === 'Escape') { hide(); }
   });
+  lintPoll(ta.value);
 })();
 </script>
 {% endblock %}

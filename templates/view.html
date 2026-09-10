@@ -26,6 +26,18 @@
     </details>
     {% endif %}
     <div class="md">{{ body_html | safe }}</div>
+
+    {% if backlinks %}
+    <div class="backlinks">
+      <h3>↩ linked from <span class="muted" style="font-size:.8rem">{{ backlinks | length }}</span></h3>
+      <ul>
+        {% for b in backlinks %}
+        <li><a href="/n/{{ b.rel | safe }}">{{ b.title }}</a>
+          <span class="muted" style="font-size:.78rem">{{ b.rel }}</span></li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
   </div>
 </div>
 {% endblock %}

@@ -1,5 +1,7 @@
 //! HTTP handlers.
 
+use std::collections::HashMap;
+
 use axum::extract::{Path, Query, State};
 use axum::http::{header, HeaderMap, HeaderValue, StatusCode};
 use axum::response::{Html, IntoResponse, Redirect, Response};
@@ -101,9 +103,9 @@ pub async fn view(State(st): State<AppState>, Path(rel): Path<String>) -> Respon
     let root = &st.cfg.root;
     match vault::read(root, &rel) {
         Ok(n) => {
-            use std::collections::HashMap;
-            let idx: HashMap<String, String> = vault::all_notes(root)
-                .into_iter()
+            let all = vault::all_notes(root);
+            let idx: HashMap<String, String> = all
+                .iter()
                 .filter_map(|x| {
                     std::path::Path::new(&x.rel)
                         .file_stem()
@@ -116,12 +118,31 @@ pub async fn view(State(st): State<AppState>, Path(rel): Path<String>) -> Respon
                     idx.iter().find(|(k, _)| k.eq_ignore_ascii_case(stem)).map(|(_, v)| v.clone())
                 })
             });
+
+            // backlinks: other notes whose body wikilinks to this one
+            let my_stem = std::path::Path::new(&n.rel)
+                .file_stem()
+                .and_then(|s| s.to_str())
+                .unwrap_or_default()
+                .to_lowercase();
+            let backlinks: Vec<_> = all
+                .iter()
+                .filter(|x| x.rel != n.rel)
+                .filter(|x| {
+                    render::wikilink_targets(&x.body)
+                        .iter()
+                        .any(|t| t.to_lowercase() == my_stem)
+                })
+                .map(|x| context! { rel => x.rel.clone(), title => x.title.clone() })
+                .collect();
+
             page(
                 &st,
                 "view.html",
                 context! {
                     rel => n.rel, title => n.title, tags => n.tags,
                     body_html => body_html,
+                    backlinks,
                     toc => render::toc(&n.body).into_iter()
                         .map(|(l, t, a)| context! { level => l, text => t, anchor => a })
                         .collect::<Vec<_>>(),
@@ -201,9 +222,18 @@ pub struct NewForm {
     /// checkbox: "on" runs the mechanical linter on the new file
     #[serde(default)]
     tidy: String,
+    /// checkbox: "on" prefixes the file name with today's date
+    #[serde(default)]
+    date_prefix: String,
     /// "popup" opens the new note in the pop-up editor, else the full page
     #[serde(default)]
     open_in: String,
+    /// JSON object of extra `{{key}}` → value template substitutions
+    #[serde(default)]
+    fields_json: String,
+    /// appended after the template body (e.g. pasted text)
+    #[serde(default)]
+    body: String,
 }
 fn inbox() -> String {
     "Inbox".into()
@@ -228,8 +258,34 @@ pub async fn create(State(st): State<AppState>, Form(f): Form<NewForm>) -> Respo
     }
     tags.dedup();
 
-    let filename = (!f.filename.trim().is_empty()).then(|| f.filename.trim());
-    match vault::create_note(root, template, folder, f.title.trim(), filename, &tags) {
+    let fields: HashMap<String, String> = if f.fields_json.trim().is_empty() {
+        HashMap::new()
+    } else {
+        serde_json::from_str(&f.fields_json).unwrap_or_default()
+    };
+
+    let stem = if !f.filename.trim().is_empty() {
+        f.filename.trim().to_string()
+    } else {
+        vault::slugify(f.title.trim())
+    };
+    let stem = if on(&f.date_prefix) && !stem.is_empty() {
+        format!("{}-{}", chrono::Local::now().format("%Y-%m-%d"), stem)
+    } else {
+        stem
+    };
+    let filename = (!stem.is_empty()).then_some(stem);
+
+    let opts = vault::NewNote {
+        template,
+        folder,
+        title: f.title.trim(),
+        filename: filename.as_deref(),
+        tags: &tags,
+        fields: &fields,
+        body: &f.body,
+    };
+    match vault::create_note(root, &opts) {
         Ok(rel) => {
             if on(&f.tidy) {
                 if let Some(clean) = lint::apply_mechanical(root, &rel) {
@@ -581,6 +637,52 @@ pub async fn api_delete(State(st): State<AppState>, axum::Json(f): axum::Json<Ap
         )
             .into_response(),
     }
+}
+
+#[derive(Deserialize)]
+pub struct ApiMove {
+    from: String,
+    to: String,
+}
+
+/// Rename / move a note. JSON in/out.
+pub async fn api_move(State(st): State<AppState>, axum::Json(f): axum::Json<ApiMove>) -> Response {
+    let root = &st.cfg.root;
+    match vault::rename(root, f.from.trim(), f.to.trim()) {
+        Ok(to) => {
+            git::commit(root, &format!("note: move — {} → {}", f.from.trim(), to));
+            if st.cfg.auto_push {
+                let r = root.clone();
+                tokio::task::spawn_blocking(move || git::push(&r));
+            }
+            axum::Json(serde_json::json!({ "ok": true, "from": f.from.trim(), "to": to })).into_response()
+        }
+        Err(e) => (
+            StatusCode::BAD_REQUEST,
+            axum::Json(serde_json::json!({ "ok": false, "error": e.to_string() })),
+        )
+            .into_response(),
+    }
+}
+
+// ── vendored CodeMirror (offline; no CDN) ─────────────────────────────────
+pub async fn cm_js() -> impl IntoResponse {
+    (
+        [
+            (header::CONTENT_TYPE, "application/javascript; charset=utf-8"),
+            (header::CACHE_CONTROL, "public, max-age=31536000, immutable"),
+        ],
+        include_str!("../assets/cm.bundle.js"),
+    )
+}
+pub async fn cm_css() -> impl IntoResponse {
+    (
+        [
+            (header::CONTENT_TYPE, "text/css; charset=utf-8"),
+            (header::CACHE_CONTROL, "public, max-age=31536000, immutable"),
+        ],
+        include_str!("../assets/cm.bundle.css"),
+    )
 }
 
 pub async fn healthz() -> &'static str {
