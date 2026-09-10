@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}lint · cyberdesk{% endblock %}
+{% block body %}
+<div class="wrap">
+  <h1>lint <span class="muted" style="font-size:1rem">{{ n }} note{{ '' if n == 1 else 's' }} · {{ total_issues }} issue{{ '' if total_issues == 1 else 's' }}</span></h1>
+
+  {% if fixable %}
+  <form method="post" action="/lint/fix" style="margin-bottom:1rem">
+    <input type="hidden" name="rel" value="*">
+    <button class="btn">apply {{ fixable }} mechanical fix{{ '' if fixable == 1 else 'es' }}</button>
+    <span class="muted" style="font-size:.85rem">— CRLF, trailing whitespace, blank-line runs, empty/pathy titles → committed as one</span>
+  </form>
+  {% endif %}
+
+  {% if n == 0 %}<p class="muted">clean — no issues.</p>{% endif %}
+
+  {% for r in reports %}
+  <div class="win">
+    <div class="tt"><i class="dot1"></i><i class="dot2"></i><i class="dot3"></i>
+      <span style="margin-left:.4rem">{{ r.rel }}</span><span style="flex:1"></span>
+      <a class="btn ghost" style="padding:.12rem .55rem" href="/e/{{ r.rel | safe }}">edit</a>
+      {% if r.issues | selectattr('fixable') | list | length %}
+      <form method="post" action="/lint/fix" style="margin:0 0 0 .4rem">
+        <input type="hidden" name="rel" value="{{ r.rel }}">
+        <button class="btn" style="padding:.12rem .6rem">fix</button></form>
+      {% endif %}
+    </div>
+    <div class="wrap" style="padding:.8rem 1.1rem">
+      {% for i in r.issues %}
+      <div style="margin:.35rem 0">
+        <span class="pill {{ 'rev' if not i.fixable }}">{{ i.kind }}</span>
+        {{ i.detail }}
+        {% if i.before or i.after %}
+        <div class="diff" style="margin:.2rem 0 0 1rem">
+          <span class="o">- {{ i.before }}</span><br><span class="n">+ {{ i.after }}</span>
+        </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

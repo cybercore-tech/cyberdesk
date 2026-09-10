@@ -17,15 +17,6 @@ pub struct Note {
     pub body: String,
 }
 
-/// One row in the sidebar tree.
-#[derive(Debug, Clone, serde::Serialize)]
-pub struct TreeItem {
-    pub rel: String,
-    pub name: String,
-    pub is_dir: bool,
-    pub depth: usize,
-}
-
 /// A search hit.
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct Hit {
@@ -194,33 +185,46 @@ fn hidden(name: &str) -> bool {
     name.starts_with('.') || name == "scripts" || name == "book"
 }
 
-pub fn tree(root: &Path) -> Vec<TreeItem> {
-    let mut items = Vec::new();
-    for entry in WalkDir::new(root)
-        .min_depth(1)
-        .sort_by(|a, b| {
-            (b.file_type().is_dir(), a.file_name()).cmp(&(a.file_type().is_dir(), b.file_name()))
-        })
-        .into_iter()
-        .filter_entry(|e| !hidden(&e.file_name().to_string_lossy()))
-    {
-        let Ok(e) = entry else { continue };
-        let rel = e.path().strip_prefix(root).unwrap().to_string_lossy().to_string();
-        let is_dir = e.file_type().is_dir();
-        if !is_dir && !rel.ends_with(".md") {
-            continue;
+/// Nested tree for the collapsible sidebar.
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct Node {
+    pub name: String,
+    pub rel: String,
+    pub is_dir: bool,
+    pub children: Vec<Node>,
+    pub count: usize,
+}
+
+pub fn tree_nested(root: &Path) -> Vec<Node> {
+    fn build(dir: &Path, root: &Path) -> Vec<Node> {
+        let mut dirs: Vec<Node> = Vec::new();
+        let mut files: Vec<Node> = Vec::new();
+        let Ok(rd) = std::fs::read_dir(dir) else { return Vec::new() };
+        for e in rd.flatten() {
+            let name = e.file_name().to_string_lossy().to_string();
+            if hidden(&name) {
+                continue;
+            }
+            let rel = e.path().strip_prefix(root).unwrap().to_string_lossy().to_string();
+            if e.path().is_dir() {
+                let children = build(&e.path(), root);
+                let count = children.iter().map(|c| if c.is_dir { c.count } else { 1 }).sum();
+                dirs.push(Node { name, rel, is_dir: true, children, count });
+            } else if name.ends_with(".md") && name != "MANIFEST.md" && name != "README.md" {
+                files.push(Node {
+                    name: name.trim_end_matches(".md").to_string(),
+                    rel,
+                    is_dir: false,
+                    children: Vec::new(),
+                    count: 0,
+                });
+            }
         }
-        if rel == "MANIFEST.md" || rel == "README.md" {
-            continue;
-        }
-        items.push(TreeItem {
-            name: e.file_name().to_string_lossy().trim_end_matches(".md").to_string(),
-            depth: rel.matches('/').count(),
-            is_dir,
-            rel,
-        });
+        dirs.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
+        files.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
+        dirs.into_iter().chain(files).collect()
     }
-    items
+    build(root, root)
 }
 
 /// Every note's rel path + title (for search index / "recent" / counts).
@@ -301,6 +305,22 @@ pub fn folders(root: &Path) -> Vec<String> {
     v
 }
 
+/// Byte-clamp `b` down/up to the nearest char boundary of `s`.
+fn floor_boundary(s: &str, mut b: usize) -> usize {
+    b = b.min(s.len());
+    while b > 0 && !s.is_char_boundary(b) {
+        b -= 1;
+    }
+    b
+}
+fn ceil_boundary(s: &str, mut b: usize) -> usize {
+    b = b.min(s.len());
+    while b < s.len() && !s.is_char_boundary(b) {
+        b += 1;
+    }
+    b
+}
+
 pub fn search(root: &Path, q: &str) -> Vec<Hit> {
     let ql = q.to_lowercase();
     if ql.is_empty() {
@@ -310,20 +330,48 @@ pub fn search(root: &Path, q: &str) -> Vec<Hit> {
     for n in all_notes(root) {
         let bl = n.body.to_lowercase();
         let tl = n.title.to_lowercase();
-        if tl.contains(&ql) || bl.contains(&ql) || n.tags.iter().any(|t| t.to_lowercase().contains(&ql)) {
+        if tl.contains(&ql)
+            || bl.contains(&ql)
+            || n.tags.iter().any(|t| t.to_lowercase().contains(&ql))
+        {
             let snippet = bl
                 .find(&ql)
                 .map(|i| {
-                    let s = i.saturating_sub(40);
-                    let e = (i + ql.len() + 80).min(n.body.len());
-                    format!("…{}…", n.body[s..e].replace('\n', " "))
+                    let s = floor_boundary(&bl, i.saturating_sub(40));
+                    let e = ceil_boundary(&bl, i + ql.len() + 80);
+                    format!("…{}…", bl[s..e].replace('\n', " ").trim())
                 })
                 .unwrap_or_default();
             hits.push(Hit { rel: n.rel, title: n.title, snippet });
         }
-        if hits.len() >= 100 {
+        if hits.len() >= 200 {
             break;
         }
     }
     hits
+}
+
+/// Every distinct tag, sorted, with a count.
+pub fn tag_counts(root: &Path) -> Vec<(String, usize)> {
+    use std::collections::BTreeMap;
+    let mut m: BTreeMap<String, usize> = BTreeMap::new();
+    for n in all_notes(root) {
+        for t in n.tags {
+            *m.entry(t).or_default() += 1;
+        }
+    }
+    m.into_iter().collect()
+}
+
+/// Notes carrying a given tag.
+pub fn by_tag(root: &Path, tag: &str) -> Vec<Note> {
+    all_notes(root)
+        .into_iter()
+        .filter(|n| n.tags.iter().any(|t| t == tag))
+        .collect()
+}
+
+/// All note titles (for the search datalist / link completion).
+pub fn titles(root: &Path) -> Vec<(String, String)> {
+    all_notes(root).into_iter().map(|n| (n.rel, n.title)).collect()
 }

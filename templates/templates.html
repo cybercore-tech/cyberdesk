@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}templates · cyberdesk{% endblock %}
+{% block body %}
+<div class="wrap">
+  <h1>templates <span class="muted" style="font-size:1rem">{{ list | length }}</span></h1>
+  <p class="muted">Skeletons in <code>_templates/</code>. <b>＋ new</b> fills in
+    <code>{{ '{{title}}' }}</code>, <code>{{ '{{date}}' }}</code>, <code>{{ '{{slug}}' }}</code>. Edit any of them like a note.</p>
+  {% for t in list %}
+  <div class="win">
+    <div class="tt"><i class="dot1"></i><i class="dot2"></i><i class="dot3"></i>
+      <span style="margin-left:.4rem">{{ t.rel }}</span><span style="flex:1"></span>
+      <a class="btn ghost" style="padding:.12rem .55rem" href="/e/{{ t.rel | safe }}">edit</a></div>
+    <pre style="margin:0;padding:.9rem 1.1rem;background:var(--bg);overflow:auto">{{ t.preview }}</pre>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}folders · cyberdesk{% endblock %}
+{% block body %}
+<div class="wrap">
+  <h1>folders</h1>
+  <ul>
+    {% for f in list %}
+    <li><strong>{{ f.rel }}/</strong> <span class="muted">{{ f.count }} note{{ '' if f.count == 1 else 's' }}</span>
+      &nbsp;<a href="/search?q={{ f.rel }}" class="muted" style="font-size:.8rem">search in</a></li>
+    {% endfor %}
+  </ul>
+  <p class="muted" style="margin-top:1rem">New notes land in the folder you pick in <b>＋ new</b>.
+  Move a note by editing its path — rename/move UI is Pass 2.</p>
+</div>
+{% endblock %}

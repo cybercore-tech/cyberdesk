@@ -3,6 +3,7 @@
 
 mod config;
 mod git;
+mod lint;
 mod render;
 mod routes;
 mod theme;
@@ -50,6 +51,13 @@ async fn main() -> anyhow::Result<()> {
         .route("/", get(routes::portal))
         .route("/healthz", get(routes::healthz))
         .route("/search", get(routes::search))
+        .route("/all", get(routes::all))
+        .route("/folders", get(routes::folders_page))
+        .route("/templates", get(routes::templates_page))
+        .route("/tag/*tag", get(routes::by_tag))
+        .route("/lint", get(routes::lint_page))
+        .route("/lint/fix", post(routes::lint_fix))
+        .route("/api/titles", get(routes::api_titles))
         .route("/new", post(routes::create))
         .route("/n/*path", get(routes::view))
         .route("/e/*path", get(routes::edit).post(routes::save))

@@ -14,10 +14,11 @@ axum = { version = "0.7", features = ["macros"] }
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "net", "signal", "fs"] }
 tower-http = { version = "0.5", features = ["trace", "catch-panic"] }
 
-minijinja = { version = "2", features = ["loader"] }
+minijinja = { version = "2", features = ["loader", "json"] }
 comrak = "0.29"
 
 serde = { version = "1", features = ["derive"] }
+serde_json = "1"
 serde_urlencoded = "0.7"
 chrono = "0.4"
 walkdir = "2"

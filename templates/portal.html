@@ -4,12 +4,45 @@
   <h1>portal</h1>
 
   <div class="grid" style="margin-bottom:1.6rem">
-    <div class="card"><div class="muted">notes</div><div class="stat">{{ total }}</div></div>
-    <div class="card"><div class="muted">needs review</div>
-      <div class="stat" style="color:var(--orange)">{{ needs_review_n }}</div></div>
-    <div class="card"><div class="muted">templates</div><div class="stat">{{ templates | length }}</div></div>
-    <div class="card"><div class="muted">folders</div><div class="stat">{{ folders | length }}</div></div>
+    <a class="card" href="/all">
+      <div class="muted">notes</div><div class="stat">{{ total }}</div>
+      <div class="pop-info"><span class="t">notes</span> — every markdown file in the vault.
+        <div><a href="/all">browse all</a> <a href="/folders">by folder</a> <a href="/search?q=">search</a></div></div>
+    </a>
+    <a class="card" href="/tag/needs-review">
+      <div class="muted">needs review</div>
+      <div class="stat" style="color:var(--orange)">{{ needs_review }}</div>
+      <div class="pop-info"><span class="t">needs review</span> — imports whose title/heading looked
+        auto-generated. Open, fix the title, drop the tag.
+        <div><a href="/tag/needs-review">list</a> <a href="/lint">run lint</a></div></div>
+    </a>
+    <a class="card" href="/templates">
+      <div class="muted">templates</div><div class="stat">{{ n_templates }}</div>
+      <div class="pop-info"><span class="t">templates</span> — skeletons in <code>_templates/</code>
+        used by <b>＋ new</b>. <code>{{ '{{title}}' }}</code> / <code>{{ '{{date}}' }}</code> / <code>{{ '{{slug}}' }}</code> are filled in.
+        <div><a href="/templates">view / preview</a> <a href="/e/_templates/note.md">edit “note”</a></div></div>
+    </a>
+    <a class="card" href="/folders">
+      <div class="muted">folders</div><div class="stat">{{ n_folders }}</div>
+      <div class="pop-info"><span class="t">folders</span> — top-level categories: Arch, System,
+        Network, Omarchy, Dev, Cybercore, Tools, Inbox. New notes land in the folder you pick.
+        <div><a href="/folders">folder index</a></div></div>
+    </a>
+    <a class="card" href="/lint">
+      <div class="muted">lint</div>
+      <div class="stat" style="color:{{ 'var(--acid)' if issue_notes == 0 else 'var(--pink)' }}">{{ issue_notes }}</div>
+      <div class="pop-info"><span class="t">lint</span> — notes with problems: bad titles, missing/duplicate
+        H1, redundant bodies, broken <code>[[links]]</code>, whitespace. Mechanical fixes are one click.
+        <div><a href="/lint">open lint</a></div></div>
+    </a>
   </div>
+
+  {% if tags %}
+  <h2>tags</h2>
+  <div class="row" style="margin-bottom:1.4rem">
+    {% for t in tags %}<a href="/tag/{{ t.tag | safe }}" class="pill {{ 'rev' if t.tag == 'needs-review' }}">{{ t.tag }} · {{ t.count }}</a>{% endfor %}
+  </div>
+  {% endif %}
 
   <h2>recent</h2>
   <ul>
@@ -17,14 +50,5 @@
     <li><a href="/n/{{ r.rel | safe }}">{{ r.title }}</a> &nbsp;<span class="muted" style="font-size:.8rem">{{ r.rel }}</span></li>
     {% else %}<li class="muted">nothing yet</li>{% endfor %}
   </ul>
-
-  {% if needs_review %}
-  <h2 style="color:var(--orange)">needs review <span class="pill rev">{{ needs_review_n }}</span></h2>
-  <ul>
-    {% for r in needs_review %}
-    <li><a href="/e/{{ r.rel | safe }}">{{ r.title }}</a> &nbsp;<span class="muted" style="font-size:.8rem">{{ r.rel }}</span></li>
-    {% endfor %}
-  </ul>
-  {% endif %}
 </div>
 {% endblock %}

@@ -10,16 +10,86 @@
       <a class="btn ghost" style="padding:.12rem .55rem" href="/n/{{ rel | safe }}">view</a>
       <button class="btn" style="padding:.12rem .8rem;margin-left:.4rem">save</button>
     </div>
-    <textarea class="ed" name="content" spellcheck="false" autofocus>{{ content }}</textarea>
+    <div style="position:relative">
+      <textarea id="ed" class="ed" name="content" spellcheck="false" autofocus>{{ content }}</textarea>
+      <ul id="ac" style="display:none;position:absolute;z-index:40;background:var(--panel);
+        border:1px solid var(--cyan);border-radius:6px;padding:.2rem;margin:0;list-style:none;
+        max-height:240px;overflow:auto;font-size:.82rem;box-shadow:0 12px 40px -8px #000"></ul>
+    </div>
   </div>
-  <p class="muted" style="padding:.2rem 1.6rem">Ctrl/⌘+S to save · commits to git on save</p>
+  <p class="muted" style="padding:.2rem 1.6rem">Ctrl/⌘+S saves · <code>[[</code> to link a note ·
+    <code>#tag</code> completes tags · commits to git on save</p>
 </form>
+{% endblock %}
+
+{% block script %}
 <script>
-addEventListener('keydown', function (e) {
-  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') {
-    e.preventDefault();
-    document.querySelector('form').submit();
+(function () {
+  var ed = document.getElementById('ed'), ac = document.getElementById('ac');
+  var NOTES = {{ titles | default([]) | tojson }};
+  NOTES.forEach(function (n) { n.stem = n.rel.split('/').pop().replace(/\.md$/, ''); });
+  var TAGS = {{ tags_all | default([]) | tojson }};
+  var items = [], sel = 0, mode = null, tokStart = 0;
+
+  function hide() { ac.style.display = 'none'; items = []; mode = null; }
+  function place() {
+    // rough caret position via a mirror div
+    var r = ed.getBoundingClientRect();
+    ac.style.left = '12px';
+    ac.style.top = (Math.min(ed.scrollTop + 24 + lineOf() * 21, r.height - 40)) + 'px';
   }
-});
+  function lineOf() {
+    return ed.value.slice(0, ed.selectionStart).split('\n').length - 1 - ed.scrollTop / 21 | 0;
+  }
+  function render() {
+    ac.innerHTML = '';
+    items.slice(0, 40).forEach(function (it, i) {
+      var li = document.createElement('li');
+      li.textContent = it.label;
+      li.style.padding = '.2rem .5rem';
+      li.style.cursor = 'pointer';
+      if (i === sel) { li.style.background = 'var(--acid)'; li.style.color = 'var(--bg)'; }
+      li.addEventListener('mousedown', function (e) { e.preventDefault(); accept(i); });
+      ac.appendChild(li);
+    });
+    ac.style.display = items.length ? 'block' : 'none';
+    place();
+  }
+  function accept(i) {
+    var it = items[i]; if (!it) return hide();
+    var v = ed.value, s = ed.selectionStart;
+    ed.value = v.slice(0, tokStart) + it.insert + v.slice(s);
+    var pos = tokStart + it.insert.length;
+    ed.selectionStart = ed.selectionEnd = pos;
+    hide(); ed.focus();
+  }
+  function scan() {
+    var s = ed.selectionStart, v = ed.value, line = v.slice(v.lastIndexOf('\n', s - 1) + 1, s);
+    var m;
+    if ((m = /\[\[([^\]\n]*)$/.exec(line))) {
+      mode = 'link'; tokStart = s - m[1].length - 2;
+      var q = m[1].toLowerCase();
+      items = NOTES.filter(function (n) {
+        return n.stem.toLowerCase().includes(q) || n.title.toLowerCase().includes(q);
+      }).map(function (n) { return { label: n.stem + '  —  ' + n.title, insert: '[[' + n.stem + ']]' }; });
+    } else if ((m = /(^|[\s,\[])#([\w-]*)$/.exec(line))) {
+      mode = 'tag'; tokStart = s - m[2].length - 1;
+      var q2 = m[2].toLowerCase();
+      items = TAGS.filter(function (t) { return t.toLowerCase().includes(q2); })
+        .map(function (t) { return { label: '#' + t, insert: '#' + t }; });
+    } else { return hide(); }
+    sel = 0; render();
+  }
+  ed.addEventListener('input', scan);
+  ed.addEventListener('click', hide);
+  ed.addEventListener('keydown', function (e) {
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') { e.preventDefault(); ed.form.submit(); return; }
+    if (ac.style.display === 'none') return;
+    if (e.key === 'ArrowDown') { e.preventDefault(); sel = (sel + 1) % items.length; render(); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); sel = (sel - 1 + items.length) % items.length; render(); }
+    else if (e.key === 'Enter' || e.key === 'Tab') { e.preventDefault(); accept(sel); }
+    else if (e.key === 'Escape') { hide(); }
+  });
+})();
 </script>
 {% endblock %}

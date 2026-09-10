@@ -2,6 +2,33 @@
 
 use comrak::{markdown_to_html, ComrakOptions};
 
+/// Turn `[[stem]]` / `[[stem|label]]` into links. `resolve(stem) -> Some(rel)`
+/// when a note matches; otherwise the link renders with `.broken`.
+pub fn wikilinks(html: &str, resolve: &impl Fn(&str) -> Option<String>) -> String {
+    let mut out = String::with_capacity(html.len());
+    let mut rest = html;
+    while let Some(i) = rest.find("[[") {
+        out.push_str(&rest[..i]);
+        rest = &rest[i + 2..];
+        let Some(j) = rest.find("]]") else {
+            out.push_str("[[");
+            continue;
+        };
+        let inner = &rest[..j];
+        rest = &rest[j + 2..];
+        let (target, label) = match inner.split_once('|') {
+            Some((t, l)) => (t.trim(), l.trim()),
+            None => (inner.trim(), inner.trim()),
+        };
+        match resolve(target) {
+            Some(rel) => out.push_str(&format!("<a class=\"wl\" href=\"/n/{rel}\">{label}</a>")),
+            None => out.push_str(&format!("<a class=\"wl broken\" href=\"/e/{target}.md\" title=\"no such note\">{label}</a>")),
+        }
+    }
+    out.push_str(rest);
+    out
+}
+
 pub fn html(md: &str) -> String {
     let mut o = ComrakOptions::default();
     o.extension.strikethrough = true;

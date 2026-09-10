@@ -12,15 +12,22 @@ body { margin: 0; background: var(--bg); color: var(--fg);
   font: 14px/1.6 ui-monospace, "JetBrains Mono", Menlo, Consolas, monospace; }
 a { color: var(--cyan); text-decoration: none; }
 a:hover { color: var(--acid); }
-.app { display: grid; grid-template-columns: 262px 1fr; height: 100%; }
+.app { display: grid; grid-template-columns: 260px 1fr; height: 100%; }
 aside { border-right: 1px solid var(--line); overflow: auto; background: var(--panel); }
 aside .brand { padding: .8rem 1rem; font-weight: 700; color: var(--acid);
   letter-spacing: .06em; border-bottom: 1px solid var(--line); text-shadow: 0 0 14px var(--acid); }
-aside nav { padding: .4rem 0 2rem; }
-aside a { display: block; padding: .12rem 1rem; color: var(--muted);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-aside a:hover { color: var(--fg); background: rgba(255,255,255,.03); }
-aside .d { color: var(--purple); font-weight: 600; margin-top: .35rem; }
+aside .navrow { display: flex; gap: .8rem; padding: .4rem 1rem; border-bottom: 1px solid var(--line); font-size: .82rem; }
+aside .navrow a { color: var(--muted); } aside .navrow a.on, aside .navrow a:hover { color: var(--fg); }
+aside .tree { padding: .4rem 0 2rem; font-size: .86rem; }
+.tree .fold > summary { list-style: none; cursor: pointer; color: var(--purple); white-space: nowrap;
+  padding: .1rem 1rem .1rem calc(.5rem + var(--d,0) * .7rem); overflow: hidden; text-overflow: ellipsis; }
+.tree .fold > summary::-webkit-details-marker { display: none; }
+.tree .fold > summary::before { content: "▸ "; color: var(--muted); }
+.tree .fold[open] > summary::before { content: "▾ "; }
+.tree .fold > summary .c { color: var(--muted); font-size: .78em; }
+.tree a.f { display: block; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  padding: .08rem 1rem .08rem calc(1.1rem + var(--d,0) * .7rem); }
+.tree a.f:hover { color: var(--fg); background: rgba(255,255,255,.03); }
 main { overflow: auto; }
 .bar { display: flex; gap: .6rem; align-items: center; padding: .5rem .9rem;
   border-bottom: 1px solid var(--line); background: var(--panel); position: sticky; top: 0; z-index: 5; }
@@ -31,7 +38,7 @@ main { overflow: auto; }
   box-shadow: 0 0 16px -4px var(--pink); }
 .btn.ghost { background: transparent; color: var(--cyan); border: 1px solid var(--line); box-shadow: none; }
 .btn.danger { background: var(--red); color: #fff; }
-.wrap { padding: 1.2rem 1.6rem; max-width: 900px; }
+.wrap { padding: 1.2rem 1.6rem; max-width: 960px; }
 .win { border: 1px solid var(--line); border-radius: 8px; overflow: hidden; margin: 1rem 1.6rem;
   box-shadow: 0 0 50px -34px var(--cyan); }
 .win .tt { display: flex; gap: .4rem; align-items: center; padding: .4rem .7rem;
@@ -41,58 +48,77 @@ main { overflow: auto; }
 h1 { font-size: 1.4rem; margin: .2rem 0 1rem; color: var(--fg); }
 h2, h3 { color: var(--acid); }
 .md :is(h1,h2,h3,h4) { margin-top: 1.6rem; }
-.md pre { background: var(--panel); border: 1px solid var(--line); border-radius: 6px;
-  padding: .8rem 1rem; overflow: auto; }
+.md pre { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: .8rem 1rem; overflow: auto; }
 .md code { background: var(--panel); padding: .05rem .3rem; border-radius: 4px; }
 .md pre code { background: none; padding: 0; }
 .md table { border-collapse: collapse; }
 .md th, .md td { border: 1px solid var(--line); padding: .3rem .6rem; }
 .md blockquote { border-left: 3px solid var(--purple); margin: 0; padding-left: 1rem; color: var(--muted); }
 .md a { text-decoration: underline; }
-.pill { font-size: .75rem; border: 1px solid var(--line); border-radius: 999px;
-  padding: .05rem .5rem; color: var(--muted); }
+.md a.wl { color: var(--acid); } .md a.wl.broken { color: var(--red); }
+.pill { font-size: .75rem; border: 1px solid var(--line); border-radius: 999px; padding: .05rem .5rem; color: var(--muted); }
 .pill.rev { color: var(--orange); border-color: var(--orange); }
 textarea.ed { width: 100%; height: calc(100vh - 150px); background: var(--bg); color: var(--fg);
-  border: 0; outline: 0; padding: 1rem 1.2rem; font: 13px/1.65 ui-monospace, monospace;
-  resize: none; caret-color: var(--acid); }
+  border: 0; outline: 0; padding: 1rem 1.2rem; font: 13px/1.65 ui-monospace, monospace; resize: none; caret-color: var(--acid); }
 .muted { color: var(--muted); }
 .row { display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; }
 details.new { position: relative; }
 details.new > summary { list-style: none; cursor: pointer; }
 details.new > summary::-webkit-details-marker { display: none; }
 details.new .pop { position: absolute; right: 0; top: 2.3rem; background: var(--panel);
-  border: 1px solid var(--line); border-radius: 8px; padding: 1rem; width: 340px; z-index: 20;
-  box-shadow: 0 10px 40px -10px #000; }
+  border: 1px solid var(--line); border-radius: 8px; padding: 1rem; width: 340px; z-index: 20; box-shadow: 0 10px 40px -10px #000; }
 .chip { display: inline-block; border: 1px solid var(--line); border-radius: 6px;
   padding: .15rem .5rem; margin: .15rem .15rem 0 0; cursor: pointer; color: var(--muted); }
 .chip.on { color: var(--bg); background: var(--acid); border-color: var(--acid); }
-.fld { width: 100%; background: var(--bg); color: var(--fg); border: 1px solid var(--line);
-  border-radius: 6px; padding: .35rem; font: inherit; }
-.grid { display: grid; gap: .8rem; grid-template-columns: repeat(auto-fill, minmax(200px,1fr)); }
-.card { border: 1px solid var(--line); border-radius: 8px; padding: .8rem; background: var(--panel); }
+.fld { width: 100%; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: .35rem; font: inherit; }
+.grid { display: grid; gap: .8rem; grid-template-columns: repeat(auto-fill, minmax(180px,1fr)); }
+.card { border: 1px solid var(--line); border-radius: 8px; padding: .8rem; background: var(--panel); position: relative; }
+a.card { display: block; color: inherit; transition: border-color .12s, box-shadow .12s, transform .12s; }
+a.card:hover { border-color: var(--cyan); box-shadow: 0 0 26px -10px var(--cyan); transform: translateY(-2px); }
+a.card:hover .pop-info { display: block; }
 .stat { font-size: 1.8rem; font-weight: 800; color: var(--cyan); text-shadow: 0 0 22px currentColor; }
+.pop-info { display: none; position: absolute; left: 0; top: calc(100% + 6px); width: 260px; z-index: 30;
+  background: var(--bg); border: 1px solid var(--cyan); border-radius: 8px; padding: .7rem .8rem;
+  font-size: .8rem; color: var(--fg); box-shadow: 0 12px 40px -8px #000; }
+.pop-info .t { color: var(--acid); font-weight: 700; }
+.pop-info a { display: inline-block; margin: .2rem .35rem 0 0; }
 ul { padding-left: 1.2rem; }
+.diff { font-size: .82rem; }
+.diff .o { color: var(--red); } .diff .n { color: var(--acid); }
 </style>
 </head>
 <body>
 <div class="app">
 <aside>
   <div class="brand">◈ cyberdesk</div>
-  <nav>
-    <a href="/" style="color:var(--fg)">▸ portal</a>
-    {% for it in tree %}
-      {% if it.is_dir %}
-        <span class="d" style="display:block;padding:.12rem 1rem;padding-left:{{ 0.6 + it.depth * 0.8 }}rem">{{ it.name }}/</span>
+  <div class="navrow">
+    <a href="/" class="{{ 'on' if nav == 'portal' }}">portal</a>
+    <a href="/all">all</a>
+    <a href="/folders">folders</a>
+    <a href="/lint" class="{{ 'on' if nav == 'lint' }}">lint</a>
+  </div>
+  <div class="tree">
+    {% macro tnode(n, depth) %}
+      {% if n.is_dir %}
+      <details class="fold" data-rel="{{ n.rel }}" style="--d:{{ depth }}">
+        <summary>{{ n.name }}/ <span class="c">{{ n.count }}</span></summary>
+        {% for c in n.children %}{{ tnode(c, depth + 1) }}{% endfor %}
+      </details>
       {% else %}
-        <a href="/n/{{ it.rel | safe }}" style="padding-left:{{ 0.9 + it.depth * 0.8 }}rem">{{ it.name }}</a>
+      <a class="f" href="/n/{{ n.rel | safe }}" style="--d:{{ depth }}">{{ n.name }}</a>
       {% endif %}
-    {% endfor %}
-  </nav>
+    {% endmacro %}
+    {% for n in tree | default([]) %}{{ tnode(n, 0) }}{% endfor %}
+  </div>
 </aside>
 <main>
   <div class="bar">
     <form action="/search" method="get" style="flex:1;display:flex">
-      <input type="search" name="q" placeholder="search notes…" value="{{ q | default('') }}">
+      <input type="search" name="q" placeholder="search notes…" value="{{ q | default('') }}"
+             list="titles-dl" autocomplete="off">
+      <datalist id="titles-dl">
+        {% for t in titles | default([]) %}<option value="{{ t.title }}">{{ t.rel }}</option>{% endfor %}
+      </datalist>
     </form>
     <details class="new">
       <summary class="btn">＋ new</summary>
@@ -121,16 +147,26 @@ ul { padding-left: 1.2rem; }
 </div>
 <script>
 (function () {
-  var tpls = document.getElementById('tpls');
-  if (!tpls) return;
-  var mark = function () {
-    tpls.querySelectorAll('.chip').forEach(function (c) {
-      c.classList.toggle('on', c.querySelector('input').checked);
+  var K = 'cyberdesk.open';
+  var open;
+  try { open = new Set(JSON.parse(localStorage.getItem(K) || '[]')); } catch (e) { open = new Set(); }
+  document.querySelectorAll('.tree .fold').forEach(function (d) {
+    if (open.has(d.dataset.rel)) d.open = true;
+    d.addEventListener('toggle', function () {
+      if (d.open) open.add(d.dataset.rel); else open.delete(d.dataset.rel);
+      try { localStorage.setItem(K, JSON.stringify([...open])); } catch (e) {}
     });
-  };
-  tpls.querySelectorAll('.chip input').forEach(function (r) { r.addEventListener('change', mark); });
-  mark();
+  });
+  var tpls = document.getElementById('tpls');
+  if (tpls) {
+    var mark = function () {
+      tpls.querySelectorAll('.chip').forEach(function (c) { c.classList.toggle('on', c.querySelector('input').checked); });
+    };
+    tpls.querySelectorAll('.chip input').forEach(function (r) { r.addEventListener('change', mark); });
+    mark();
+  }
 })();
 </script>
+{% block script %}{% endblock %}
 </body>
 </html>

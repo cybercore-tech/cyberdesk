@@ -17,6 +17,10 @@ pub fn build_env() -> Environment<'static> {
     tpl!(env, "view.html");
     tpl!(env, "edit.html");
     tpl!(env, "search.html");
+    tpl!(env, "list.html");
+    tpl!(env, "templates.html");
+    tpl!(env, "folders.html");
+    tpl!(env, "lint.html");
     env
 }
 
