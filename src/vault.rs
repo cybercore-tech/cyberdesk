@@ -258,6 +258,47 @@ pub struct Node {
     pub count: usize,
 }
 
+/// Cheap title read for the sidebar: frontmatter `title:` or the first H1,
+/// else the filename stem with dashes/underscores turned into spaces.
+fn quick_title(path: &Path, stem: &str) -> String {
+    use std::io::{BufRead, BufReader};
+    let humanized = || stem.replace(['-', '_'], " ");
+    let Ok(f) = std::fs::File::open(path) else { return humanized() };
+    let mut r = BufReader::new(f);
+    let mut line = String::new();
+    let (mut in_fm, mut first) = (false, true);
+    for _ in 0..60 {
+        line.clear();
+        if r.read_line(&mut line).unwrap_or(0) == 0 {
+            break;
+        }
+        let t = line.trim();
+        if first {
+            first = false;
+            if t == "---" {
+                in_fm = true;
+                continue;
+            }
+        }
+        if in_fm {
+            if t == "---" {
+                in_fm = false;
+            } else if let Some(v) = t.strip_prefix("title:") {
+                let v = v.trim().trim_matches('"').trim_matches('\'').trim();
+                if !v.is_empty() && !v.contains("{{") {
+                    return v.to_string();
+                }
+            }
+        } else if let Some(h) = t.strip_prefix("# ") {
+            let h = h.trim();
+            if !h.contains("{{") {
+                return h.to_string();
+            }
+        }
+    }
+    humanized()
+}
+
 pub fn tree_nested(root: &Path) -> Vec<Node> {
     fn build(dir: &Path, root: &Path) -> Vec<Node> {
         let mut dirs: Vec<Node> = Vec::new();
@@ -274,8 +315,9 @@ pub fn tree_nested(root: &Path) -> Vec<Node> {
                 let count = children.iter().map(|c| if c.is_dir { c.count } else { 1 }).sum();
                 dirs.push(Node { name, rel, is_dir: true, children, count });
             } else if name.ends_with(".md") && name != "MANIFEST.md" && name != "README.md" {
+                let stem = name.trim_end_matches(".md");
                 files.push(Node {
-                    name: name.trim_end_matches(".md").to_string(),
+                    name: quick_title(&e.path(), stem),
                     rel,
                     is_dir: false,
                     children: Vec::new(),
