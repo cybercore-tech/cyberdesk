@@ -282,9 +282,9 @@ table.log .d { color: var(--muted); white-space: nowrap; font-size: .78rem; }
 
 /* ── pop-up file editor — HUD panel ──────────────────────── */
 #fed, #fed input, #fed select, #fed button { font-family: var(--font-mono); }
-.tbtn { font: inherit; font-size: .64rem; font-weight: 600; text-transform: uppercase; letter-spacing: .04em;
+.tbtn { font: inherit; font-size: .58rem; font-weight: 600; text-transform: uppercase; letter-spacing: .02em;
   color: var(--muted); background: var(--panel-2);
-  border: 1px solid var(--line); border-radius: 0; padding: .28rem .5rem; cursor: pointer; white-space: nowrap;
+  border: 1px solid var(--line); border-radius: 0; padding: .26rem .42rem; cursor: pointer; white-space: nowrap;
   transition: color .12s, background .12s, border-color .12s; }
 .tbtn:hover { color: var(--fg); background: color-mix(in srgb, var(--panel) 55%, var(--bg));
   border-color: color-mix(in srgb, var(--pink) 55%, var(--line)); }
@@ -299,31 +299,33 @@ table.log .d { color: var(--muted); white-space: nowrap; font-size: .78rem; }
 @keyframes fedIn { from { opacity: 0; } }
 .fed-box { position: relative; width: min(1180px, 95vw); height: min(88vh, 960px);
   display: flex; flex-direction: column; overflow: hidden; border-radius: 3px;
-  background:
-    repeating-linear-gradient(0deg, transparent 0 2px, color-mix(in srgb, var(--cyan) 4%, transparent) 2px 3px),
-    var(--bg);
-  border: 1px solid var(--cyan);
-  box-shadow: 0 40px 140px -20px #000, 0 0 0 1px color-mix(in srgb, var(--pink) 20%, transparent),
-    0 0 60px -20px color-mix(in srgb, var(--cyan) 60%, transparent); }
+  background: var(--bg);
+  border: 1px solid color-mix(in srgb, var(--pink) 28%, var(--line));
+  box-shadow: 0 40px 140px -20px #000, 0 0 0 1px color-mix(in srgb, var(--pink) 18%, transparent),
+    0 0 60px -22px color-mix(in srgb, var(--pink) 45%, transparent); }
 /* corner brackets */
-.fed-box::before, .fed-box::after { content: ""; position: absolute; width: 18px; height: 18px;
-  border: 2px solid var(--pink); pointer-events: none; }
+.fed-box::before, .fed-box::after { content: ""; position: absolute; width: 16px; height: 16px;
+  border: 2px solid var(--pink); pointer-events: none; z-index: 2; }
 .fed-box::before { top: 5px; left: 5px; border-right: 0; border-bottom: 0; }
 .fed-box::after { bottom: 5px; right: 5px; border-left: 0; border-top: 0; }
-.fed-tt { display: flex; gap: .34rem; align-items: center; padding: .5rem .7rem; flex-wrap: wrap;
-  background: linear-gradient(180deg, var(--panel), var(--panel-2));
-  border-bottom: 1px solid var(--cyan);
-  box-shadow: 0 1px 0 color-mix(in srgb, var(--cyan) 45%, transparent), 0 8px 20px -14px var(--cyan); }
+/* standalone window-close, kept clear of the toolbar so it isn't mistaken for delete */
+.fed-x { position: absolute; top: 6px; right: 6px; z-index: 5; width: 26px; height: 26px;
+  display: grid; place-items: center; font: 700 13px/1 var(--font-mono);
+  color: var(--muted); background: var(--panel); border: 1px solid var(--line); cursor: pointer;
+  transition: color .12s, background .12s, border-color .12s; }
+.fed-x:hover { color: #0a0a12; background: var(--pink); border-color: var(--pink); }
+.fed-tt { display: flex; gap: .3rem; align-items: center; padding: .45rem 42px .45rem .7rem; flex-wrap: wrap;
+  background: var(--panel); border-bottom: 1px solid var(--line); }
 .fed-tt i { width: 9px; height: 9px; border-radius: 50%; display: inline-block;
   box-shadow: 0 0 8px -1px currentColor; }
 .fed-tt .dot1 { color: var(--red); } .fed-tt .dot2 { color: var(--orange); } .fed-tt .dot3 { color: var(--acid); }
-.fed-tt .nm { margin-left: .5rem; color: var(--acid); font-size: .8rem; letter-spacing: .04em;
-  text-transform: none; text-shadow: 0 0 12px color-mix(in srgb, var(--acid) 45%, transparent); }
+.fed-tt .nm { margin-left: .5rem; color: var(--fg); font-size: .78rem; letter-spacing: .03em;
+  text-transform: none; }
 .fed-tt .dirty { color: var(--pink); opacity: 0; transition: opacity .12s; text-shadow: 0 0 10px var(--pink); }
 .fed-tt.is-dirty .dirty { opacity: 1; }
 .fed-tt .sp { flex: 1; }
 .fed-body { flex: 1; display: flex; min-height: 0; position: relative; }
-.fed-open { width: 292px; border-right: 1px solid var(--cyan); display: flex; flex-direction: column;
+.fed-open { width: 292px; border-right: 1px solid var(--line); display: flex; flex-direction: column;
   background: color-mix(in srgb, var(--bg) 88%, var(--panel)); }
 .fed-open input { margin: .5rem; background: var(--bg); color: var(--fg);
   border: 1px solid var(--line); border-radius: 0; padding: .4rem .5rem; font: inherit; font-size: .78rem; }
@@ -365,20 +367,20 @@ table.log .d { color: var(--muted); white-space: nowrap; font-size: .78rem; }
 #fed-diff .dl.add { background: color-mix(in srgb, var(--acid) 15%, transparent); color: var(--acid); }
 #fed-diff .dl.del { background: color-mix(in srgb, var(--red) 15%, transparent); color: var(--red); }
 #fed-diff .dl.ctx { color: var(--muted); }
-#fed-diff .hint { padding: .4rem 1rem; color: var(--cyan); font-size: .72rem;
+#fed-diff .hint { padding: .4rem 1rem; color: var(--muted); font-size: .72rem;
   text-transform: uppercase; letter-spacing: .06em; }
 .fed-foot { display: flex; gap: 1rem; align-items: center; padding: .38rem .8rem;
-  border-top: 1px solid var(--cyan); background: linear-gradient(0deg, var(--panel), var(--panel-2));
-  box-shadow: 0 -1px 0 color-mix(in srgb, var(--cyan) 40%, transparent);
-  font-size: .68rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+  border-top: 1px solid var(--line); background: var(--panel);
+  font-size: .66rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
 .fed-foot .ok { color: var(--acid); text-shadow: 0 0 10px color-mix(in srgb, var(--acid) 40%, transparent); }
 .fed-foot .bad { color: var(--pink); text-shadow: 0 0 10px color-mix(in srgb, var(--pink) 40%, transparent); }
 .fed-foot #fed-msg { margin-left: auto; text-transform: none; letter-spacing: .02em; }
 .fed-sa { position: absolute; inset: 0; display: grid; place-items: center;
   background: color-mix(in srgb, #000 62%, transparent); backdrop-filter: blur(2px); z-index: 6; }
-.fed-sa-box { position: relative; width: 380px; background: var(--panel); border: 1px solid var(--cyan);
+.fed-sa-box { position: relative; width: 380px; background: var(--panel);
+  border: 1px solid color-mix(in srgb, var(--pink) 28%, var(--line));
   border-radius: 3px; padding: 1rem 1.1rem;
-  box-shadow: 0 30px 90px -18px #000, 0 0 0 1px color-mix(in srgb, var(--pink) 22%, transparent); }
+  box-shadow: 0 30px 90px -18px #000, 0 0 0 1px color-mix(in srgb, var(--pink) 18%, transparent); }
 .fed-sa-box::before { content: ""; position: absolute; top: 5px; left: 5px; width: 16px; height: 16px;
   border: 2px solid var(--pink); border-right: 0; border-bottom: 0; }
 .fed-sa-box h3 { margin: 0 0 .7rem; color: var(--acid); font-size: .82rem;
@@ -503,6 +505,7 @@ table.log .d { color: var(--muted); white-space: nowrap; font-size: .78rem; }
 <!-- ── pop-up file editor ─────────────────────────────────── -->
 <div id="fed" hidden>
   <div class="fed-box">
+    <button type="button" class="fed-x" data-act="close" title="close (Esc)">✕</button>
     <div class="fed-tt" id="fed-tt">
       <i class="dot1"></i><i class="dot2"></i><i class="dot3"></i>
       <span class="nm" id="fed-nm">— no file —</span><span class="dirty">●</span>
@@ -517,8 +520,7 @@ table.log .d { color: var(--muted); white-space: nowrap; font-size: .78rem; }
       <button class="tbtn" data-act="cut">✂️ cut</button>
       <button class="tbtn" data-act="paste">📌 paste</button>
       <button class="tbtn" data-act="rename">🏷️ rename</button>
-      <button class="tbtn warn" data-act="delete">🗑️ delete</button>
-      <button class="tbtn warn" data-act="close">✖ close</button>
+      <button class="tbtn warn" data-act="delete" style="margin-left:.55rem">🗑️ delete</button>
     </div>
     <div class="fed-body">
       <div class="fed-open" id="fed-open" hidden>
