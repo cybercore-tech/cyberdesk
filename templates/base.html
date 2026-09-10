@@ -6,39 +6,88 @@
 <title>{% block title %}cyberdesk{% endblock %}</title>
 <style>
 {{ css|safe }}
+</style>
+<link rel="stylesheet" href="/theme.css">
+<style>
+:root {
+  --panel-2: color-mix(in srgb, var(--panel), #fff 6%);
+  --hair: color-mix(in srgb, var(--line), transparent 40%);
+}
 * { box-sizing: border-box; }
 html, body { height: 100%; }
 body { margin: 0; background: var(--bg); color: var(--fg);
   font: 14px/1.6 ui-monospace, "JetBrains Mono", Menlo, Consolas, monospace; }
 a { color: var(--cyan); text-decoration: none; }
 a:hover { color: var(--acid); }
-.app { display: grid; grid-template-columns: 260px 1fr; height: 100%; }
-aside { border-right: 1px solid var(--line); overflow: auto; background: var(--panel); }
+.app { display: grid; grid-template-columns: 264px 1fr; height: 100%; }
+
+/* ── sidebar ─────────────────────────────────────────────── */
+aside { border-right: 1px solid var(--line); background: var(--panel);
+  display: flex; flex-direction: column; min-height: 0; }
 aside .brand { padding: .8rem 1rem; font-weight: 700; color: var(--acid);
   letter-spacing: .06em; border-bottom: 1px solid var(--line); text-shadow: 0 0 14px var(--acid); }
-aside .navrow { display: flex; gap: .8rem; padding: .4rem 1rem; border-bottom: 1px solid var(--line); font-size: .82rem; }
-aside .navrow a { color: var(--muted); } aside .navrow a.on, aside .navrow a:hover { color: var(--fg); }
-aside .tree { padding: .4rem 0 2rem; font-size: .86rem; }
+aside .navrow { display: flex; flex-wrap: wrap; gap: .35rem; padding: .55rem .7rem;
+  border-bottom: 1px solid var(--line); }
+aside .navrow a { font-size: .76rem; padding: .22rem .6rem; border: 1px solid var(--line);
+  border-radius: 6px; background: var(--panel-2); color: var(--muted);
+  transition: transform .1s, background .12s, color .12s, box-shadow .12s; }
+aside .navrow a:hover { color: var(--bg); background: var(--cyan); border-color: var(--cyan);
+  box-shadow: 0 0 14px -3px var(--cyan); transform: translateY(-1px); }
+aside .navrow a.on { color: var(--bg); background: var(--acid); border-color: var(--acid);
+  box-shadow: 0 0 14px -3px var(--acid); }
+
+aside .tree { flex: 1; overflow: auto; padding: .45rem 0 1rem; font-size: .86rem; }
 .tree .fold > summary { list-style: none; cursor: pointer; color: var(--purple); white-space: nowrap;
-  padding: .1rem 1rem .1rem calc(.5rem + var(--d,0) * .7rem); overflow: hidden; text-overflow: ellipsis; }
+  padding: .12rem 1rem .12rem calc(.5rem + var(--d,0) * .7rem); overflow: hidden; text-overflow: ellipsis;
+  border-left: 2px solid transparent; transition: background .12s, color .12s, border-color .12s; }
 .tree .fold > summary::-webkit-details-marker { display: none; }
-.tree .fold > summary::before { content: "▸ "; color: var(--muted); }
-.tree .fold[open] > summary::before { content: "▾ "; }
-.tree .fold > summary .c { color: var(--muted); font-size: .78em; }
+.tree .fold > summary::before { content: "▸"; color: var(--muted); margin-right: .35rem;
+  display: inline-block; transition: transform .12s; }
+.tree .fold[open] > summary::before { transform: rotate(90deg); color: var(--accent, var(--acid)); }
+.tree .fold > summary:hover { background: rgba(255,255,255,.045);
+  color: var(--accent, var(--acid)); border-left-color: var(--accent, var(--acid)); }
+.tree .fold > summary .c { color: var(--muted); font-size: .72em; border: 1px solid var(--line);
+  border-radius: 999px; padding: 0 .4rem; margin-left: .3rem; }
 .tree a.f { display: block; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  padding: .08rem 1rem .08rem calc(1.1rem + var(--d,0) * .7rem); }
-.tree a.f:hover { color: var(--fg); background: rgba(255,255,255,.03); }
+  padding: .09rem 1rem .09rem calc(1.15rem + var(--d,0) * .7rem);
+  border-left: 2px solid transparent; transition: background .12s, color .12s, border-color .12s; }
+.tree a.f:hover { color: var(--fg); background: rgba(255,255,255,.055); border-left-color: var(--cyan);
+  text-shadow: 0 0 12px color-mix(in srgb, var(--cyan) 55%, transparent); }
+
+aside .foot { border-top: 1px solid var(--line); padding: .6rem .8rem;
+  display: flex; flex-direction: column; gap: .5rem; font-size: .77rem; }
+aside .foot label { color: var(--muted); display: block; margin-bottom: .2rem; letter-spacing: .04em; }
+aside .foot .gh { display: flex; align-items: center; gap: .45rem; color: var(--muted); }
+aside .foot .gh:hover { color: var(--acid); }
+aside .foot .gh svg { width: 15px; height: 15px; fill: currentColor; }
+aside .foot select { width: 100%; background: var(--bg); color: var(--fg); border: 1px solid var(--line);
+  border-radius: 6px; padding: .3rem; font: inherit; cursor: pointer; }
+aside .foot select:hover { border-color: var(--purple); }
+
+/* ── main ────────────────────────────────────────────────── */
 main { overflow: auto; }
 .bar { display: flex; gap: .6rem; align-items: center; padding: .5rem .9rem;
   border-bottom: 1px solid var(--line); background: var(--panel); position: sticky; top: 0; z-index: 5; }
+.combo { position: relative; flex: 1; display: flex; }
 .bar input[type=search] { flex: 1; background: var(--bg); border: 1px solid var(--line);
   color: var(--fg); border-radius: 6px; padding: .32rem .6rem; font: inherit; }
+.bar input[type=search]:focus { outline: 0; border-color: var(--cyan);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--cyan) 22%, transparent); }
+.sac { position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 40; margin: 0;
+  padding: .25rem; list-style: none; background: var(--panel); border: 1px solid var(--cyan);
+  border-radius: 8px; max-height: min(46vh, 300px); overflow: auto; font-size: .82rem;
+  box-shadow: 0 18px 50px -12px #000; }
+.sac li { padding: .28rem .5rem; border-radius: 5px; cursor: pointer; display: flex; gap: .5rem; align-items: baseline; }
+.sac li .r { color: var(--muted); font-size: .74rem; margin-left: auto; white-space: nowrap; }
+.sac li.on, .sac li:hover { background: var(--acid); color: var(--bg); }
+.sac li.on .r, .sac li:hover .r { color: var(--bg); }
+
 .btn { display: inline-block; background: var(--pink); color: var(--bg); font-weight: 700;
   padding: .3rem .75rem; border-radius: 6px; border: 0; cursor: pointer; font: inherit;
   box-shadow: 0 0 16px -4px var(--pink); }
 .btn.ghost { background: transparent; color: var(--cyan); border: 1px solid var(--line); box-shadow: none; }
 .btn.danger { background: var(--red); color: #fff; }
-.wrap { padding: 1.2rem 1.6rem; max-width: 960px; }
+.wrap { padding: 1.2rem 1.6rem; max-width: 980px; }
 .win { border: 1px solid var(--line); border-radius: 8px; overflow: hidden; margin: 1rem 1.6rem;
   box-shadow: 0 0 50px -34px var(--cyan); }
 .win .tt { display: flex; gap: .4rem; align-items: center; padding: .4rem .7rem;
@@ -56,12 +105,21 @@ h2, h3 { color: var(--acid); }
 .md blockquote { border-left: 3px solid var(--purple); margin: 0; padding-left: 1rem; color: var(--muted); }
 .md a { text-decoration: underline; }
 .md a.wl { color: var(--acid); } .md a.wl.broken { color: var(--red); }
-.pill { font-size: .75rem; border: 1px solid var(--line); border-radius: 999px; padding: .05rem .5rem; color: var(--muted); }
+
+.pill { font-size: .75rem; border: 1px solid var(--line); border-radius: 999px; padding: .05rem .5rem;
+  color: var(--muted); display: inline-block; }
 .pill.rev { color: var(--orange); border-color: var(--orange); }
+a.pill { transition: background .12s, color .12s, border-color .12s, box-shadow .12s; }
+a.pill:hover { background: var(--acid); color: var(--bg); border-color: var(--acid);
+  box-shadow: 0 0 12px -3px var(--acid); }
+a.pill.rev:hover { background: var(--orange); border-color: var(--orange); box-shadow: 0 0 12px -3px var(--orange); }
+a.pill.on { background: var(--cyan); color: var(--bg); border-color: var(--cyan); }
+
 textarea.ed { width: 100%; height: calc(100vh - 150px); background: var(--bg); color: var(--fg);
   border: 0; outline: 0; padding: 1rem 1.2rem; font: 13px/1.65 ui-monospace, monospace; resize: none; caret-color: var(--acid); }
 .muted { color: var(--muted); }
 .row { display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; }
+
 details.new { position: relative; }
 details.new > summary { list-style: none; cursor: pointer; }
 details.new > summary::-webkit-details-marker { display: none; }
@@ -71,54 +129,87 @@ details.new .pop { position: absolute; right: 0; top: 2.3rem; background: var(--
   padding: .15rem .5rem; margin: .15rem .15rem 0 0; cursor: pointer; color: var(--muted); }
 .chip.on { color: var(--bg); background: var(--acid); border-color: var(--acid); }
 .fld { width: 100%; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: .35rem; font: inherit; }
+
+/* ── portal sections + cards ─────────────────────────────── */
+.sect { border: 1px solid var(--line); border-left: 3px solid var(--sect, var(--cyan));
+  border-radius: 10px; background: var(--panel-2); padding: 1rem 1.1rem; margin-bottom: 1.1rem; }
+.sect > h2 { margin: 0 0 .8rem; color: var(--sect, var(--acid)); font-size: 1rem; letter-spacing: .05em; }
+.sect--portal { --sect: var(--cyan); } .sect--tags { --sect: var(--purple); } .sect--recent { --sect: var(--acid); }
 .grid { display: grid; gap: .8rem; grid-template-columns: repeat(auto-fill, minmax(180px,1fr)); }
 .card { border: 1px solid var(--line); border-radius: 8px; padding: .8rem; background: var(--panel); position: relative; }
 a.card { display: block; color: inherit; transition: border-color .12s, box-shadow .12s, transform .12s; }
 a.card:hover { border-color: var(--cyan); box-shadow: 0 0 26px -10px var(--cyan); transform: translateY(-2px); }
-a.card:hover .pop-info { display: block; }
 .stat { font-size: 1.8rem; font-weight: 800; color: var(--cyan); text-shadow: 0 0 22px currentColor; }
-.pop-info { display: none; position: absolute; left: 0; top: calc(100% + 6px); width: 260px; z-index: 30;
-  background: var(--bg); border: 1px solid var(--cyan); border-radius: 8px; padding: .7rem .8rem;
-  font-size: .8rem; color: var(--fg); box-shadow: 0 12px 40px -8px #000; }
-.pop-info .t { color: var(--acid); font-weight: 700; }
-.pop-info a { display: inline-block; margin: .2rem .35rem 0 0; }
+.pop-info { display: none; }
+#cardpop { position: fixed; z-index: 60; width: 274px; max-width: calc(100vw - 24px);
+  background: var(--bg); border: 1px solid var(--cyan); border-radius: 10px; padding: .78rem .9rem;
+  font-size: .8rem; line-height: 1.55; color: var(--fg); pointer-events: none;
+  box-shadow: 0 20px 60px -14px #000, 0 0 0 1px color-mix(in srgb, var(--cyan) 30%, transparent);
+  opacity: 0; transform: translateY(4px); transition: opacity .12s, transform .12s; }
+#cardpop.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
+#cardpop .t { color: var(--acid); font-weight: 700; display: block; margin-bottom: .25rem; }
+#cardpop a { display: inline-block; margin: .3rem .45rem 0 0; }
+
 ul { padding-left: 1.2rem; }
 .diff { font-size: .82rem; }
 .diff .o { color: var(--red); } .diff .n { color: var(--acid); }
+
+/* ── repo activity ───────────────────────────────────────── */
+table.log { width: 100%; border-collapse: collapse; font-size: .84rem; }
+table.log td { padding: .3rem .5rem; border-bottom: 1px solid var(--hair); vertical-align: top; }
+table.log tr:hover td { background: rgba(255,255,255,.03); }
+table.log .h { color: var(--orange); white-space: nowrap; }
+table.log .a { color: var(--muted); white-space: nowrap; }
+table.log .d { color: var(--muted); white-space: nowrap; font-size: .78rem; }
 </style>
 </head>
 <body>
+{% set accents = ['var(--acid)', 'var(--cyan)', 'var(--pink)', 'var(--purple)', 'var(--orange)'] %}
 <div class="app">
 <aside>
   <div class="brand">◈ cyberdesk</div>
   <div class="navrow">
     <a href="/" class="{{ 'on' if nav == 'portal' }}">portal</a>
-    <a href="/all">all</a>
-    <a href="/folders">folders</a>
+    <a href="/all" class="{{ 'on' if nav == 'all' }}">all</a>
+    <a href="/folders" class="{{ 'on' if nav == 'folders' }}">folders</a>
+    <a href="/templates" class="{{ 'on' if nav == 'templates' }}">templates</a>
     <a href="/lint" class="{{ 'on' if nav == 'lint' }}">lint</a>
+    <a href="/repo" class="{{ 'on' if nav == 'repo' }}">repo</a>
   </div>
   <div class="tree">
-    {% macro tnode(n, depth) %}
+    {% macro tnode(n, depth, accent) %}
       {% if n.is_dir %}
-      <details class="fold" data-rel="{{ n.rel }}" style="--d:{{ depth }}">
+      <details class="fold" data-rel="{{ n.rel }}" title="{{ n.count }} note{{ '' if n.count == 1 else 's' }} · {{ n.rel }}"
+               style="--d:{{ depth }};--accent:{{ accent }}">
         <summary>{{ n.name }}/ <span class="c">{{ n.count }}</span></summary>
-        {% for c in n.children %}{{ tnode(c, depth + 1) }}{% endfor %}
+        {% for c in n.children %}{{ tnode(c, depth + 1, accent) }}{% endfor %}
       </details>
       {% else %}
-      <a class="f" href="/n/{{ n.rel | safe }}" style="--d:{{ depth }}">{{ n.name }}</a>
+      <a class="f" href="/n/{{ n.rel | safe }}" title="{{ n.rel }}" style="--d:{{ depth }}">{{ n.name }}</a>
       {% endif %}
     {% endmacro %}
-    {% for n in tree | default([]) %}{{ tnode(n, 0) }}{% endfor %}
+    {% for n in tree | default([]) %}{{ tnode(n, 0, accents[loop.index0 % 5]) }}{% endfor %}
+  </div>
+  <div class="foot">
+    <a class="gh" href="{{ repo_url | default('https://github.com/darkstardevx/cyberdesk') | safe }}" target="_blank" rel="noopener">
+      <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+      darkstardevx/cyberdesk
+    </a>
+    <div>
+      <label for="themesel">cybercore theme</label>
+      <select id="themesel">
+        {% for t in themes | default([]) %}
+        <option value="{{ t }}" {{ 'selected' if t == theme_default }}>{{ t }}</option>
+        {% endfor %}
+      </select>
+    </div>
   </div>
 </aside>
 <main>
   <div class="bar">
-    <form action="/search" method="get" style="flex:1;display:flex">
-      <input type="search" name="q" placeholder="search notes…" value="{{ q | default('') }}"
-             list="titles-dl" autocomplete="off">
-      <datalist id="titles-dl">
-        {% for t in titles | default([]) %}<option value="{{ t.title }}">{{ t.rel }}</option>{% endfor %}
-      </datalist>
+    <form action="/search" method="get" class="combo" autocomplete="off">
+      <input type="search" id="q" name="q" placeholder="search notes…  ( ↑↓ to pick )" value="{{ q | default('') }}">
+      <ul id="sac" class="sac" hidden></ul>
     </form>
     <details class="new">
       <summary class="btn">＋ new</summary>
@@ -147,23 +238,100 @@ ul { padding-left: 1.2rem; }
 </div>
 <script>
 (function () {
-  var K = 'cyberdesk.open';
-  var open;
+  // ── collapsible tree, open state remembered ──────────────
+  var K = 'cyberdesk.open', open;
   try { open = new Set(JSON.parse(localStorage.getItem(K) || '[]')); } catch (e) { open = new Set(); }
   document.querySelectorAll('.tree .fold').forEach(function (d) {
     if (open.has(d.dataset.rel)) d.open = true;
     d.addEventListener('toggle', function () {
       if (d.open) open.add(d.dataset.rel); else open.delete(d.dataset.rel);
-      try { localStorage.setItem(K, JSON.stringify([...open])); } catch (e) {}
+      try { localStorage.setItem(K, JSON.stringify([].slice.call(open))); } catch (e) {}
     });
   });
+
+  // ── ＋ new: highlight the chosen template chip ────────────
   var tpls = document.getElementById('tpls');
   if (tpls) {
     var mark = function () {
-      tpls.querySelectorAll('.chip').forEach(function (c) { c.classList.toggle('on', c.querySelector('input').checked); });
+      tpls.querySelectorAll('.chip').forEach(function (c) {
+        c.classList.toggle('on', c.querySelector('input').checked);
+      });
     };
     tpls.querySelectorAll('.chip input').forEach(function (r) { r.addEventListener('change', mark); });
     mark();
+  }
+
+  // ── themed search autocomplete (replaces native datalist) ─
+  var TITLES = {{ titles | default([]) | tojson }};
+  var q = document.getElementById('q'), sac = document.getElementById('sac');
+  var rows = [], sel = -1;
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function sacHide() { sac.hidden = true; rows = []; sel = -1; }
+  function sacDraw() {
+    var v = q.value.trim().toLowerCase();
+    if (!v) return sacHide();
+    rows = TITLES.filter(function (t) {
+      return t.title.toLowerCase().indexOf(v) !== -1 || t.rel.toLowerCase().indexOf(v) !== -1;
+    }).slice(0, 14);
+    if (!rows.length) return sacHide();
+    sac.innerHTML = '';
+    rows.forEach(function (t, i) {
+      var li = document.createElement('li');
+      li.className = i === sel ? 'on' : '';
+      li.innerHTML = '<span>' + esc(t.title) + '</span><span class="r">' + esc(t.rel) + '</span>';
+      li.addEventListener('mousedown', function (e) { e.preventDefault(); location.href = '/n/' + t.rel; });
+      sac.appendChild(li);
+    });
+    sac.hidden = false;
+  }
+  if (q) {
+    q.addEventListener('input', function () { sel = -1; sacDraw(); });
+    q.addEventListener('keydown', function (e) {
+      if (sac.hidden) return;
+      if (e.key === 'ArrowDown') { e.preventDefault(); sel = (sel + 1) % rows.length; sacDraw(); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); sel = (sel - 1 + rows.length) % rows.length; sacDraw(); }
+      else if (e.key === 'Enter' && sel >= 0) { e.preventDefault(); location.href = '/n/' + rows[sel].rel; }
+      else if (e.key === 'Escape') { sacHide(); }
+    });
+    q.addEventListener('blur', function () { setTimeout(sacHide, 120); });
+  }
+
+  // ── card info popovers (floating, never clipped) ─────────
+  var pop = document.createElement('div');
+  pop.id = 'cardpop';
+  document.body.appendChild(pop);
+  var hideT;
+  function popHide() { hideT = setTimeout(function () { pop.classList.remove('show'); }, 140); }
+  pop.addEventListener('pointerenter', function () { clearTimeout(hideT); });
+  pop.addEventListener('pointerleave', popHide);
+  document.querySelectorAll('.card').forEach(function (card) {
+    var src = card.querySelector('.pop-info');
+    if (!src) return;
+    card.addEventListener('pointerenter', function () {
+      clearTimeout(hideT);
+      pop.innerHTML = src.innerHTML;
+      pop.classList.add('show');
+      pop.style.visibility = 'hidden';
+      var r = card.getBoundingClientRect(), ph = pop.offsetHeight, pw = pop.offsetWidth;
+      var top = r.bottom + 6;
+      if (top + ph > window.innerHeight - 8) top = Math.max(8, r.top - ph - 6);
+      var left = Math.min(r.left, window.innerWidth - pw - 12);
+      pop.style.top = top + 'px';
+      pop.style.left = Math.max(12, left) + 'px';
+      pop.style.visibility = 'visible';
+    });
+    card.addEventListener('pointerleave', popHide);
+  });
+
+  // ── cybercore theme switcher ────────────────────────────
+  var tsel = document.getElementById('themesel');
+  if (tsel) {
+    var m = document.cookie.match(/(?:^|; )cyberdesk_theme=([^;]+)/);
+    if (m) { try { tsel.value = decodeURIComponent(m[1]); } catch (e) {} }
+    tsel.addEventListener('change', function () {
+      location.href = '/theme/set/' + encodeURIComponent(tsel.value);
+    });
   }
 })();
 </script>

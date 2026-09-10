@@ -2,7 +2,16 @@
 {% block title %}lint · cyberdesk{% endblock %}
 {% block body %}
 <div class="wrap">
-  <h1>lint <span class="muted" style="font-size:1rem">{{ n }} note{{ '' if n == 1 else 's' }} · {{ total_issues }} issue{{ '' if total_issues == 1 else 's' }}</span></h1>
+  <h1>lint
+    <span class="muted" style="font-size:1rem">{{ n }} note{{ '' if n == 1 else 's' }} · {{ total_issues }} issue{{ '' if total_issues == 1 else 's' }}{% if sel %} · <code>{{ sel }}</code>{% endif %}</span>
+  </h1>
+
+  <div class="row" style="margin-bottom:1rem">
+    <a href="/lint" class="pill {{ 'on' if not sel }}">all</a>
+    {% for k in kinds %}
+    <a href="/lint?kind={{ k.kind | safe }}" class="pill {{ 'on' if k.on }}">{{ k.kind }} · {{ k.count }}</a>
+    {% endfor %}
+  </div>
 
   {% if fixable %}
   <form method="post" action="/lint/fix" style="margin-bottom:1rem">
@@ -12,7 +21,7 @@
   </form>
   {% endif %}
 
-  {% if n == 0 %}<p class="muted">clean — no issues.</p>{% endif %}
+  {% if n == 0 %}<p class="muted">{{ 'clean — no issues.' if not sel else 'no notes with that issue.' }}</p>{% endif %}
 
   {% for r in reports %}
   <div class="win">
@@ -28,7 +37,7 @@
     <div class="wrap" style="padding:.8rem 1.1rem">
       {% for i in r.issues %}
       <div style="margin:.35rem 0">
-        <span class="pill {{ 'rev' if not i.fixable }}">{{ i.kind }}</span>
+        <a href="/lint?kind={{ i.kind | safe }}" class="pill {{ 'rev' if not i.fixable }}">{{ i.kind }}</a>
         {{ i.detail }}
         {% if i.before or i.after %}
         <div class="diff" style="margin:.2rem 0 0 1rem">

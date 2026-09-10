@@ -1,13 +1,29 @@
 //! HTTP handlers.
 
 use axum::extract::{Path, Query, State};
-use axum::http::StatusCode;
+use axum::http::{header, HeaderMap, HeaderValue, StatusCode};
 use axum::response::{Html, IntoResponse, Redirect, Response};
 use axum::Form;
 use minijinja::{context, Value};
 use serde::Deserialize;
 
-use crate::{git, lint, render, vault, AppState};
+use crate::{git, lint, render, theme, vault, AppState};
+
+/// GitHub page for the app's own source.
+const REPO_URL: &str = "https://github.com/darkstardevx/cyberdesk";
+
+/// Pull one cookie value out of the `Cookie:` header.
+fn cookie(headers: &HeaderMap, name: &str) -> Option<String> {
+    headers
+        .get(header::COOKIE)?
+        .to_str()
+        .ok()?
+        .split(';')
+        .find_map(|kv| {
+            let (k, v) = kv.split_once('=')?;
+            (k.trim() == name).then(|| v.trim().to_string())
+        })
+}
 
 fn err(msg: impl std::fmt::Display) -> Response {
     (
@@ -36,6 +52,9 @@ fn shell(st: &AppState) -> Value {
             .map(|(rel, title)| context! { rel => rel, title => title })
             .collect::<Vec<_>>(),
         tags_all => vault::tag_counts(root).into_iter().map(|(t, _)| t).collect::<Vec<_>>(),
+        themes => theme::names(),
+        theme_default => theme::active_name(),
+        repo_url => REPO_URL,
     }
 }
 
@@ -254,18 +273,53 @@ pub async fn folders_page(State(st): State<AppState>) -> Response {
 }
 
 // ── lint ──────────────────────────────────────────────────────────────────
-pub async fn lint_page(State(st): State<AppState>) -> Response {
-    let reports = lint::scan(&st.cfg.root);
-    let total_issues: usize = reports.iter().map(|r| r.issues.len()).sum();
-    let fixable: usize = reports
+#[derive(Deserialize)]
+pub struct LintQ {
+    /// filter to a single issue kind (empty = show everything)
+    #[serde(default)]
+    kind: String,
+}
+
+pub async fn lint_page(State(st): State<AppState>, Query(q): Query<LintQ>) -> Response {
+    let all = lint::scan(&st.cfg.root);
+    let sel = q.kind.trim().to_string();
+
+    // kind → count across the whole vault (stable regardless of the filter)
+    let mut counts: std::collections::BTreeMap<&'static str, usize> = Default::default();
+    for r in &all {
+        for i in &r.issues {
+            *counts.entry(i.kind).or_default() += 1;
+        }
+    }
+    let kinds: Vec<_> = counts
         .iter()
-        .flat_map(|r| &r.issues)
-        .filter(|i| i.fixable)
-        .count();
+        .map(|(k, c)| context! { kind => k, count => c, on => (*k == sel.as_str()) })
+        .collect();
+
+    // reports, filtered to the selected kind
+    let reports: Vec<lint::NoteReport> = all
+        .iter()
+        .filter_map(|r| {
+            let issues: Vec<lint::Issue> = r
+                .issues
+                .iter()
+                .filter(|i| sel.is_empty() || i.kind == sel)
+                .cloned()
+                .collect();
+            (!issues.is_empty()).then(|| lint::NoteReport {
+                rel: r.rel.clone(),
+                title: r.title.clone(),
+                issues,
+            })
+        })
+        .collect();
+
+    let total_issues: usize = reports.iter().map(|r| r.issues.len()).sum();
+    let fixable: usize = reports.iter().flat_map(|r| &r.issues).filter(|i| i.fixable).count();
     page(
         &st,
         "lint.html",
-        context! { reports, n => reports.len(), total_issues, fixable },
+        context! { reports, n => reports.len(), total_issues, fixable, kinds, sel },
         "lint",
     )
 }
@@ -299,6 +353,64 @@ pub async fn lint_fix(State(st): State<AppState>, Form(f): Form<LintFix>) -> Res
         git::commit(root, &format!("lint: mechanical fixes ({fixed} note(s))"));
     }
     Redirect::to("/lint").into_response()
+}
+
+// ── theme (cybercore switcher) ────────────────────────────────────────────
+/// `:root{}` custom properties for the browser's chosen theme. Linked from
+/// every page, so switching is just a cookie + reload — no server restart.
+pub async fn theme_css(State(st): State<AppState>, headers: HeaderMap) -> Response {
+    let css = cookie(&headers, "cyberdesk_theme")
+        .and_then(|slug| theme::css_for_slug(&slug))
+        .unwrap_or_else(|| st.render.css.clone());
+    (
+        [
+            (header::CONTENT_TYPE, "text/css; charset=utf-8"),
+            (header::CACHE_CONTROL, "no-store"),
+        ],
+        css,
+    )
+        .into_response()
+}
+
+/// Set (or, for an unknown slug, clear) the theme cookie, then bounce back.
+pub async fn theme_set(Path(slug): Path<String>, headers: HeaderMap) -> Response {
+    let known = theme::names().contains(&slug.as_str());
+    let set_cookie = if known {
+        format!("cyberdesk_theme={slug}; Path=/; Max-Age=31536000; SameSite=Lax")
+    } else {
+        "cyberdesk_theme=; Path=/; Max-Age=0; SameSite=Lax".to_string()
+    };
+    let back = headers
+        .get(header::REFERER)
+        .and_then(|v| v.to_str().ok())
+        .filter(|r| r.contains("://"))
+        .unwrap_or("/")
+        .to_string();
+    let mut res = Redirect::to(&back).into_response();
+    if let Ok(v) = HeaderValue::from_str(&set_cookie) {
+        res.headers_mut().insert(header::SET_COOKIE, v);
+    }
+    res
+}
+
+// ── repo activity ─────────────────────────────────────────────────────────
+pub async fn repo_page(State(st): State<AppState>) -> Response {
+    let app_dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+    let (app_branch, app_web) = git::head_info(app_dir);
+    let (vault_branch, vault_web) = git::head_info(&st.cfg.root);
+    page(
+        &st,
+        "repo.html",
+        context! {
+            app_commits => git::log(app_dir, 25),
+            app_branch, app_web => app_web.clone().unwrap_or_else(|| REPO_URL.into()),
+            app_path => app_dir.display().to_string(),
+            vault_commits => git::log(&st.cfg.root, 25),
+            vault_branch, vault_web,
+            vault_path => st.cfg.root.display().to_string(),
+        },
+        "repo",
+    )
 }
 
 // ── api ───────────────────────────────────────────────────────────────────

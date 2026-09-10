@@ -21,6 +21,7 @@ pub fn build_env() -> Environment<'static> {
     tpl!(env, "templates.html");
     tpl!(env, "folders.html");
     tpl!(env, "lint.html");
+    tpl!(env, "repo.html");
     env
 }
 

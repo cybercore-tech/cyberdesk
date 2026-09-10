@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}repo · cyberdesk{% endblock %}
+{% block body %}
+<div class="wrap">
+  <h1>repo activity</h1>
+  <p class="muted">Live <code>git log</code> from the two repos this instance touches — the
+    app itself and the vault it edits. Every note save is a commit in the vault.</p>
+</div>
+
+{% macro panel(name, path, branch, web, commits) %}
+<div class="win">
+  <div class="tt"><i class="dot1"></i><i class="dot2"></i><i class="dot3"></i>
+    <span style="margin-left:.4rem">{{ name }}</span>
+    {% if branch %}<span class="pill" style="margin-left:.5rem">{{ branch }}</span>{% endif %}
+    <span style="flex:1"></span>
+    {% if web %}<a class="btn ghost" style="padding:.12rem .6rem" href="{{ web | safe }}" target="_blank" rel="noopener">GitHub ↗</a>{% endif %}
+  </div>
+  <div style="padding:.6rem .9rem">
+    <div class="muted" style="font-size:.78rem;margin-bottom:.5rem">{{ path }}</div>
+    {% if commits %}
+    <table class="log">
+      {% for c in commits %}
+      <tr>
+        <td class="h">{% if web %}<a href="{{ web | safe }}/commit/{{ c.hash }}" target="_blank" rel="noopener">{{ c.hash }}</a>{% else %}{{ c.hash }}{% endif %}</td>
+        <td>{{ c.subject }}</td>
+        <td class="a">{{ c.author }}</td>
+        <td class="d">{{ c.ago }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+    {% else %}
+    <p class="muted">not a git repo, or no commits.</p>
+    {% endif %}
+  </div>
+</div>
+{% endmacro %}
+
+{{ panel('cyberdesk — app', app_path, app_branch, app_web, app_commits) }}
+{{ panel('darknotes — vault', vault_path, vault_branch, vault_web, vault_commits) }}
+{% endblock %}
