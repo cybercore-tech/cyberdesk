@@ -2,7 +2,7 @@
 {% block title %}lint · cyberdesk{% endblock %}
 {% block body %}
 <div class="wrap">
-  <h1>lint
+  <h1>🩹 lint
     <span class="muted" style="font-size:1rem">{{ n }} note{{ '' if n == 1 else 's' }} · {{ total_issues }} issue{{ '' if total_issues == 1 else 's' }}{% if sel %} · <code>{{ sel }}</code>{% endif %}</span>
   </h1>
 
@@ -24,21 +24,23 @@
   {% if n == 0 %}<p class="muted">{{ 'clean — no issues.' if not sel else 'no notes with that issue.' }}</p>{% endif %}
 
   {% for r in reports %}
-  <div class="win">
-    <div class="tt"><i class="dot1"></i><i class="dot2"></i><i class="dot3"></i>
-      <span style="margin-left:.4rem">{{ r.rel }}</span><span style="flex:1"></span>
-      <a class="btn ghost" style="padding:.12rem .55rem" href="/e/{{ r.rel | safe }}">edit</a>
+  <div class="pcard" style="--pc:{{ 'var(--pink)' if r.issues | selectattr('fixable') | list | length else 'var(--orange)' }}">
+    <div class="pcard-tt">
+      <span class="k">🩹</span>
+      <span class="nm">{{ r.title }}</span>
+      <span class="sub">{{ r.rel }}</span>
+      <span style="flex:1"></span>
       {% if r.issues | selectattr('fixable') | list | length %}
-      <form method="post" action="/lint/fix" style="margin:0 0 0 .4rem">
-        <input type="hidden" name="rel" value="{{ r.rel }}">
-        <button class="btn" style="padding:.12rem .6rem">fix</button></form>
+      <form method="post" action="/lint/fix" style="margin:0"><input type="hidden" name="rel" value="{{ r.rel }}">
+        <button class="tbtn2">🧹 fix</button></form>
       {% endif %}
+      <a class="tbtn2" href="/e/{{ r.rel | safe }}">✎ edit</a>
     </div>
-    <div class="wrap" style="padding:.8rem 1.1rem">
+    <div class="pcard-body">
       {% for i in r.issues %}
       <div style="margin:.35rem 0">
         <a href="/lint?kind={{ i.kind | safe }}" class="pill {{ 'rev' if not i.fixable }}">{{ i.kind }}</a>
-        {{ i.detail }}
+        <span class="muted">{{ i.detail }}</span>
         {% if i.before or i.after %}
         <div class="diff" style="margin:.2rem 0 0 1rem">
           <span class="o">- {{ i.before }}</span><br><span class="n">+ {{ i.after }}</span>

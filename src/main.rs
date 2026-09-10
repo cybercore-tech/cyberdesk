@@ -70,6 +70,7 @@ async fn main() -> anyhow::Result<()> {
         .route("/api/move", post(routes::api_move))
         .route("/vendor/cm.js", get(routes::cm_js))
         .route("/vendor/cm.css", get(routes::cm_css))
+        .route("/vendor/tokens.css", get(routes::tokens_css))
         .route("/logo.svg", get(routes::logo_svg))
         .route("/mark.svg", get(routes::mark_svg))
         .route("/favicon.svg", get(routes::favicon_svg))

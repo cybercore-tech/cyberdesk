@@ -738,6 +738,17 @@ pub async fn cm_css() -> impl IntoResponse {
     )
 }
 
+/// Shared cybercore design tokens (fonts / sizing / spacing / motion).
+pub async fn tokens_css() -> impl IntoResponse {
+    (
+        [
+            (header::CONTENT_TYPE, "text/css; charset=utf-8"),
+            (header::CACHE_CONTROL, "public, max-age=86400"),
+        ],
+        cybercore::tokens::CSS,
+    )
+}
+
 fn svg(body: &'static str) -> impl IntoResponse {
     (
         [

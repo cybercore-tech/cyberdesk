@@ -13,18 +13,19 @@
 <link rel="stylesheet" href="/vendor/cm.css">
 <script defer src="/vendor/cm.js"></script>
 
+<!-- shared cybercore design tokens: fonts, type scale, spacing, radii, motion -->
+<link rel="stylesheet" href="/vendor/tokens.css">
 <style>
 {{ css|safe }}
 </style>
 <link rel="stylesheet" href="/theme.css">
 <style>
 :root {
-  /* a hair above the page bg — darker than --panel, never quite --bg */
+  /* --font-mono / --font-ui / --fs-* / --space-* / --radius-* come from
+     /vendor/tokens.css (cybercore::tokens). Project-specific bits below. */
   --panel-2: color-mix(in srgb, var(--bg) 82%, var(--panel));
   --hair: color-mix(in srgb, var(--line), transparent 40%);
-  --r: 2px;                 /* global corner radius — small on purpose */
-  --font-ui: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --r: var(--radius, 2px);
   /* hotter, more electric than the theme's stock pink — used across the chrome */
   --pink: #ff2ecb;
   --pink-soft: color-mix(in srgb, var(--pink) 22%, transparent);
@@ -285,13 +286,32 @@ ul { padding-left: 1.2rem; }
 .diff { font-size: .82rem; }
 .diff .o { color: var(--red); } .diff .n { color: var(--acid); }
 
+/* ── shared panel card (templates / folders / lint / repo / api) ─── */
+.pcard { border: 1px solid var(--line); border-left: var(--border-accent, 3px) solid var(--pc, var(--cyan));
+  border-radius: var(--r); overflow: hidden; margin: var(--space-3, .9rem) 0; background: var(--bg); }
+.pcard-tt { display: flex; align-items: center; gap: var(--space-2, .5rem); padding: .42rem .7rem;
+  background: color-mix(in srgb, var(--bg) 70%, var(--panel)); border-bottom: 1px solid var(--line);
+  font-family: var(--font-mono); }
+.pcard-tt .k { font-size: .95em; }
+.pcard-tt .nm { color: var(--pc, var(--cyan)); text-transform: uppercase; letter-spacing: var(--tracking-caps, .05em);
+  font-weight: var(--fw-semibold, 600); font-size: var(--fs-1, .84rem); }
+.pcard-tt .sub { color: var(--muted); font-size: var(--fs-0, .72rem); }
+.pcard-body { padding: .7rem 1rem; font-family: var(--font-mono); }
+.tbtn2 { font: inherit; font-family: var(--font-mono); font-size: var(--fs-0, .7rem);
+  text-transform: uppercase; letter-spacing: var(--tracking-wide, .04em); color: var(--muted);
+  background: var(--panel-2); border: 1px solid var(--line); border-radius: 0; padding: .2rem .5rem; cursor: pointer; }
+.tbtn2:hover { color: var(--fg); background: color-mix(in srgb, var(--panel) 55%, var(--bg));
+  border-color: color-mix(in srgb, var(--cyan) 55%, var(--line)); }
+.tbtn2.warn:hover { color: #0a0a12; background: var(--pink); border-color: var(--pink); }
+
 /* ── repo activity ───────────────────────────────────────── */
-table.log { width: 100%; border-collapse: collapse; font-size: .84rem; }
+table.log { width: 100%; border-collapse: collapse; font-size: var(--fs-1, .84rem); font-family: var(--font-mono); }
 table.log td { padding: .3rem .5rem; border-bottom: 1px solid var(--hair); vertical-align: top; }
 table.log tr:hover td { background: rgba(255,255,255,.03); }
 table.log .h { color: var(--orange); white-space: nowrap; }
+table.log .h a { color: var(--orange); }
 table.log .a { color: var(--muted); white-space: nowrap; }
-table.log .d { color: var(--muted); white-space: nowrap; font-size: .78rem; }
+table.log .d { color: var(--muted); white-space: nowrap; font-size: var(--fs-0, .78rem); }
 
 /* ── pop-up file editor — HUD panel ──────────────────────── */
 #fed, #fed input, #fed select, #fed button { font-family: var(--font-mono); }
