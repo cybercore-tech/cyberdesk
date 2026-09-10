@@ -78,15 +78,25 @@ aside .navrow a.on { color: var(--bg); background: var(--acid); border-color: va
   box-shadow: 0 0 14px -3px var(--acid); }
 
 aside .tree { flex: 1; overflow: auto; padding: .45rem 0 1rem; font-size: .82rem; }
-.tree .fold > summary { list-style: none; cursor: pointer; color: var(--purple); white-space: nowrap;
+.tree .fold > summary { list-style: none; cursor: pointer; white-space: nowrap;
+  color: var(--accent, var(--purple));
   padding: .14rem 1rem .14rem calc(.5rem + var(--d,0) * .7rem); overflow: hidden; text-overflow: ellipsis;
   border-left: 2px solid transparent; transition: background .12s, color .12s, border-color .12s; }
 .tree .fold > summary::-webkit-details-marker { display: none; }
 .tree .fold > summary::before { content: "📁"; margin-right: .38rem; font-size: .92em;
   display: inline-block; filter: saturate(.85); }
 .tree .fold[open] > summary::before { content: "📂"; }
-.tree .fold > summary:hover { background: rgba(255,255,255,.045);
-  color: var(--accent, var(--acid)); border-left-color: var(--accent, var(--acid)); }
+/* nested folders read cool-cyan and dimmer, with an indent guide */
+.tree .fold .fold > summary { color: color-mix(in srgb, var(--cyan) 62%, var(--muted));
+  box-shadow: inset 2px 0 0 color-mix(in srgb, var(--cyan) 35%, transparent); }
+.tree .fold .fold .fold > summary { color: color-mix(in srgb, var(--purple) 58%, var(--muted));
+  box-shadow: inset 2px 0 0 color-mix(in srgb, var(--purple) 40%, transparent); }
+.tree .fold .fold > summary::before { content: "🗂"; font-size: .86em; opacity: .9; }
+.tree .fold .fold[open] > summary::before { content: "🗂"; opacity: 1; }
+.tree .fold > summary:hover { background: rgba(255,255,255,.05);
+  color: var(--accent, var(--acid)); border-left-color: var(--accent, var(--acid));
+  text-shadow: 0 0 14px color-mix(in srgb, currentColor 55%, transparent); }
+.tree .fold .fold > summary:hover { border-left-color: var(--cyan); }
 .tree .fold > summary .c { color: var(--muted); font-size: .72em; border: 1px solid var(--line);
   border-radius: var(--r); padding: 0 .4rem; margin-left: .3rem; text-transform: none; letter-spacing: 0; }
 .tree a.f { display: block; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
@@ -236,7 +246,8 @@ details.new .pop { position: absolute; right: 0; top: 2.3rem; background: var(--
   font: 11.5px/1.5 var(--font-mono); color: var(--muted); max-height: 220px; overflow: auto; white-space: pre-wrap; }
 .btn.is-bad { filter: grayscale(.6) brightness(.8); }
 .chip { display: inline-block; border: 1px solid var(--line); border-radius: var(--r);
-  padding: .15rem .5rem; margin: .15rem .15rem 0 0; cursor: pointer; color: var(--muted);
+  padding: .16rem .5rem; margin: .15rem .15rem 0 0; cursor: pointer; color: var(--muted);
+  font-family: var(--font-mono); font-size: .72rem; text-transform: uppercase; letter-spacing: .05em;
   transition: transform .1s, color .12s, background .12s, border-color .12s, box-shadow .12s; }
 .chip:hover { color: var(--fg); border-color: var(--cyan); transform: translateY(-1px);
   box-shadow: 0 0 12px -4px var(--cyan); }
@@ -297,12 +308,12 @@ table.log .d { color: var(--muted); white-space: nowrap; font-size: .78rem; }
   animation: fedIn .14s ease; }
 #fed[hidden], #fed-open[hidden], .fed-sa[hidden], #fed-diff[hidden] { display: none; }
 @keyframes fedIn { from { opacity: 0; } }
-.fed-box { position: relative; width: min(1180px, 95vw); height: min(88vh, 960px);
+.fed-box { position: relative; width: min(1500px, 97vw); height: min(93vh, 1180px);
   display: flex; flex-direction: column; overflow: hidden; border-radius: 3px;
   background: var(--bg);
   border: 1px solid color-mix(in srgb, var(--pink) 28%, var(--line));
   box-shadow: 0 40px 140px -20px #000, 0 0 0 1px color-mix(in srgb, var(--pink) 18%, transparent),
-    0 0 60px -22px color-mix(in srgb, var(--pink) 45%, transparent); }
+    0 0 70px -22px color-mix(in srgb, var(--pink) 45%, transparent); }
 /* corner brackets */
 .fed-box::before, .fed-box::after { content: ""; position: absolute; width: 16px; height: 16px;
   border: 2px solid var(--pink); pointer-events: none; z-index: 2; }
@@ -392,6 +403,62 @@ table.log .d { color: var(--muted); white-space: nowrap; font-size: .78rem; }
 .fed-sa-box select:focus, .fed-sa-box input:focus { outline: 0;
   border-color: color-mix(in srgb, var(--pink) 55%, var(--line)); }
 .fed-sa-act { display: flex; justify-content: flex-end; gap: .5rem; margin-top: 1rem; }
+
+/* ── cutting-edge accents ─────────────────────────────────── */
+@property --shine { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+
+/* glassy sticky header */
+.bar { background: color-mix(in srgb, var(--panel) 82%, transparent);
+  backdrop-filter: blur(7px) saturate(1.3); -webkit-backdrop-filter: blur(7px) saturate(1.3); }
+
+/* gradient headings (chrome only — rendered notes keep flat colour) */
+h1 { background: linear-gradient(96deg, var(--fg), var(--acid) 52%, var(--cyan));
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; }
+.md h1, .md h2, .md h3 { background: none; -webkit-text-fill-color: currentColor; color: var(--fg); }
+
+/* card hover: animated glow ring */
+a.card::after { content: ""; position: absolute; inset: -1px; border-radius: inherit; pointer-events: none;
+  opacity: 0; transition: opacity .2s, box-shadow .2s; }
+a.card:hover::after { opacity: 1;
+  box-shadow: 0 0 0 1px var(--cyan), 0 0 26px -4px var(--cyan), inset 0 0 44px -30px var(--cyan); }
+
+/* faint CRT scanlines over everything (non-interactive) */
+body::after { content: ""; position: fixed; inset: 0; z-index: 500; pointer-events: none;
+  background: repeating-linear-gradient(0deg, transparent 0 2px, rgba(0,0,0,.10) 2px 3px); }
+
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes shine { to { --shine: 360deg; } }
+  @keyframes breathe { 0%,100% { filter: drop-shadow(0 0 8px color-mix(in srgb, var(--acid) 40%, transparent)); }
+                       50% { filter: drop-shadow(0 0 20px color-mix(in srgb, var(--cyan) 60%, transparent)); } }
+  @keyframes navpulse { 0%,100% { box-shadow: 0 0 14px -4px var(--acid); }
+                        50% { box-shadow: 0 0 24px -1px var(--acid), 0 0 46px -12px var(--acid); } }
+  @keyframes flicker { 0%,18%,22%,54%,58%,100% { opacity: 1; } 20%,56% { opacity: .74; } }
+  @keyframes glitch { 0%,100% { transform: none; text-shadow: none; }
+    25% { transform: translate(-2px,1px); }
+    50% { transform: translate(2px,-1px); text-shadow: -2px 0 var(--pink), 2px 0 var(--cyan); }
+    75% { transform: translate(-1px,-1px); } }
+
+  aside .brand img { animation: breathe 5s ease-in-out infinite; }
+  aside .navrow a.on { animation: navpulse 2.6s ease-in-out infinite; }
+  .stat { animation: flicker 7s steps(1,end) infinite; }
+  h1:hover { animation: glitch .3s steps(2,end) 1; }
+
+  /* slow neon border-spin on the HUD panels + portal sections */
+  .sect { border: 1px solid transparent; box-shadow: inset 3px 0 0 var(--sect, var(--cyan));
+    background:
+      linear-gradient(var(--panel-2), var(--panel-2)) padding-box,
+      conic-gradient(from var(--shine), color-mix(in srgb, var(--cyan) 65%, transparent),
+        color-mix(in srgb, var(--purple) 65%, transparent), color-mix(in srgb, var(--pink) 75%, transparent),
+        color-mix(in srgb, var(--cyan) 65%, transparent)) border-box;
+    animation: shine 10s linear infinite; }
+  .fed-box { border: 1px solid transparent;
+    background:
+      linear-gradient(var(--bg), var(--bg)) padding-box,
+      conic-gradient(from var(--shine), color-mix(in srgb, var(--pink) 85%, transparent),
+        color-mix(in srgb, var(--purple) 55%, transparent), color-mix(in srgb, var(--cyan) 50%, transparent),
+        color-mix(in srgb, var(--pink) 85%, transparent)) border-box;
+    animation: shine 12s linear infinite; }
+}
 </style>
 </head>
 <body>
@@ -568,8 +635,17 @@ table.log .d { color: var(--muted); white-space: nowrap; font-size: .78rem; }
   }
 
   // ── collapsible tree: remember open folders + expand the current path ──
-  var K = 'cyberdesk.open', open;
-  try { open = new Set(JSON.parse(localStorage.getItem(K) || '[]')); } catch (e) { open = new Set(); }
+  var K = 'cyberdesk.open', open, firstVisit = false;
+  try {
+    var stored = localStorage.getItem(K);
+    firstVisit = stored === null;
+    open = new Set(JSON.parse(stored || '[]'));
+  } catch (e) { open = new Set(); }
+  // on the very first visit, expand every top-level folder so the sub-folder
+  // structure is visible at a glance
+  if (firstVisit) {
+    document.querySelectorAll('.tree > .fold').forEach(function (d) { open.add(d.dataset.rel); });
+  }
   var pm = location.pathname.match(/^\/(?:n|e)\/(.+)$/);
   var hereRel = pm ? decodeURIComponent(pm[1]) : null;
   if (hereRel) {

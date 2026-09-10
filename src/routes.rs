@@ -386,14 +386,10 @@ pub async fn templates_page(State(st): State<AppState>) -> Response {
 
 pub async fn folders_page(State(st): State<AppState>) -> Response {
     let root = &st.cfg.root;
-    let list: Vec<_> = vault::folders(root)
-        .into_iter()
-        .map(|f| {
-            let n = vault::all_notes(root).iter().filter(|x| x.rel.starts_with(&format!("{f}/"))).count();
-            context! { rel => f, count => n }
-        })
-        .collect();
-    page(&st, "folders.html", context! { list }, "")
+    let n_folders = vault::folders(root).len();
+    let n_notes = vault::all_notes(root).len();
+    // `tree` is already supplied by shell(); the page renders its dir nodes
+    page(&st, "folders.html", context! { n_folders, n_notes }, "folders")
 }
 
 // ── lint ──────────────────────────────────────────────────────────────────

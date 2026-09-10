@@ -1,15 +1,60 @@
 {% extends "base.html" %}
 {% block title %}folders · cyberdesk{% endblock %}
 {% block body %}
+{% set faccents = ['var(--cyan)', 'var(--purple)', 'var(--pink)', 'var(--acid)', 'var(--orange)'] %}
 <div class="wrap">
-  <h1>folders</h1>
-  <ul>
-    {% for f in list %}
-    <li><strong>{{ f.rel }}/</strong> <span class="muted">{{ f.count }} note{{ '' if f.count == 1 else 's' }}</span>
-      &nbsp;<a href="/search?q={{ f.rel }}" class="muted" style="font-size:.8rem">search in</a></li>
+  <h1>🗂 folders <span class="muted" style="font-size:1rem">{{ n_folders }} folders · {{ n_notes }} notes</span></h1>
+
+  {% macro fnode(n, depth, accent) %}
+    {% if n.is_dir %}
+    <details class="ftree-fold" {{ 'open' if depth == 0 else '' }}
+             style="--fd:{{ depth }};--fac:{{ accent }};margin-left:{{ depth * 1.1 }}rem">
+      <summary>
+        <span class="ficon">{{ '📂' if depth == 0 else '🗂' }}</span>
+        <span class="fname">{{ n.name }}</span>
+        <span class="fcount">{{ n.count }}</span>
+      </summary>
+      <div class="ftree-kids">
+        {% for c in n.children %}{{ fnode(c, depth + 1, accent) }}{% endfor %}
+      </div>
+    </details>
+    {% else %}
+    <a class="ftree-file" href="/n/{{ n.rel | safe }}" style="margin-left:{{ depth * 1.1 }}rem">
+      <span class="ficon">📄</span> {{ n.name }}
+    </a>
+    {% endif %}
+  {% endmacro %}
+
+  <div class="ftree">
+    {% for n in tree | default([]) %}
+      {% if n.is_dir %}{{ fnode(n, 0, faccents[loop.index0 % 5]) }}{% endif %}
     {% endfor %}
-  </ul>
-  <p class="muted" style="margin-top:1rem">New notes land in the folder you pick in <b>＋ new</b>.
-  Move a note by editing its path — rename/move UI is Pass 2.</p>
+  </div>
 </div>
+
+<style>
+.ftree { margin-top: .4rem; }
+.ftree-fold { margin: .18rem 0; }
+.ftree-fold > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: .5rem;
+  padding: .34rem .7rem; border: 1px solid var(--line); border-left: 3px solid var(--fac, var(--cyan));
+  background: color-mix(in srgb, var(--bg) 78%, var(--panel)); border-radius: var(--r);
+  color: var(--fac, var(--fg)); text-transform: uppercase; letter-spacing: .05em; font-size: .82rem; font-weight: 600;
+  transition: box-shadow .15s, transform .1s, background .15s; }
+.ftree-fold > summary::-webkit-details-marker { display: none; }
+.ftree-fold > summary:hover { transform: translateX(2px);
+  box-shadow: 0 0 20px -6px var(--fac, var(--cyan)), inset 0 0 30px -22px var(--fac, var(--cyan));
+  background: color-mix(in srgb, var(--bg) 60%, var(--panel)); }
+.ftree-fold[open] > summary { border-left-width: 3px; }
+.ftree-fold .ftree-fold > summary { color: color-mix(in srgb, var(--fac, var(--cyan)) 55%, var(--muted));
+  border-left-color: color-mix(in srgb, var(--fac, var(--cyan)) 55%, var(--muted)); font-size: .78rem; }
+.ftree-fold .ftree-fold .ftree-fold > summary { color: color-mix(in srgb, var(--fac, var(--cyan)) 35%, var(--muted)); }
+.ftree .fcount { margin-left: auto; font-size: .7rem; font-weight: 400; letter-spacing: 0;
+  color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 0 .5rem; }
+.ftree .ficon { font-size: .95em; }
+.ftree-kids { padding: .15rem 0 .1rem; border-left: 1px dashed var(--hair); }
+.ftree-file { display: block; padding: .16rem .7rem; color: var(--muted); font-size: .82rem;
+  border-left: 3px solid transparent; }
+.ftree-file:hover { color: var(--fg); background: rgba(255,255,255,.04);
+  border-left-color: var(--cyan); text-shadow: 0 0 12px color-mix(in srgb, var(--cyan) 45%, transparent); }
+</style>
 {% endblock %}
