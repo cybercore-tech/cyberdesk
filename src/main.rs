@@ -61,6 +61,8 @@ async fn main() -> anyhow::Result<()> {
         .route("/theme.css", get(routes::theme_css))
         .route("/theme/set/:slug", get(routes::theme_set))
         .route("/api/titles", get(routes::api_titles))
+        .route("/api/raw/*path", get(routes::api_raw))
+        .route("/api/save", post(routes::api_save))
         .route("/new", post(routes::create))
         .route("/n/*path", get(routes::view))
         .route("/e/*path", get(routes::edit).post(routes::save))

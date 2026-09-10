@@ -8,7 +8,7 @@
     <li>
       <a href="/n/{{ it.rel | safe }}">{{ it.title }}</a>
       &nbsp;<span class="muted" style="font-size:.78rem">{{ it.rel }}</span>
-      {% for t in it.tags %}<span class="pill {{ 'rev' if t == 'needs-review' }}" style="margin-left:.3rem">{{ t }}</span>{% endfor %}
+      {% for t in it.tags %}<a href="/tag/{{ t | safe }}" class="pill {{ 'rev' if t == 'needs-review' }}" style="margin-left:.3rem">{{ t }}</a>{% endfor %}
     </li>
     {% else %}<li class="muted">none</li>{% endfor %}
   </ul>

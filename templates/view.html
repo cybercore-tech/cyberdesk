@@ -15,7 +15,7 @@
   <div class="wrap">
     <h1>{{ title }}</h1>
     {% if tags %}<div class="row" style="margin-bottom:1rem">
-      {% for t in tags %}<span class="pill {{ 'rev' if t == 'needs-review' }}">{{ t }}</span>{% endfor %}
+      {% for t in tags %}<a href="/tag/{{ t | safe }}" class="pill {{ 'rev' if t == 'needs-review' }}">{{ t }}</a>{% endfor %}
     </div>{% endif %}
     {% if toc | length > 2 %}
     <details style="margin-bottom:1.2rem">

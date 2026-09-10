@@ -10,7 +10,8 @@
 <link rel="stylesheet" href="/theme.css">
 <style>
 :root {
-  --panel-2: color-mix(in srgb, var(--panel), #fff 6%);
+  /* a hair above the page bg — darker than --panel, never quite --bg */
+  --panel-2: color-mix(in srgb, var(--bg) 82%, var(--panel));
   --hair: color-mix(in srgb, var(--line), transparent 40%);
 }
 * { box-sizing: border-box; }
@@ -82,11 +83,28 @@ main { overflow: auto; }
 .sac li.on, .sac li:hover { background: var(--acid); color: var(--bg); }
 .sac li.on .r, .sac li:hover .r { color: var(--bg); }
 
-.btn { display: inline-block; background: var(--pink); color: var(--bg); font-weight: 700;
-  padding: .3rem .75rem; border-radius: 6px; border: 0; cursor: pointer; font: inherit;
-  box-shadow: 0 0 16px -4px var(--pink); }
-.btn.ghost { background: transparent; color: var(--cyan); border: 1px solid var(--line); box-shadow: none; }
-.btn.danger { background: var(--red); color: #fff; }
+.btn { position: relative; overflow: hidden; isolation: isolate; display: inline-block;
+  background: linear-gradient(135deg, var(--pink), color-mix(in srgb, var(--pink) 55%, var(--purple)));
+  color: var(--bg); font-weight: 700; padding: .3rem .75rem; border-radius: 6px; border: 0;
+  cursor: pointer; font: inherit; letter-spacing: .02em;
+  box-shadow: 0 0 16px -6px var(--pink), inset 0 0 0 1px color-mix(in srgb, #fff 22%, transparent);
+  transition: transform .12s cubic-bezier(.2,.8,.2,1), box-shadow .15s, filter .15s; }
+.btn::after { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background: linear-gradient(115deg, transparent 32%, rgba(255,255,255,.5) 50%, transparent 68%);
+  transform: translateX(-130%); transition: transform .55s ease; }
+.btn:hover { transform: translateY(-1px);
+  box-shadow: 0 0 26px -4px var(--pink), 0 6px 18px -6px #000, inset 0 0 0 1px rgba(255,255,255,.35); }
+.btn:hover::after { transform: translateX(130%); }
+.btn:active { transform: translateY(1px) scale(.97); filter: brightness(.92); }
+.btn:focus-visible { outline: 2px solid var(--acid); outline-offset: 2px; }
+.btn.ghost { background: transparent; color: var(--cyan); border: 1px solid var(--line);
+  box-shadow: none; }
+.btn.ghost:hover { color: var(--bg); border-color: var(--cyan);
+  background: linear-gradient(135deg, var(--cyan), color-mix(in srgb, var(--cyan) 60%, var(--acid)));
+  box-shadow: 0 0 20px -5px var(--cyan), 0 6px 18px -8px #000; }
+.btn.danger { background: linear-gradient(135deg, var(--red), color-mix(in srgb, var(--red) 60%, var(--orange)));
+  color: #fff; box-shadow: 0 0 16px -6px var(--red), inset 0 0 0 1px rgba(255,255,255,.18); }
+.btn.danger:hover { box-shadow: 0 0 26px -4px var(--red), 0 6px 18px -6px #000; }
 .wrap { padding: 1.2rem 1.6rem; max-width: 980px; }
 .win { border: 1px solid var(--line); border-radius: 8px; overflow: hidden; margin: 1rem 1.6rem;
   box-shadow: 0 0 50px -34px var(--cyan); }
@@ -126,8 +144,12 @@ details.new > summary::-webkit-details-marker { display: none; }
 details.new .pop { position: absolute; right: 0; top: 2.3rem; background: var(--panel);
   border: 1px solid var(--line); border-radius: 8px; padding: 1rem; width: 340px; z-index: 20; box-shadow: 0 10px 40px -10px #000; }
 .chip { display: inline-block; border: 1px solid var(--line); border-radius: 6px;
-  padding: .15rem .5rem; margin: .15rem .15rem 0 0; cursor: pointer; color: var(--muted); }
-.chip.on { color: var(--bg); background: var(--acid); border-color: var(--acid); }
+  padding: .15rem .5rem; margin: .15rem .15rem 0 0; cursor: pointer; color: var(--muted);
+  transition: transform .1s, color .12s, background .12s, border-color .12s, box-shadow .12s; }
+.chip:hover { color: var(--fg); border-color: var(--cyan); transform: translateY(-1px);
+  box-shadow: 0 0 12px -4px var(--cyan); }
+.chip.on { color: var(--bg); background: var(--acid); border-color: var(--acid);
+  box-shadow: 0 0 14px -3px var(--acid); }
 .fld { width: 100%; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: .35rem; font: inherit; }
 
 /* ── portal sections + cards ─────────────────────────────── */
@@ -161,6 +183,54 @@ table.log tr:hover td { background: rgba(255,255,255,.03); }
 table.log .h { color: var(--orange); white-space: nowrap; }
 table.log .a { color: var(--muted); white-space: nowrap; }
 table.log .d { color: var(--muted); white-space: nowrap; font-size: .78rem; }
+
+/* ── pop-up file editor ──────────────────────────────────── */
+.tbtn { font: inherit; font-size: .76rem; color: var(--muted); background: var(--panel-2);
+  border: 1px solid var(--line); border-radius: 5px; padding: .18rem .5rem; cursor: pointer;
+  transition: transform .1s, color .12s, background .12s, border-color .12s, box-shadow .12s; }
+.tbtn:hover { color: var(--bg); background: var(--cyan); border-color: var(--cyan);
+  box-shadow: 0 0 12px -3px var(--cyan); transform: translateY(-1px); }
+.tbtn:active { transform: translateY(1px) scale(.96); }
+.tbtn.warn:hover { background: var(--pink); border-color: var(--pink); box-shadow: 0 0 12px -3px var(--pink); }
+
+#fed { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center;
+  background: color-mix(in srgb, #000 62%, transparent); backdrop-filter: blur(2px);
+  animation: fedIn .14s ease; }
+#fed[hidden], #fed-open[hidden], .fed-sa[hidden] { display: none; }
+@keyframes fedIn { from { opacity: 0; } }
+.fed-box { width: min(1120px, 94vw); height: min(84vh, 900px); display: flex; flex-direction: column;
+  background: var(--bg); border: 1px solid var(--cyan); border-radius: 12px; overflow: hidden;
+  box-shadow: 0 40px 120px -20px #000, 0 0 0 1px color-mix(in srgb, var(--cyan) 25%, transparent); }
+.fed-tt { display: flex; gap: .4rem; align-items: center; padding: .5rem .7rem;
+  background: var(--panel); border-bottom: 1px solid var(--line); }
+.fed-tt i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.fed-tt .nm { margin-left: .5rem; color: var(--fg); font-size: .86rem; }
+.fed-tt .dirty { color: var(--orange); opacity: 0; transition: opacity .12s; }
+.fed-tt.is-dirty .dirty { opacity: 1; }
+.fed-body { flex: 1; display: flex; min-height: 0; position: relative; }
+.fed-open { width: 300px; border-right: 1px solid var(--line); display: flex; flex-direction: column;
+  background: var(--panel-2); }
+.fed-open input { margin: .5rem; background: var(--bg); color: var(--fg); border: 1px solid var(--line);
+  border-radius: 6px; padding: .35rem .5rem; font: inherit; }
+.fed-open ul { flex: 1; overflow: auto; margin: 0; padding: 0 .3rem .5rem; list-style: none; font-size: .82rem; }
+.fed-open li { padding: .3rem .5rem; border-radius: 5px; cursor: pointer; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis; color: var(--muted); }
+.fed-open li:hover, .fed-open li.on { background: var(--acid); color: var(--bg); }
+#fed-ta { flex: 1; min-width: 0; background: var(--bg); color: var(--fg); border: 0; outline: 0;
+  padding: 1rem 1.2rem; font: 13px/1.65 ui-monospace, "JetBrains Mono", monospace; resize: none;
+  caret-color: var(--acid); tab-size: 2; }
+.fed-foot { display: flex; gap: 1.2rem; align-items: center; padding: .35rem .8rem;
+  border-top: 1px solid var(--line); background: var(--panel); font-size: .76rem; color: var(--muted); }
+.fed-foot .ok { color: var(--acid); } .fed-foot .bad { color: var(--red); }
+.fed-sa { position: absolute; inset: 0; display: grid; place-items: center;
+  background: color-mix(in srgb, #000 55%, transparent); }
+.fed-sa-box { width: 380px; background: var(--panel); border: 1px solid var(--cyan); border-radius: 10px;
+  padding: 1rem 1.1rem; box-shadow: 0 30px 80px -18px #000; }
+.fed-sa-box h3 { margin: 0 0 .7rem; color: var(--acid); font-size: .95rem; }
+.fed-sa-box label { display: block; color: var(--muted); font-size: .76rem; margin: .5rem 0 .2rem; }
+.fed-sa-box select, .fed-sa-box input { width: 100%; background: var(--bg); color: var(--fg);
+  border: 1px solid var(--line); border-radius: 6px; padding: .38rem; font: inherit; }
+.fed-sa-act { display: flex; justify-content: flex-end; gap: .5rem; margin-top: 1rem; }
 </style>
 </head>
 <body>
@@ -232,9 +302,58 @@ table.log .d { color: var(--muted); white-space: nowrap; font-size: .78rem; }
         </form>
       </div>
     </details>
+    <button type="button" class="btn ghost" id="fed-open-btn" title="pop-up file editor (Ctrl/⌘+E)">✎ files</button>
   </div>
   {% block body %}{% endblock %}
 </main>
+</div>
+
+<!-- ── pop-up file editor ─────────────────────────────────── -->
+<div id="fed" hidden>
+  <div class="fed-box">
+    <div class="fed-tt" id="fed-tt">
+      <i class="dot1"></i><i class="dot2"></i><i class="dot3"></i>
+      <span class="nm" id="fed-nm">— no file —</span><span class="dirty">●</span>
+      <span style="flex:1"></span>
+      <button class="tbtn" data-act="open">open</button>
+      <button class="tbtn" data-act="save">save</button>
+      <button class="tbtn" data-act="saveas">save as</button>
+      <button class="tbtn" data-act="selall">select all</button>
+      <button class="tbtn" data-act="copy">copy</button>
+      <button class="tbtn" data-act="cut">cut</button>
+      <button class="tbtn" data-act="paste">paste</button>
+      <button class="tbtn warn" data-act="close">✕ close</button>
+    </div>
+    <div class="fed-body">
+      <div class="fed-open" id="fed-open" hidden>
+        <input type="text" id="fed-filter" placeholder="filter files…" autocomplete="off">
+        <ul id="fed-list"></ul>
+      </div>
+      <textarea id="fed-ta" spellcheck="false" placeholder="open a file, or start typing and “save as”…"></textarea>
+    </div>
+    <div class="fed-foot">
+      <span id="fed-pos">L1 · C1</span>
+      <span id="fed-cnt">0 words · 0 chars</span>
+      <span id="fed-msg"></span>
+    </div>
+    <div class="fed-sa" id="fed-sa" hidden>
+      <div class="fed-sa-box">
+        <h3>save as</h3>
+        <label for="fed-sa-folder">folder</label>
+        <select id="fed-sa-folder">
+          <option value="">(vault root)</option>
+          <option value="Inbox">Inbox</option>
+          {% for f in folders | default([]) %}<option value="{{ f }}">{{ f }}</option>{% endfor %}
+        </select>
+        <label for="fed-sa-name">file name</label>
+        <input type="text" id="fed-sa-name" placeholder="my-note.md" autocomplete="off">
+        <div class="fed-sa-act">
+          <button class="tbtn" data-act="sa-cancel">cancel</button>
+          <button class="btn" data-act="sa-ok">save</button>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 <script>
 (function () {
@@ -331,6 +450,177 @@ table.log .d { color: var(--muted); white-space: nowrap; font-size: .78rem; }
     if (m) { try { tsel.value = decodeURIComponent(m[1]); } catch (e) {} }
     tsel.addEventListener('change', function () {
       location.href = '/theme/set/' + encodeURIComponent(tsel.value);
+    });
+  }
+
+  // ── pop-up file editor (notepad-style, save / save as / …) ─
+  var g = function (id) { return document.getElementById(id); };
+  var fed = g('fed'), ta = g('fed-ta'), tt = g('fed-tt'),
+      openPane = g('fed-open'), list = g('fed-list'), filter = g('fed-filter'),
+      sa = g('fed-sa'), saFolder = g('fed-sa-folder'), saName = g('fed-sa-name');
+  if (fed && ta) {
+    var FILES = null, cur = null, dirty = false, msgT;
+
+    function msg(t, cls) {
+      var m = g('fed-msg'); m.textContent = t || ''; m.className = cls || '';
+      clearTimeout(msgT);
+      if (t) msgT = setTimeout(function () { m.textContent = ''; m.className = ''; }, 4000);
+    }
+    function setDirty(v) { dirty = v; tt.classList.toggle('is-dirty', v); }
+    function setName() { g('fed-nm').textContent = cur || '— unsaved —'; }
+    function encPath(p) { return p.split('/').map(encodeURIComponent).join('/'); }
+
+    function stats() {
+      var v = ta.value, ss = ta.selectionStart;
+      var line = v.slice(0, ss).split('\n').length;
+      var col = ss - (v.lastIndexOf('\n', ss - 1) + 1) + 1;
+      g('fed-pos').textContent = 'L' + line + ' · C' + col;
+      var w = v.trim() ? v.trim().split(/\s+/).length : 0;
+      g('fed-cnt').textContent = w + ' word' + (w === 1 ? '' : 's') + ' · ' + v.length + ' chars';
+    }
+    function insertAtCaret(text) {
+      var s = ta.selectionStart, e = ta.selectionEnd;
+      ta.value = ta.value.slice(0, s) + text + ta.value.slice(e);
+      ta.selectionStart = ta.selectionEnd = s + text.length;
+      setDirty(true); stats();
+    }
+
+    function drawList(f) {
+      f = (f || '').toLowerCase();
+      list.innerHTML = '';
+      (FILES || []).filter(function (x) {
+        return !f || x.rel.toLowerCase().indexOf(f) !== -1 || x.title.toLowerCase().indexOf(f) !== -1;
+      }).slice(0, 400).forEach(function (x) {
+        var li = document.createElement('li');
+        li.textContent = x.rel;
+        li.title = x.title;
+        if (x.rel === cur) li.className = 'on';
+        li.addEventListener('click', function () { loadFile(x.rel); });
+        list.appendChild(li);
+      });
+    }
+    function ensureList(cb) {
+      if (FILES) { cb && cb(); return; }
+      fetch('/api/titles').then(function (r) { return r.json(); }).then(function (j) {
+        FILES = j.sort(function (a, b) { return a.rel < b.rel ? -1 : 1; });
+        drawList(filter.value); cb && cb();
+      }).catch(function () { msg('could not load file list', 'bad'); });
+    }
+    function loadFile(rel) {
+      fetch('/api/raw/' + encPath(rel)).then(function (r) { return r.json(); }).then(function (j) {
+        if (j.error) { msg(j.error, 'bad'); return; }
+        ta.value = j.content; cur = j.rel; setName(); setDirty(false);
+        openPane.hidden = true; ta.focus(); ta.setSelectionRange(0, 0); stats();
+        msg('opened · ' + j.rel, 'ok'); drawList(filter.value);
+      }).catch(function () { msg('could not open ' + rel, 'bad'); });
+    }
+    function doSave(rel) {
+      msg('saving…');
+      fetch('/api/save', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rel: rel, content: ta.value })
+      }).then(function (r) { return r.json(); }).then(function (j) {
+        if (!j.ok) { msg(j.error || 'save failed', 'bad'); return; }
+        var isNew = j.created && j.rel !== cur;
+        cur = j.rel; setName(); setDirty(false);
+        msg((j.created ? 'created · ' : 'saved · ') + j.rel, 'ok');
+        if (FILES && isNew && !FILES.some(function (x) { return x.rel === j.rel; })) {
+          FILES.push({ rel: j.rel, title: j.rel }); FILES.sort(function (a, b) { return a.rel < b.rel ? -1 : 1; });
+        }
+        drawList(filter.value);
+      }).catch(function () { msg('save failed (network)', 'bad'); });
+    }
+    function openSaveAs() {
+      var base = (cur || 'untitled.md').split('/').pop();
+      var dir = (cur && cur.indexOf('/') !== -1) ? cur.slice(0, cur.lastIndexOf('/')) : '';
+      saName.value = base;
+      saFolder.value = [].some.call(saFolder.options, function (o) { return o.value === dir; }) ? dir : '';
+      sa.hidden = false; saName.focus(); saName.select();
+    }
+    function clip(write) {
+      var s = ta.value.substring(ta.selectionStart, ta.selectionEnd);
+      var text = s || ta.value;
+      var done = function () {
+        msg(write === 'cut' ? 'cut' : 'copied', 'ok');
+        if (write === 'cut' && s) {
+          var a = ta.selectionStart;
+          ta.value = ta.value.slice(0, a) + ta.value.slice(ta.selectionEnd);
+          ta.selectionStart = ta.selectionEnd = a; setDirty(true); stats();
+        }
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, function () {
+          ta.focus(); try { document.execCommand('copy'); done(); } catch (e) { msg('clipboard blocked', 'bad'); }
+        });
+      } else { ta.focus(); try { document.execCommand('copy'); done(); } catch (e) { msg('clipboard blocked', 'bad'); } }
+    }
+    function paste() {
+      if (navigator.clipboard && navigator.clipboard.readText) {
+        navigator.clipboard.readText().then(insertAtCaret, function () { msg('clipboard blocked — use Ctrl/⌘+V', 'bad'); });
+      } else { msg('use Ctrl/⌘+V to paste', 'bad'); }
+    }
+
+    function openModal(rel) {
+      fed.hidden = false;
+      ensureList(function () { if (rel) loadFile(rel); });
+      if (!rel && !cur) openPane.hidden = false;
+      (rel || cur ? ta : filter).focus();
+      stats();
+    }
+    function closeModal() {
+      if (dirty && !confirm('discard unsaved changes?')) return;
+      fed.hidden = true; sa.hidden = true;
+    }
+
+    var ACT = {
+      open: function () { openPane.hidden = !openPane.hidden; if (!openPane.hidden) { drawList(filter.value); filter.focus(); } },
+      save: function () { cur ? doSave(cur) : openSaveAs(); },
+      saveas: openSaveAs,
+      selall: function () { ta.focus(); ta.select(); },
+      copy: function () { clip('copy'); },
+      cut: function () { clip('cut'); },
+      paste: paste,
+      close: closeModal,
+      'sa-cancel': function () { sa.hidden = true; ta.focus(); },
+      'sa-ok': function () {
+        var name = saName.value.trim();
+        if (!name) { saName.focus(); msg('name required', 'bad'); return; }
+        var dir = saFolder.value;
+        sa.hidden = true;
+        doSave(dir ? dir + '/' + name : name);
+      }
+    };
+    fed.addEventListener('click', function (e) {
+      if (e.target === fed) { closeModal(); return; }
+      var b = e.target.closest('[data-act]');
+      if (b && ACT[b.dataset.act]) { e.preventDefault(); ACT[b.dataset.act](); }
+    });
+
+    ta.addEventListener('input', function () { setDirty(true); stats(); });
+    ta.addEventListener('keyup', stats);
+    ta.addEventListener('click', stats);
+    ta.addEventListener('keydown', function (e) {
+      var mod = e.metaKey || e.ctrlKey;
+      if (mod && e.key.toLowerCase() === 's') {
+        e.preventDefault();
+        e.shiftKey ? openSaveAs() : (cur ? doSave(cur) : openSaveAs());
+      }
+    });
+    filter.addEventListener('input', function () { drawList(filter.value); });
+    filter.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { var f = list.querySelector('li'); if (f) f.click(); }
+      else if (e.key === 'Escape') { openPane.hidden = true; ta.focus(); }
+    });
+
+    var ob = g('fed-open-btn');
+    if (ob) ob.addEventListener('click', function () { openModal(); });
+    document.addEventListener('click', function (e) {
+      var d = e.target.closest('[data-fed-open]');
+      if (d) { e.preventDefault(); openModal(d.getAttribute('data-fed-open') || undefined); }
+    });
+    document.addEventListener('keydown', function (e) {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'e') { e.preventDefault(); fed.hidden ? openModal() : closeModal(); }
+      else if (e.key === 'Escape' && !fed.hidden) { sa.hidden ? closeModal() : (sa.hidden = true, ta.focus()); }
     });
   }
 })();

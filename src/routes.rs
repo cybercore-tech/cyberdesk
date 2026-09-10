@@ -423,6 +423,57 @@ pub async fn api_titles(State(st): State<AppState>) -> impl IntoResponse {
     )
 }
 
+/// Raw file contents for the pop-up editor.
+pub async fn api_raw(State(st): State<AppState>, Path(rel): Path<String>) -> Response {
+    match vault::safe_rel(&rel) {
+        Ok(r) => {
+            let exists = vault::exists(&st.cfg.root, &r);
+            let content = vault::read_raw(&st.cfg.root, &r).unwrap_or_default();
+            axum::Json(serde_json::json!({ "rel": r, "content": content, "exists": exists }))
+                .into_response()
+        }
+        Err(e) => (
+            StatusCode::BAD_REQUEST,
+            axum::Json(serde_json::json!({ "error": e.to_string() })),
+        )
+            .into_response(),
+    }
+}
+
+#[derive(Deserialize)]
+pub struct ApiSave {
+    rel: String,
+    content: String,
+}
+
+/// Save (or save-as) from the pop-up editor. Creates the file + parent dirs if
+/// missing, commits, and optionally pushes. Returns JSON.
+pub async fn api_save(State(st): State<AppState>, axum::Json(f): axum::Json<ApiSave>) -> Response {
+    let root = &st.cfg.root;
+    let mut rel = f.rel.trim().trim_start_matches('/').to_string();
+    if !rel.ends_with(".md") {
+        rel.push_str(".md");
+    }
+    let existed = vault::exists(root, &rel);
+    match vault::write_raw(root, &rel, &f.content) {
+        Ok(()) => {
+            let verb = if existed { "note" } else { "note: new —" };
+            git::commit(root, &format!("{verb} {rel}"));
+            if st.cfg.auto_push {
+                let r = root.clone();
+                tokio::task::spawn_blocking(move || git::push(&r));
+            }
+            axum::Json(serde_json::json!({ "ok": true, "rel": rel, "created": !existed }))
+                .into_response()
+        }
+        Err(e) => (
+            StatusCode::BAD_REQUEST,
+            axum::Json(serde_json::json!({ "ok": false, "error": e.to_string() })),
+        )
+            .into_response(),
+    }
+}
+
 pub async fn healthz() -> &'static str {
     "ok"
 }
