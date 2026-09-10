@@ -54,6 +54,8 @@ async fn main() -> anyhow::Result<()> {
         .route("/all", get(routes::all))
         .route("/folders", get(routes::folders_page))
         .route("/templates", get(routes::templates_page))
+        .route("/templates/new", post(routes::template_new))
+        .route("/api", get(routes::api_docs))
         .route("/tag/*tag", get(routes::by_tag))
         .route("/lint", get(routes::lint_page))
         .route("/lint/fix", post(routes::lint_fix))

@@ -2,16 +2,160 @@
 {% block title %}templates · cyberdesk{% endblock %}
 {% block body %}
 <div class="wrap">
-  <h1>templates <span class="muted" style="font-size:1rem">{{ list | length }}</span></h1>
-  <p class="muted">Skeletons in <code>_templates/</code>. <b>＋ new</b> fills in
-    <code>{{ '{{title}}' }}</code>, <code>{{ '{{date}}' }}</code>, <code>{{ '{{slug}}' }}</code>. Edit any of them like a note.</p>
+  <h1>🧩 templates <span class="muted" style="font-size:1rem">{{ list | length }}</span></h1>
+  <p class="muted">Skeletons in <code>_templates/</code>. <b>＋ new note</b> fills in
+    <code>{{ '{{title}}' }}</code>, <code>{{ '{{date}}' }}</code>, <code>{{ '{{slug}}' }}</code>, and any
+    <code>{{ '{{field}}' }}</code> you declare. Sub-folders in a template's frontmatter are up to you.</p>
+
+  <details class="tpanel" id="nt">
+    <summary>＋ new template</summary>
+    <div class="tpanel-body">
+      <div class="trow">
+        <label>name</label>
+        <span class="tfile"><input id="nt-name" placeholder="incident-report" autocomplete="off"><span class="text">.md</span></span>
+      </div>
+      <label class="tlbl">snippets — click to insert at the cursor</label>
+      <div class="snips" id="nt-snips"></div>
+      <label class="tlbl">content</label>
+      <form method="post" action="/templates/new" onsubmit="return document.getElementById('nt-name').value.trim() !== ''">
+        <input type="hidden" name="name" id="nt-name-h">
+        <textarea name="content" id="nt-body" spellcheck="false" rows="16"
+          placeholder="leave blank for the standard frontmatter starter"></textarea>
+        <div style="margin-top:.7rem"><button class="btn">create template</button></div>
+      </form>
+    </div>
+  </details>
+
   {% for t in list %}
-  <div class="win">
-    <div class="tt"><i class="dot1"></i><i class="dot2"></i><i class="dot3"></i>
-      <span style="margin-left:.4rem">{{ t.rel }}</span><span style="flex:1"></span>
-      <a class="btn ghost" style="padding:.12rem .55rem" href="/e/{{ t.rel | safe }}">edit</a></div>
-    <pre style="margin:0;padding:.9rem 1.1rem;background:var(--bg);overflow:auto">{{ t.preview }}</pre>
+  <div class="tcard">
+    <div class="tcard-tt">
+      <span class="k">🧩</span>
+      <span class="nm">{{ t.name }}</span>
+      <span class="muted" style="font-size:.72rem">{{ t.lines }} lines</span>
+      <span style="flex:1"></span>
+      <button class="tbtn2" data-view="{{ t.rel | safe }}" data-name="{{ t.name }}">👁 view</button>
+      <a class="tbtn2" href="/e/{{ t.rel | safe }}">✎ edit</a>
+    </div>
+    <pre class="tprev">{{ t.preview }}</pre>
   </div>
   {% endfor %}
 </div>
+
+<!-- template viewer -->
+<div id="tvm" hidden>
+  <div class="tvm-box">
+    <div class="tvm-tt"><span class="k">🧩</span><span class="nm" id="tvm-nm"></span>
+      <span style="flex:1"></span>
+      <a class="tbtn2" id="tvm-edit" href="#">✎ edit</a>
+      <button class="tbtn2 warn" data-close>✕ close</button></div>
+    <pre id="tvm-body"></pre>
+  </div>
+</div>
+
+<style>
+.tpanel { margin: .6rem 0 1.4rem; border: 1px solid var(--line); border-left: 3px solid var(--acid);
+  background: color-mix(in srgb, var(--bg) 78%, var(--panel)); border-radius: var(--r); }
+.tpanel > summary { list-style: none; cursor: pointer; padding: .5rem .8rem; color: var(--acid);
+  text-transform: uppercase; letter-spacing: .06em; font-size: .8rem; font-weight: 600; }
+.tpanel > summary::-webkit-details-marker { display: none; }
+.tpanel > summary::before { content: "▸ "; } .tpanel[open] > summary::before { content: "▾ "; }
+.tpanel-body { padding: .3rem .9rem 1rem; }
+.trow { display: flex; align-items: center; gap: .6rem; margin: .5rem 0; }
+.trow label, .tlbl { color: var(--muted); font-size: .68rem; text-transform: uppercase; letter-spacing: .07em; }
+.tlbl { display: block; margin: .9rem 0 .3rem; }
+.tfile { display: inline-flex; }
+.tfile input { background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 0;
+  padding: .34rem .5rem; font: inherit; font-size: .82rem; }
+.tfile .text { display: inline-flex; align-items: center; padding: 0 .5rem; border: 1px solid var(--line);
+  border-left: 0; background: var(--panel-2); color: var(--muted); font-size: .8rem; }
+.snips { display: flex; flex-wrap: wrap; gap: .35rem; }
+.snips button { font: inherit; font-size: .68rem; text-transform: uppercase; letter-spacing: .04em;
+  color: var(--cyan); background: var(--panel-2); border: 1px solid var(--line); border-radius: 0;
+  padding: .22rem .5rem; cursor: pointer; transition: color .12s, background .12s, border-color .12s; }
+.snips button:hover { color: #0a0a12; background: var(--cyan); border-color: var(--cyan); }
+#nt-body { width: 100%; background: var(--bg); color: var(--fg); border: 1px solid var(--line);
+  border-radius: 0; padding: .7rem .9rem; font: 12.5px/1.6 var(--font-mono); resize: vertical; }
+
+.tcard { border: 1px solid var(--line); border-left: 3px solid var(--purple); border-radius: var(--r);
+  overflow: hidden; margin: .9rem 0; background: var(--bg); }
+.tcard-tt { display: flex; align-items: center; gap: .5rem; padding: .4rem .7rem;
+  background: color-mix(in srgb, var(--bg) 70%, var(--panel)); border-bottom: 1px solid var(--line); }
+.tcard-tt .nm { color: var(--purple); text-transform: uppercase; letter-spacing: .05em; font-weight: 600; font-size: .84rem; }
+.tbtn2 { font: inherit; font-size: .68rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted);
+  background: var(--panel-2); border: 1px solid var(--line); border-radius: 0; padding: .2rem .5rem; cursor: pointer; }
+.tbtn2:hover { color: var(--fg); background: color-mix(in srgb, var(--panel) 55%, var(--bg));
+  border-color: color-mix(in srgb, var(--cyan) 55%, var(--line)); }
+.tbtn2.warn:hover { color: #0a0a12; background: var(--pink); border-color: var(--pink); }
+.tprev { margin: 0; padding: .8rem 1rem; background: var(--bg); color: var(--muted); overflow: auto;
+  max-height: 240px; font: 12px/1.55 var(--font-mono); white-space: pre; }
+
+#tvm { position: fixed; inset: 0; z-index: 120; display: grid; place-items: center;
+  background: color-mix(in srgb, #000 70%, transparent); backdrop-filter: blur(3px); }
+#tvm[hidden] { display: none; }
+.tvm-box { position: relative; width: min(900px, 92vw); height: min(80vh, 800px); display: flex; flex-direction: column;
+  background: var(--bg); border: 1px solid color-mix(in srgb, var(--pink) 28%, var(--line)); border-radius: 3px;
+  overflow: hidden; box-shadow: 0 40px 120px -20px #000, 0 0 60px -22px color-mix(in srgb, var(--pink) 45%, transparent); }
+.tvm-box::before { content: ""; position: absolute; top: 5px; left: 5px; width: 16px; height: 16px;
+  border: 2px solid var(--pink); border-right: 0; border-bottom: 0; }
+.tvm-tt { display: flex; align-items: center; gap: .5rem; padding: .5rem .7rem;
+  background: var(--panel); border-bottom: 1px solid var(--line); }
+.tvm-tt .nm { color: var(--acid); text-transform: uppercase; letter-spacing: .05em; font-size: .82rem; }
+#tvm-body { flex: 1; margin: 0; padding: 1rem 1.2rem; overflow: auto; color: var(--fg);
+  font: 13px/1.62 var(--font-mono); white-space: pre; }
+</style>
+
+<script>
+(function () {
+  var body = document.getElementById('nt-body'), name = document.getElementById('nt-name'),
+      nameH = document.getElementById('nt-name-h'), snips = document.getElementById('nt-snips');
+  if (name) name.addEventListener('input', function () { nameH.value = name.value.trim(); });
+
+  var SNIPPETS = [
+    ['frontmatter', '---\ntitle: "{{title}}"\nuser: darkstardevx@gmail.com\nrepo: {{repo}}\nlicense: MIT\ntags: []\ncreated: {{date}}\n---\n\n'],
+    ['h1 title', '# {{title}}\n\n'],
+    ['overview', '## Overview\n\n## Details\n\n'],
+    ['steps', '## Steps\n\n1. \n2. \n3. \n\n## Verify\n\n'],
+    ['prereqs', '## Prerequisites\n\n- \n\n'],
+    ['table', '| Column | Meaning |\n|--------|---------|\n|        |         |\n\n'],
+    ['cmd table', '| Command | Description |\n|---------|-------------|\n| `` |  |\n\n'],
+    ['task list', '- [ ] \n- [ ] \n- [ ] \n\n'],
+    ['code fence', '```sh\n\n```\n\n'],
+    ['callout', '> **Note:** \n\n'],
+    ['collapsible', '<details>\n<summary>details</summary>\n\n\n</details>\n\n'],
+    ['runbook body', '> Purpose:\n\n## Steps\n\n## Rollback\n\n## Verify\n\n'],
+    ['troubleshooting', '## Symptom\n\n## Cause\n\n## Fix\n\n## Prevention\n\n'],
+    ['links', 'See also: [[related-note]] · [[another|labelled]]\n\n']
+  ];
+  if (snips) SNIPPETS.forEach(function (s) {
+    var b = document.createElement('button');
+    b.type = 'button'; b.textContent = s[0];
+    b.addEventListener('click', function () {
+      var st = body.selectionStart, en = body.selectionEnd;
+      body.value = body.value.slice(0, st) + s[1] + body.value.slice(en);
+      body.selectionStart = body.selectionEnd = st + s[1].length;
+      body.focus();
+    });
+    snips.appendChild(b);
+  });
+
+  // viewer modal
+  var tvm = document.getElementById('tvm'), tvb = document.getElementById('tvm-body'),
+      tvn = document.getElementById('tvm-nm'), tve = document.getElementById('tvm-edit');
+  function openView(rel, nm) {
+    fetch('/api/raw/' + rel.split('/').map(encodeURIComponent).join('/'))
+      .then(function (r) { return r.json(); }).then(function (j) {
+        tvb.textContent = j.content || '(empty)';
+        tvn.textContent = nm; tve.href = '/e/' + rel;
+        tvm.hidden = false;
+      });
+  }
+  document.querySelectorAll('[data-view]').forEach(function (b) {
+    b.addEventListener('click', function () { openView(b.dataset.view, b.dataset.name); });
+  });
+  tvm.addEventListener('click', function (e) {
+    if (e.target === tvm || e.target.closest('[data-close]')) tvm.hidden = true;
+  });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !tvm.hidden) tvm.hidden = true; });
+})();
+</script>
 {% endblock %}

@@ -35,6 +35,8 @@
 html, body { height: 100%; }
 body { margin: 0; background: var(--bg); color: var(--fg);
   font: 14px/1.6 var(--font-mono); }
+/* UA stylesheets reset these to a generic monospace — pin them to ours */
+pre, code, kbd, samp, tt, textarea { font-family: var(--font-mono); }
 a { color: var(--cyan); text-decoration: none; }
 a:hover { color: var(--acid); }
 .app { display: grid; grid-template-columns: 264px 1fr; height: 100%; }
@@ -473,6 +475,7 @@ body::after { content: ""; position: fixed; inset: 0; z-index: 500; pointer-even
     <a href="/templates" class="{{ 'on' if nav == 'templates' }}">🧩 templates</a>
     <a href="/lint" class="{{ 'on' if nav == 'lint' }}">🩹 lint</a>
     <a href="/repo" class="{{ 'on' if nav == 'repo' }}">🌿 repo</a>
+    <a href="/api" class="{{ 'on' if nav == 'api' }}">🔌 api</a>
   </div>
   <div class="tree">
     {% macro tnode(n, depth, accent) %}

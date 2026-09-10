@@ -378,10 +378,48 @@ pub async fn templates_page(State(st): State<AppState>) -> Response {
         .map(|t| {
             let rel = format!("_templates/{t}.md");
             let body = std::fs::read_to_string(root.join(&rel)).unwrap_or_default();
-            context! { name => t, rel => rel, preview => body }
+            let lines = body.lines().count();
+            context! { name => t, rel => rel, preview => body, lines => lines }
         })
         .collect();
-    page(&st, "templates.html", context! { list }, "")
+    page(&st, "templates.html", context! { list }, "templates")
+}
+
+#[derive(Deserialize)]
+pub struct NewTemplate {
+    name: String,
+    #[serde(default)]
+    content: String,
+}
+
+/// Create `_templates/<slug>.md` from the templates page. Commits, redirects.
+pub async fn template_new(State(st): State<AppState>, Form(f): Form<NewTemplate>) -> Response {
+    let root = &st.cfg.root;
+    let slug = vault::slugify(f.name.trim().trim_end_matches(".md"));
+    if slug.is_empty() {
+        return err("template needs a name");
+    }
+    let rel = format!("_templates/{slug}.md");
+    if vault::exists(root, &rel) {
+        return err(format!("a template named {slug} already exists"));
+    }
+    let body = if f.content.trim().is_empty() {
+        "---\ntitle: \"{{title}}\"\nuser: darkstardevx@gmail.com\nrepo: {{repo}}\nlicense: MIT\ntags: []\ncreated: {{date}}\n---\n\n# {{title}}\n\n".to_string()
+    } else {
+        f.content.clone()
+    };
+    match vault::write_raw(root, &rel, &body) {
+        Ok(()) => {
+            git::commit(root, &format!("template: new — {slug}"));
+            Redirect::to("/templates").into_response()
+        }
+        Err(e) => err(e),
+    }
+}
+
+// ── API reference page ───────────────────────────────────────────────────
+pub async fn api_docs(State(st): State<AppState>) -> Response {
+    page(&st, "api.html", context! {}, "api")
 }
 
 pub async fn folders_page(State(st): State<AppState>) -> Response {

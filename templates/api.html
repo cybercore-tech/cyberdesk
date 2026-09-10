@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}api · cyberdesk{% endblock %}
+{% block body %}
+<div class="wrap" style="max-width:1040px">
+  <h1>🔌 cyberdesk api</h1>
+  <p class="muted">Every HTTP endpoint the app serves. The vault root is
+    <code>$CYBERDESK_ROOT</code>; a <code>&lt;path&gt;</code> is a vault-relative
+    <code>.md</code> file. JSON endpoints take/emit <code>application/json</code>;
+    action endpoints take form bodies and 303-redirect.</p>
+
+  <section class="api-grp" style="--g:var(--cyan)">
+    <h2>pages · GET → HTML</h2>
+    <div class="api-ep"><b class="m get">GET</b><code>/</code><span>portal — counts, tags, recent</span></div>
+    <div class="api-ep"><b class="m get">GET</b><code>/all</code><span>every note</span></div>
+    <div class="api-ep"><b class="m get">GET</b><code>/folders</code><span>folder tree</span></div>
+    <div class="api-ep"><b class="m get">GET</b><code>/templates</code><span>template skeletons</span></div>
+    <div class="api-ep"><b class="m get">GET</b><code>/lint</code><span>vault lint report · <code>?kind=&lt;kind&gt;</code> filters</span></div>
+    <div class="api-ep"><b class="m get">GET</b><code>/repo</code><span>git activity (app + vault)</span></div>
+    <div class="api-ep"><b class="m get">GET</b><code>/api</code><span>this page</span></div>
+    <div class="api-ep"><b class="m get">GET</b><code>/search?q=&lt;query&gt;</code><span>full-text search</span></div>
+    <div class="api-ep"><b class="m get">GET</b><code>/tag/&lt;tag&gt;</code><span>notes with a tag</span></div>
+    <div class="api-ep"><b class="m get">GET</b><code>/n/&lt;path&gt;</code><span>render a note (+ TOC, backlinks)</span></div>
+    <div class="api-ep"><b class="m get">GET</b><code>/e/&lt;path&gt;</code><span>edit a note (CodeMirror)</span></div>
+  </section>
+
+  <section class="api-grp" style="--g:var(--acid)">
+    <h2>json api</h2>
+    <div class="api-ep"><b class="m get">GET</b><code>/api/titles</code>
+      <span>→ <code>[{rel, title}]</code> for every note</span></div>
+    <div class="api-ep"><b class="m get">GET</b><code>/api/raw/&lt;path&gt;</code>
+      <span>→ <code>{rel, content, exists}</code></span></div>
+    <div class="api-ep"><b class="m post">POST</b><code>/api/save</code>
+      <span><code>{rel, content, tidy?:bool}</code> → <code>{ok, rel, created, content}</code>. Writes,
+        creates parent dirs, commits. <code>tidy</code> mechanically lints first.</span></div>
+    <div class="api-ep"><b class="m post">POST</b><code>/api/tidy</code>
+      <span><code>{rel?, content}</code> → <code>{content, changed}</code>. No filesystem write.</span></div>
+    <div class="api-ep"><b class="m post">POST</b><code>/api/delete</code>
+      <span><code>{rel}</code> → <code>{ok, rel}</code>. Removes + commits.</span></div>
+    <div class="api-ep"><b class="m post">POST</b><code>/api/move</code>
+      <span><code>{from, to}</code> → <code>{ok, from, to}</code>. <code>to</code>'s last segment is slugified.</span></div>
+    <pre class="api-eg">curl -s localhost:8765/api/raw/Inbox/note.md
+curl -s -XPOST localhost:8765/api/save -H 'content-type: application/json' \
+  -d '{"rel":"Inbox/note.md","content":"# hi\n","tidy":true}'</pre>
+  </section>
+
+  <section class="api-grp" style="--g:var(--pink)">
+    <h2>actions · form POST → 303</h2>
+    <div class="api-ep"><b class="m post">POST</b><code>/new</code>
+      <span>create from template. fields: <code>template, folder, new_folder, title, filename,
+        tags, needs_review, tidy, date_prefix, open_in, fields_json, body</code></span></div>
+    <div class="api-ep"><b class="m post">POST</b><code>/e/&lt;path&gt;</code><span><code>content</code> — save a note</span></div>
+    <div class="api-ep"><b class="m post">POST</b><code>/rm/&lt;path&gt;</code><span>delete a note</span></div>
+    <div class="api-ep"><b class="m post">POST</b><code>/lint/fix</code><span><code>rel</code> (a path, or <code>*</code> for all fixable)</span></div>
+    <div class="api-ep"><b class="m post">POST</b><code>/templates/new</code><span><code>name, content?</code> — create a template</span></div>
+  </section>
+
+  <section class="api-grp" style="--g:var(--purple)">
+    <h2>assets &amp; misc · GET</h2>
+    <div class="api-ep"><b class="m get">GET</b><code>/theme.css</code><span><code>:root{}</code> for the browser's chosen cybercore theme</span></div>
+    <div class="api-ep"><b class="m get">GET</b><code>/theme/set/&lt;slug&gt;</code><span>set the theme cookie, redirect back</span></div>
+    <div class="api-ep"><b class="m get">GET</b><code>/vendor/cm.js</code> · <code>/vendor/cm.css</code><span>bundled CodeMirror (offline)</span></div>
+    <div class="api-ep"><b class="m get">GET</b><code>/logo.svg</code> · <code>/mark.svg</code> · <code>/favicon.svg</code><span>brand marks</span></div>
+    <div class="api-ep"><b class="m get">GET</b><code>/healthz</code><span>→ <code>ok</code></span></div>
+  </section>
+</div>
+
+<style>
+.api-grp { border: 1px solid var(--line); border-left: 3px solid var(--g, var(--cyan));
+  background: color-mix(in srgb, var(--bg) 78%, var(--panel)); border-radius: var(--r);
+  padding: .3rem .9rem 1rem; margin: 1rem 0; }
+.api-grp > h2 { color: var(--g, var(--acid)); font-size: .9rem; text-transform: uppercase;
+  letter-spacing: .08em; margin: .7rem 0 .5rem; }
+.api-ep { display: grid; grid-template-columns: 3.4rem minmax(11rem, auto) 1fr; gap: .7rem;
+  align-items: baseline; padding: .3rem 0; border-top: 1px solid var(--hair); font-size: .84rem; }
+.api-ep:first-of-type { border-top: 0; }
+.api-ep .m { font-size: .66rem; font-weight: 700; text-align: center; padding: .1rem 0; border-radius: var(--r);
+  text-transform: uppercase; letter-spacing: .04em; }
+.api-ep .m.get { color: var(--acid); border: 1px solid color-mix(in srgb, var(--acid) 50%, var(--line)); }
+.api-ep .m.post { color: var(--pink); border: 1px solid color-mix(in srgb, var(--pink) 50%, var(--line)); }
+.api-ep > code { color: var(--cyan); font-size: .82rem; word-break: break-all; }
+.api-ep > span { color: var(--muted); }
+.api-ep span code { color: var(--fg); background: var(--panel-2); padding: 0 .25rem; border-radius: var(--r); }
+.api-eg { margin: .8rem 0 0; padding: .7rem .9rem; background: var(--bg); border: 1px solid var(--line);
+  border-radius: var(--r); overflow: auto; color: var(--muted); font: 11.5px/1.6 var(--font-mono); white-space: pre; }
+</style>
+{% endblock %}
