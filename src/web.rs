@@ -31,28 +31,24 @@ pub struct Renderer {
     env: std::sync::Arc<Environment<'static>>,
     pub css: String,
     pub theme: String,
+    pub site_name: String,
 }
 
 impl Renderer {
-    pub fn new() -> Self {
+    pub fn new(site_name: String) -> Self {
         Self {
             env: std::sync::Arc::new(build_env()),
             css: crate::theme::css(),
             theme: crate::theme::active_name().to_string(),
+            site_name,
         }
     }
 
     pub fn page(&self, name: &str, ctx: Value, nav: &str) -> Result<Html<String>, minijinja::Error> {
         let t = self.env.get_template(name)?;
         let merged = context! { ..ctx, ..context! {
-            css => self.css, theme => self.theme, nav => nav,
+            css => self.css, theme => self.theme, nav => nav, site_name => self.site_name,
         }};
         Ok(Html(t.render(merged)?))
-    }
-}
-
-impl Default for Renderer {
-    fn default() -> Self {
-        Self::new()
     }
 }

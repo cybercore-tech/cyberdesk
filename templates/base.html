@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{% block title %}cyberdesk{% endblock %}</title>
+<title>{% block title %}{{ site_name }}{% endblock %}</title>
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 
 <link rel="stylesheet" href="/fonts.css">
@@ -509,7 +509,7 @@ body::after { content: ""; position: fixed; inset: 0; z-index: 500; pointer-even
 {% set accents = ['var(--acid)', 'var(--cyan)', 'var(--pink)', 'var(--purple)', 'var(--orange)'] %}
 <div class="app">
 <aside>
-  <div class="brand"><a href="/" title="cyberdesk"><img src="/logo.svg" alt="cyberdesk"></a></div>
+  <div class="brand"><a href="/" title="{{ site_name }}"><img src="/logo.svg" alt="{{ site_name }}"></a></div>
   <div class="navrow">
     <a href="/" class="{{ 'on' if nav == 'portal' }}">🖥 portal</a>
     <a href="/all" class="{{ 'on' if nav == 'all' }}">📄 all</a>

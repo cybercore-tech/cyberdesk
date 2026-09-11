@@ -45,7 +45,7 @@ async fn main() -> anyhow::Result<()> {
     }
     tracing::info!("vault: {}  theme: {}", cfg.root.display(), theme::active_name());
 
-    let state = AppState { cfg: Arc::new(cfg.clone()), render: Renderer::new() };
+    let state = AppState { cfg: Arc::new(cfg.clone()), render: Renderer::new(cfg.site_name.clone()) };
 
     let app = Router::new()
         .route("/", get(routes::portal))

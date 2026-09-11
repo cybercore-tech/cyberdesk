@@ -183,6 +183,9 @@ pub fn scan(root: &Path) -> Vec<NoteReport> {
             }
         }
 
+        // ── hardware diagnostics (cyberdeck reports specifically) ──
+        issues.extend(hardware_issues(&n.body));
+
         // ── redundancy ──
         if let Some(others) = dup_of.get(&n.rel) {
             issues.push(Issue {
@@ -211,6 +214,103 @@ pub fn scan(root: &Path) -> Vec<NoteReport> {
     }
     reports.sort_by(|a, b| b.issues.len().cmp(&a.issues.len()));
     reports
+}
+
+/// Cyberdeck-diagnostics-specific checks — a no-op against a regular
+/// darknotes note (none of these literal patterns show up in prose), but
+/// this is what turns "Cyberdeck Diagnostic Output" from a plain markdown
+/// viewer into something that actually flags problems. Deliberately plain
+/// string scanning, no regex dependency, matching the rest of this file —
+/// extend here as cyberdeck's own report format grows new sections.
+/// Thresholds are calibrated against this machine's own real reports
+/// (e.g. a 74%-of-design battery genuinely should read as "aging").
+fn hardware_issues(body: &str) -> Vec<Issue> {
+    let mut out = Vec::new();
+    let no_fix = String::new();
+
+    // S.M.A.R.T. — cyberdeck can't read drive health without root, and a
+    // genuine failure reads "FAILED" in smartctl's own output either way.
+    if body.contains("smartctl") && body.contains("Permission denied") {
+        out.push(Issue {
+            kind: "smart_permission",
+            detail: "S.M.A.R.T. check needs root — smartctl couldn't read drive health. https://wiki.archlinux.org/title/S.M.A.R.T.".into(),
+            fixable: false,
+            before: no_fix.clone(),
+            after: no_fix.clone(),
+        });
+    }
+    if body.contains("FAILED") {
+        out.push(Issue {
+            kind: "smart_failed",
+            detail: "a FAILED result appears in this report — check the raw output above.".into(),
+            fixable: false,
+            before: no_fix.clone(),
+            after: no_fix.clone(),
+        });
+    }
+
+    // Thermal — "Zone N: NN.NN°C" / "Peak temperature: NN.NN°C" lines.
+    for line in body.lines() {
+        let Some(idx) = line.find("°C") else { continue };
+        let head = &line[..idx];
+        let Some(cut) = head.rfind(|c: char| !c.is_ascii_digit() && c != '.') else { continue };
+        let Ok(temp) = head[cut + 1..].trim().parse::<f64>() else { continue };
+        if temp >= 90.0 {
+            out.push(Issue {
+                kind: "thermal_critical",
+                detail: format!("{temp:.1}°C is critically hot — check cooling/airflow. https://wiki.archlinux.org/title/Improving_performance#Overheating"),
+                fixable: false,
+                before: no_fix.clone(),
+                after: no_fix.clone(),
+            });
+        } else if temp >= 80.0 {
+            out.push(Issue {
+                kind: "thermal_warning",
+                detail: format!("{temp:.1}°C is running hot. https://wiki.archlinux.org/title/Improving_performance#Overheating"),
+                fixable: false,
+                before: no_fix.clone(),
+                after: no_fix.clone(),
+            });
+        }
+    }
+
+    // Battery health — the energy-source block's own `capacity:` field is
+    // energy-full ÷ energy-full-design, i.e. wear, not charge level.
+    for line in body.lines() {
+        let Some(rest) = line.trim().strip_prefix("capacity:") else { continue };
+        let Ok(pct) = rest.trim().trim_end_matches('%').parse::<f64>() else { continue };
+        if pct < 60.0 {
+            out.push(Issue {
+                kind: "battery_degraded",
+                detail: format!("battery health at {pct:.0}% of design capacity — meaningfully degraded. https://wiki.archlinux.org/title/Laptop#Battery"),
+                fixable: false,
+                before: no_fix.clone(),
+                after: no_fix.clone(),
+            });
+        } else if pct < 80.0 {
+            out.push(Issue {
+                kind: "battery_aging",
+                detail: format!("battery health at {pct:.0}% of design capacity — normal aging, worth watching. https://wiki.archlinux.org/title/Laptop#Battery"),
+                fixable: false,
+                before: no_fix.clone(),
+                after: no_fix.clone(),
+            });
+        }
+    }
+
+    // Cooling — cyberdeck reports this exact literal when no fan-control
+    // daemon is running.
+    if body.contains("Fancontrol Daemon") && body.contains("Not Detected") {
+        out.push(Issue {
+            kind: "no_fan_control",
+            detail: "no fan-control daemon detected — fans run on firmware defaults. https://wiki.archlinux.org/title/Fan_speed_control".into(),
+            fixable: false,
+            before: no_fix,
+            after: String::new(),
+        });
+    }
+
+    out
 }
 
 fn regex_lite_wikilinks(body: &str) -> Vec<String> {
