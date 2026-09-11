@@ -196,7 +196,8 @@ a.pill.on { background: var(--cyan); color: var(--bg); border-color: var(--cyan)
 
 /* tag cloud — fluid, uniform, count baked into each chip */
 .tagcloud { display: flex; flex-wrap: wrap; gap: .4rem; }
-.tagcloud a { display: inline-flex; align-items: center; gap: .35rem; font-size: .78rem; line-height: 1.4;
+.tagcloud a { display: inline-flex; align-items: center; gap: .35rem; font-size: .74rem; line-height: 1.4;
+  text-transform: uppercase; letter-spacing: .04em;
   padding: .12rem .2rem .12rem .5rem; border: 1px solid var(--line); border-radius: var(--r);
   color: var(--muted); background: var(--panel-2);
   transition: transform .1s, color .12s, background .12s, border-color .12s, box-shadow .12s; }
@@ -209,7 +210,7 @@ a.pill.on { background: var(--cyan); color: var(--bg); border-color: var(--cyan)
 .tagcloud a:hover .n { background: color-mix(in srgb, var(--bg) 32%, transparent); color: var(--bg); }
 
 textarea.ed { width: 100%; height: calc(100vh - 150px); background: var(--bg); color: var(--fg);
-  border: 0; outline: 0; padding: 1rem 1.2rem; font: 13px/1.65 var(--font-mono); resize: none; caret-color: var(--acid); }
+  border: 0; outline: 0; padding: 1rem 1.2rem; font: 12px/1.55 var(--font-mono); resize: none; caret-color: var(--acid); }
 .muted { color: var(--muted); }
 .row { display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; }
 
@@ -296,7 +297,8 @@ ul { padding-left: 1.2rem; }
 .pcard-tt .nm { color: var(--pc, var(--cyan)); text-transform: uppercase; letter-spacing: var(--tracking-caps, .05em);
   font-weight: var(--fw-semibold, 600); font-size: var(--fs-1, .84rem); }
 .pcard-tt .sub { color: var(--muted); font-size: var(--fs-0, .72rem); }
-.pcard-body { padding: .7rem 1rem; font-family: var(--font-mono); }
+.pcard-body { padding: .7rem 1rem; font: 12px/1.55 var(--font-mono); }
+.pcard-body .pill { font-size: 11px; }
 .tbtn2 { font: inherit; font-family: var(--font-mono); font-size: var(--fs-0, .7rem);
   text-transform: uppercase; letter-spacing: var(--tracking-wide, .04em); color: var(--muted);
   background: var(--panel-2); border: 1px solid var(--line); border-radius: 0; padding: .2rem .5rem; cursor: pointer; }
@@ -305,7 +307,7 @@ ul { padding-left: 1.2rem; }
 .tbtn2.warn:hover { color: #0a0a12; background: var(--pink); border-color: var(--pink); }
 
 /* ── repo activity ───────────────────────────────────────── */
-table.log { width: 100%; border-collapse: collapse; font-size: var(--fs-1, .84rem); font-family: var(--font-mono); }
+table.log { width: 100%; border-collapse: collapse; font: 12px/1.55 var(--font-mono); }
 table.log td { padding: .3rem .5rem; border-bottom: 1px solid var(--hair); vertical-align: top; }
 table.log tr:hover td { background: rgba(255,255,255,.03); }
 table.log .h { color: var(--orange); white-space: nowrap; }
@@ -371,10 +373,11 @@ table.log .d { color: var(--muted); white-space: nowrap; font-size: var(--fs-0, 
 .fed-open li:hover { color: var(--fg); background: rgba(255,255,255,.04); border-left-color: var(--cyan); }
 .fed-open li.on { color: #0a0a12; background: var(--acid); border-left-color: var(--acid); }
 #fed-ta { flex: 1; min-width: 0; background: var(--bg); color: var(--fg); border: 0; outline: 0;
-  padding: 1rem 1.2rem; font: 13px/1.65 var(--font-mono); resize: none; caret-color: var(--acid); tab-size: 2; }
+  padding: 1rem 1.2rem; font: 12px/1.55 var(--font-mono); resize: none; caret-color: var(--acid); tab-size: 2; }
 .fed-body > .CodeMirror { flex: 1; min-width: 0; height: 100%; }
-.CodeMirror { background: var(--bg); color: var(--fg); font-family: var(--font-mono);
-  font-size: 13px; line-height: 1.62; }
+.CodeMirror { background: var(--bg); color: var(--fg); font-family: var(--font-mono) !important;
+  font-size: 12px; line-height: 1.55; }
+.CodeMirror pre, .CodeMirror-line, .CodeMirror-linenumber { font-family: var(--font-mono) !important; }
 .CodeMirror-gutters { background: var(--panel-2); border-right: 1px solid var(--line); }
 .CodeMirror-linenumber { color: var(--muted); }
 .CodeMirror-cursor { border-left: 2px solid var(--acid); }
@@ -395,7 +398,7 @@ table.log .d { color: var(--muted); white-space: nowrap; font-size: var(--fs-0, 
 .cm-property { color: var(--cyan); }
 .cm-operator { color: var(--fg); }
 #fed-diff { position: absolute; inset: 0; overflow: auto; background: var(--bg); z-index: 4;
-  font: 12.5px/1.55 var(--font-mono); padding: .55rem 0; }
+  font: 12px/1.55 var(--font-mono); padding: .55rem 0; }
 #fed-diff .dl { padding: 0 1rem; white-space: pre-wrap; word-break: break-word; }
 #fed-diff .dl.add { background: color-mix(in srgb, var(--acid) 15%, transparent); color: var(--acid); }
 #fed-diff .dl.del { background: color-mix(in srgb, var(--red) 15%, transparent); color: var(--red); }

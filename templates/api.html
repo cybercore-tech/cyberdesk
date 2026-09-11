@@ -70,14 +70,15 @@ curl -s -XPOST localhost:8765/api/save -H 'content-type: application/json' \
   padding: .3rem .9rem 1rem; margin: 1rem 0; }
 .api-grp > h2 { color: var(--g, var(--acid)); font-size: .9rem; text-transform: uppercase;
   letter-spacing: .08em; margin: .7rem 0 .5rem; }
-.api-ep { display: grid; grid-template-columns: 3.4rem minmax(11rem, auto) 1fr; gap: .7rem;
-  align-items: baseline; padding: .3rem 0; border-top: 1px solid var(--hair); font-size: .84rem; }
+.api-ep { display: grid; grid-template-columns: 3.2rem minmax(10rem, auto) 1fr; gap: .7rem;
+  align-items: baseline; padding: .3rem 0; border-top: 1px solid var(--hair);
+  font: 12px/1.55 var(--font-mono); }
 .api-ep:first-of-type { border-top: 0; }
 .api-ep .m { font-size: .66rem; font-weight: 700; text-align: center; padding: .1rem 0; border-radius: var(--r);
   text-transform: uppercase; letter-spacing: .04em; }
 .api-ep .m.get { color: var(--acid); border: 1px solid color-mix(in srgb, var(--acid) 50%, var(--line)); }
 .api-ep .m.post { color: var(--pink); border: 1px solid color-mix(in srgb, var(--pink) 50%, var(--line)); }
-.api-ep > code { color: var(--cyan); font-size: .82rem; word-break: break-all; }
+.api-ep > code { color: var(--cyan); font-size: 12px; word-break: break-all; }
 .api-ep > span { color: var(--muted); }
 .api-ep span code { color: var(--fg); background: var(--panel-2); padding: 0 .25rem; border-radius: var(--r); }
 .api-eg { margin: .8rem 0 0; padding: .7rem .9rem; background: var(--bg); border: 1px solid var(--line);
