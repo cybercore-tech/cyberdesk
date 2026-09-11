@@ -10,6 +10,7 @@
       <button type="button" id="ef-lint" class="ef-lint">checking…</button>
       <a class="btn ghost" style="padding:.12rem .55rem;margin-left:.4rem" href="/n/{{ rel | safe }}">👁 view</a>
       <button class="btn" style="padding:.12rem .8rem;margin-left:.4rem">💾 save</button>
+      <button type="button" class="win-x" id="ef-close" title="close (Esc)">✕</button>
     </div>
     <div id="ef-fix" class="ef-fix" hidden></div>
     <div style="position:relative">
@@ -52,7 +53,19 @@
   NOTES.forEach(function (n) { n.stem = n.rel.split('/').pop().replace(/\.md$/, ''); });
   var TAGS = {{ tags_all | default([]) | tojson }};
   var FM_TITLE = {{ title | tojson }};
-  var cm = null, lintT;
+  var cm = null, lintT, START = ta.value;
+
+  // close [✕] — warn only if there are unsaved edits
+  var closeBtn = document.getElementById('ef-close');
+  function isDirty() { return getBuf() !== START; }
+  function closeEditor() {
+    if (isDirty() && !confirm('Discard unsaved changes?')) return;
+    location.href = '/n/{{ rel | safe }}';
+  }
+  if (closeBtn) closeBtn.addEventListener('click', closeEditor);
+  window.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && ac.style.display === 'none' && !document.querySelector('.CodeMirror-hints')) closeEditor();
+  });
 
   function getBuf() { return cm ? cm.getValue() : ta.value; }
   function setBuf(v) {

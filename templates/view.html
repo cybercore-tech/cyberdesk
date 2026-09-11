@@ -6,11 +6,12 @@
     <i class="dot1"></i><i class="dot2"></i><i class="dot3"></i>
     <span style="margin-left:.4rem">{{ rel }}</span>
     <span style="flex:1"></span>
-    <a class="btn ghost" style="padding:.12rem .55rem" href="/e/{{ rel | safe }}">edit</a>
+    <a class="btn ghost" style="padding:.12rem .55rem" href="/e/{{ rel | safe }}">✎ edit</a>
     <form method="post" action="/rm/{{ rel | safe }}" style="margin:0 0 0 .4rem"
           onsubmit="return confirm('delete {{ rel }} ?')">
-      <button class="btn danger" style="padding:.12rem .55rem">del</button>
+      <button class="btn danger" style="padding:.12rem .55rem">🗑 del</button>
     </form>
+    <a class="win-x" href="/" title="close" onclick="if(history.length>1){history.back();return false}">✕</a>
   </div>
   <div class="wrap">
     <h1>{{ title }}</h1>

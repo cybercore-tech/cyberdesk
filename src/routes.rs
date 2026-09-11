@@ -749,6 +749,33 @@ pub async fn tokens_css() -> impl IntoResponse {
     )
 }
 
+/// Self-hosted webfont `@font-face` rules.
+pub async fn fonts_css() -> impl IntoResponse {
+    (
+        [
+            (header::CONTENT_TYPE, "text/css; charset=utf-8"),
+            (header::CACHE_CONTROL, "public, max-age=604800"),
+        ],
+        include_str!("../assets/fonts.css"),
+    )
+}
+
+fn woff2(bytes: &'static [u8]) -> impl IntoResponse {
+    (
+        [
+            (header::CONTENT_TYPE, "font/woff2"),
+            (header::CACHE_CONTROL, "public, max-age=31536000, immutable"),
+        ],
+        bytes,
+    )
+}
+pub async fn font_mono() -> impl IntoResponse {
+    woff2(include_bytes!("../assets/fonts/JetBrainsMono.woff2"))
+}
+pub async fn font_ui() -> impl IntoResponse {
+    woff2(include_bytes!("../assets/fonts/Inter.woff2"))
+}
+
 fn svg(body: &'static str) -> impl IntoResponse {
     (
         [
