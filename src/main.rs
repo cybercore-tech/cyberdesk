@@ -59,6 +59,7 @@ async fn main() -> anyhow::Result<()> {
         .route("/tag/*tag", get(routes::by_tag))
         .route("/lint", get(routes::lint_page))
         .route("/lint/fix", post(routes::lint_fix))
+        .route("/api/lint", get(routes::api_lint))
         .route("/repo", get(routes::repo_page))
         .route("/theme.css", get(routes::theme_css))
         .route("/theme/set/:slug", get(routes::theme_set))

@@ -513,6 +513,21 @@ pub async fn lint_fix(State(st): State<AppState>, Form(f): Form<LintFix>) -> Res
     Redirect::to("/lint").into_response()
 }
 
+/// JSON form of the same scan `/lint` renders — for anything that wants to
+/// show "possible problems and fixes" without parsing HTML (e.g. Mission
+/// Control's Diagnostics tab reading the cyberdeck-diagnostics-deck
+/// instance of this same binary).
+pub async fn api_lint(State(st): State<AppState>) -> impl IntoResponse {
+    let reports = lint::scan(&st.cfg.root);
+    let total_issues: usize = reports.iter().map(|r| r.issues.len()).sum();
+    let fixable: usize = reports.iter().flat_map(|r| &r.issues).filter(|i| i.fixable).count();
+    axum::Json(serde_json::json!({
+        "reports": reports,
+        "total_issues": total_issues,
+        "fixable": fixable,
+    }))
+}
+
 // ── theme (cybercore switcher) ────────────────────────────────────────────
 /// `:root{}` custom properties for the browser's chosen theme. Linked from
 /// every page, so switching is just a cookie + reload — no server restart.
