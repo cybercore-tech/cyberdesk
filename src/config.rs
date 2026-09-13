@@ -13,6 +13,17 @@ pub struct Config {
     /// serve a second vault (e.g. cyberdeck's diagnostics output) under
     /// its own identity instead of every deployment saying "cyberdesk".
     pub site_name: String,
+    /// When set, the sidebar shows this text instead of the cyberdesk
+    /// wordmark image — `site_name` alone only ever changed `<title>`/
+    /// `alt`, not the actual logo graphic, which stayed the compiled-in
+    /// cyberdesk SVG regardless. `None` (the default, and always for the
+    /// primary vault) keeps the original image exactly as before.
+    pub logo_text: Option<String>,
+    /// When set, an absolute path to a custom favicon SVG read from disk
+    /// at request time (not baked in) — so a second deployment can have
+    /// its own tab icon without a rebuild. Falls back to the compiled-in
+    /// cyberdesk favicon when unset or unreadable.
+    pub favicon_path: Option<PathBuf>,
 }
 
 impl Config {
@@ -29,6 +40,8 @@ impl Config {
                 Ok("1") | Ok("true") | Ok("yes")
             ),
             site_name: std::env::var("CYBERDESK_SITE_NAME").unwrap_or_else(|_| "cyberdesk".into()),
+            logo_text: std::env::var("CYBERDESK_LOGO_TEXT").ok(),
+            favicon_path: std::env::var("CYBERDESK_FAVICON_PATH").ok().map(PathBuf::from),
         }
     }
 }

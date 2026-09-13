@@ -32,15 +32,17 @@ pub struct Renderer {
     pub css: String,
     pub theme: String,
     pub site_name: String,
+    pub logo_text: Option<String>,
 }
 
 impl Renderer {
-    pub fn new(site_name: String) -> Self {
+    pub fn new(site_name: String, logo_text: Option<String>) -> Self {
         Self {
             env: std::sync::Arc::new(build_env()),
             css: crate::theme::css(),
             theme: crate::theme::active_name().to_string(),
             site_name,
+            logo_text,
         }
     }
 
@@ -48,6 +50,7 @@ impl Renderer {
         let t = self.env.get_template(name)?;
         let merged = context! { ..ctx, ..context! {
             css => self.css, theme => self.theme, nav => nav, site_name => self.site_name,
+            logo_text => self.logo_text,
         }};
         Ok(Html(t.render(merged)?))
     }

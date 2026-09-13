@@ -791,7 +791,7 @@ pub async fn font_ui() -> impl IntoResponse {
     woff2(include_bytes!("../assets/fonts/Inter.woff2"))
 }
 
-fn svg(body: &'static str) -> impl IntoResponse {
+fn svg(body: String) -> impl IntoResponse {
     (
         [
             (header::CONTENT_TYPE, "image/svg+xml; charset=utf-8"),
@@ -801,13 +801,18 @@ fn svg(body: &'static str) -> impl IntoResponse {
     )
 }
 pub async fn logo_svg() -> impl IntoResponse {
-    svg(include_str!("../assets/logo/cyberdesk-logo.svg"))
+    svg(include_str!("../assets/logo/cyberdesk-logo.svg").to_string())
 }
 pub async fn mark_svg() -> impl IntoResponse {
-    svg(include_str!("../assets/logo/cyberdesk-mark.svg"))
+    svg(include_str!("../assets/logo/cyberdesk-mark.svg").to_string())
 }
-pub async fn favicon_svg() -> impl IntoResponse {
-    svg(include_str!("../assets/logo/favicon.svg"))
+pub async fn favicon_svg(State(st): State<AppState>) -> impl IntoResponse {
+    if let Some(path) = &st.cfg.favicon_path {
+        if let Ok(custom) = std::fs::read_to_string(path) {
+            return svg(custom);
+        }
+    }
+    svg(include_str!("../assets/logo/favicon.svg").to_string())
 }
 
 pub async fn healthz() -> &'static str {

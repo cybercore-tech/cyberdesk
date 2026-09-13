@@ -67,6 +67,13 @@ aside .brand { padding: .85rem 1rem .8rem; border-bottom: 1px solid var(--line);
 aside .brand a { display: block; }
 aside .brand img { width: 186px; height: auto; display: block;
   filter: drop-shadow(0 0 10px color-mix(in srgb, var(--acid) 45%, transparent)); }
+/* Text wordmark for a second deployment (CYBERDESK_LOGO_TEXT) — the
+   image logo is a compiled-in asset shared by every instance, so a
+   deployment under a different identity (cyberdeck's diagnostics deck)
+   needs a text alternative rather than a rebuild for a new SVG. */
+.brand-text-link { text-decoration: none; display: block; line-height: 1.25;
+  font-weight: 800; font-size: 1.05rem; letter-spacing: 0.5px;
+  color: var(--fg); text-shadow: 0 0 10px color-mix(in srgb, var(--acid) 45%, transparent); }
 aside .navrow { display: flex; flex-wrap: wrap; gap: .35rem; padding: .55rem .7rem;
   border-bottom: 1px solid var(--line); }
 aside .navrow a { font-size: .76rem; padding: .22rem .6rem; border: 1px solid var(--line);
@@ -474,6 +481,9 @@ body::after { content: ""; position: fixed; inset: 0; z-index: 500; pointer-even
   @keyframes shine { to { --shine: 360deg; } }
   @keyframes breathe { 0%,100% { filter: drop-shadow(0 0 8px color-mix(in srgb, var(--acid) 40%, transparent)); }
                        50% { filter: drop-shadow(0 0 20px color-mix(in srgb, var(--cyan) 60%, transparent)); } }
+  @keyframes breathe-text { 0%,100% { text-shadow: 0 0 8px color-mix(in srgb, var(--acid) 40%, transparent); }
+                       50% { text-shadow: 0 0 18px color-mix(in srgb, var(--cyan) 60%, transparent); } }
+  .brand-text-link { animation: breathe-text 5s ease-in-out infinite; }
   @keyframes navpulse { 0%,100% { box-shadow: 0 0 14px -4px var(--acid); }
                         50% { box-shadow: 0 0 24px -1px var(--acid), 0 0 46px -12px var(--acid); } }
   @keyframes flicker { 0%,18%,22%,54%,58%,100% { opacity: 1; } 20%,56% { opacity: .74; } }
@@ -509,7 +519,7 @@ body::after { content: ""; position: fixed; inset: 0; z-index: 500; pointer-even
 {% set accents = ['var(--acid)', 'var(--cyan)', 'var(--pink)', 'var(--purple)', 'var(--orange)'] %}
 <div class="app">
 <aside>
-  <div class="brand"><a href="/" title="{{ site_name }}"><img src="/logo.svg" alt="{{ site_name }}"></a></div>
+  <div class="brand">{% if logo_text %}<a href="/" title="{{ site_name }}" class="brand-text-link">{{ logo_text | upper }}</a>{% else %}<a href="/" title="{{ site_name }}"><img src="/logo.svg" alt="{{ site_name }}"></a>{% endif %}</div>
   <div class="navrow">
     <a href="/" class="{{ 'on' if nav == 'portal' }}">🖥 portal</a>
     <a href="/all" class="{{ 'on' if nav == 'all' }}">📄 all</a>
