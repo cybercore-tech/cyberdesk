@@ -938,7 +938,14 @@ body::after { content: ""; position: fixed; inset: 0; z-index: 500; pointer-even
   // page reload — /api/theme/css/:slug also sets the cyberdesk_theme
   // cookie server-side, so a plain reload without JS still lands on the
   // same theme via the existing /theme.css cookie fallback.
-  function applyTheme(name) {
+  //
+  // Assigned onto `window` explicitly, not plain `function` declarations
+  // — this whole <script> is wrapped in the enclosing (function(){...})()
+  // IIFE below, and the theme-item/theme-picker-btn markup calls these
+  // via inline onclick="", which resolves names against global/window
+  // scope, not this closure. A plain local `function toggleDropdown(){}`
+  // here is invisible to that onclick and just silently no-ops on click.
+  window.applyTheme = function (name) {
     fetch('/api/theme/css/' + encodeURIComponent(name))
       .then(function (r) { return r.text(); })
       .then(function (css) {
@@ -952,27 +959,27 @@ body::after { content: ""; position: fixed; inset: 0; z-index: 500; pointer-even
     document.querySelectorAll('#theme-dropdown .theme-item').forEach(function (el) {
       el.classList.toggle('selected', el.dataset.value === name);
     });
-  }
-  function selectTheme(name) {
-    applyTheme(name);
-    closeAllDropdowns();
-  }
-  function toggleDropdown(evt, id) {
+  };
+  window.selectTheme = function (name) {
+    window.applyTheme(name);
+    window.closeAllDropdowns();
+  };
+  window.toggleDropdown = function (evt, id) {
     var dd = g(id);
     var open = !dd.hidden;
-    closeAllDropdowns();
+    window.closeAllDropdowns();
     if (open) return;
     var r = evt.currentTarget.getBoundingClientRect();
     dd.style.top = (r.bottom + 6) + 'px';
     dd.style.left = Math.max(12, r.right - dd.offsetWidth) + 'px';
     dd.hidden = false;
     evt.currentTarget.setAttribute('aria-expanded', 'true');
-  }
-  function closeAllDropdowns() {
+  };
+  window.closeAllDropdowns = function () {
     document.querySelectorAll('.theme-dropdown').forEach(function (dd) { dd.hidden = true; });
     var btn = g('theme-picker-btn');
     if (btn) btn.setAttribute('aria-expanded', 'false');
-  }
+  };
   document.addEventListener('click', function (e) {
     if (!e.target.closest('.theme-dropdown-wrap')) closeAllDropdowns();
   });
