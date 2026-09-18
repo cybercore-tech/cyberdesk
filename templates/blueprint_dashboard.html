@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block title %}{{ instance.project_name }} · blueprint{% endblock %}
 {% block body %}
+<div class="wrap">
 <div class="dash-head">
   <h1>{{ instance.project_name }}</h1>
   <p><code>{{ instance.target_dir }}</code> — <span class="badge status-running">{{ instance.current_phase }}</span></p>
@@ -158,4 +159,5 @@ function closeViewer() {
 }
 document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeViewer(); });
 </script>
+</div>
 {% endblock %}
