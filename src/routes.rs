@@ -844,7 +844,16 @@ pub async fn components_css() -> impl IntoResponse {
     (
         [
             (header::CONTENT_TYPE, "text/css; charset=utf-8"),
-            (header::CACHE_CONTROL, "public, max-age=86400"),
+            // Unlike tokens.css (rarely touched), this file is under active
+            // iteration — a long max-age here caused real, repeated
+            // "the fix isn't showing up" confusion across multiple browser
+            // tabs/origins after each redeploy. `no-cache` (not `no-store`)
+            // still permits caching but forces revalidation with the server
+            // first — with no ETag/Last-Modified support to validate
+            // against, that means every load gets the current build, no
+            // hard-refresh required. Revisit once this stops changing every
+            // few minutes.
+            (header::CACHE_CONTROL, "no-cache"),
         ],
         cybercore::components::CSS,
     )
