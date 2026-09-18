@@ -25,20 +25,129 @@ use anyhow::{Context, Result};
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 
-/// A reusable blueprint schema (e.g. "rust-agent-blueprint").
+/// A reusable blueprint schema (e.g. "rust-agent-blueprint"). Named
+/// sections instead of one big blob, matching the real
+/// `rust-agent-blueprint`'s actual `PROJECT_SPEC.md` header structure —
+/// these are the parts that genuinely don't vary per project (they're
+/// policy, not project-specific facts), so they're authored once here
+/// and rendered into every instance built from this template.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Template {
     pub slug: String,
     pub name: String,
     /// Full `AGENTS.md` text — mostly static operating rules, with
-    /// `{{ project_name }}`-style minijinja placeholders filled in per
-    /// instance at render time.
+    /// `{{ instance.project_name }}`-style minijinja placeholders filled
+    /// in per instance at render time. Kept as one block deliberately —
+    /// unlike the sections below, this one really is meant to be
+    /// authored close to verbatim and reused, not filled in per section.
     pub agents_md: String,
-    /// The boilerplate portions of `PROJECT_SPEC.md` that don't vary per
-    /// project (Full Validation Gate, Package Gate, CI, Git Commit
-    /// Standard, Changelog, Release Checklist, Error/Dependency Policy,
-    /// Definition of Done) — rendered after the per-instance fields.
-    pub spec_boilerplate: String,
+    #[serde(default)]
+    pub error_policy: String,
+    #[serde(default)]
+    pub dependency_policy: String,
+    #[serde(default)]
+    pub testing_strategy: String,
+    #[serde(default)]
+    pub full_validation_gate: String,
+    #[serde(default)]
+    pub feature_isolation_gate: String,
+    #[serde(default)]
+    pub package_gate: String,
+    #[serde(default)]
+    pub ci_info: String,
+    #[serde(default)]
+    pub git_commit_standard: String,
+    #[serde(default)]
+    pub changelog_policy: String,
+    #[serde(default)]
+    pub release_checklist: String,
+    #[serde(default)]
+    pub definition_of_done: String,
+}
+
+impl Template {
+    /// A real, ready-to-use starting point for a new template — these
+    /// sections are genuinely boilerplate (policy, not project-specific
+    /// facts), drawn from `rust-agent-blueprint`'s actual conventions, so
+    /// "author a new template" means *adjust this*, not *start from
+    /// nothing*.
+    pub fn seed_defaults() -> Self {
+        Self {
+            slug: String::new(),
+            name: String::new(),
+            agents_md: String::new(),
+            error_policy: "Use `thiserror` structured error types with source chain + context. \
+No generic errors."
+                .into(),
+            dependency_policy: "New dependencies require: concrete need, maintenance review, \
+feature review, MSRV review, platform review, security/transitive-cost review."
+                .into(),
+            testing_strategy: "unit (src/ inline #[cfg(test)] modules)\n\
+integration (tests/*.rs)\n\
+regression\n\
+serde round-trip (types)\n\
+compatibility (file format versioning)\n\
+feature isolation (scripts/validate-features.sh)\n\
+compile tests (doctests)"
+                .into(),
+            full_validation_gate: "cargo fmt --all --check\n\n\
+git diff --check\n\n\
+cargo check --workspace --all-targets --all-features\n\n\
+cargo clippy --workspace --all-targets --all-features -- -D warnings\n\n\
+cargo test --workspace --all-features --lib --tests\n\n\
+# Doc tests must pass explicitly:\n\
+cargo test --doc --workspace --all-features\n\n\
+RUSTDOCFLAGS=\"-D warnings\" cargo doc --workspace --no-deps --all-features"
+                .into(),
+            feature_isolation_gate: "cargo check --workspace --no-default-features\n\
+cargo test --workspace --no-default-features\n\n\
+# Then each project-critical feature combination individually — see\n\
+# this project's own Feature Matrix above for which ones."
+                .into(),
+            package_gate: "cargo package -p <crate> --list\n\
+cargo package -p <crate>\n\n\
+Package must succeed from clean, committed state. Do not use\n\
+--allow-dirty as the normal fix."
+                .into(),
+            ci_info: "Primary CI system: GitHub Actions\n\n\
+Workflow files:\n\
+.github/workflows/ci.yml\n\n\
+CI should cover: fmt, check, clippy, tests, docs, feature isolation,\n\
+package, and a real pinned-MSRV re-check (not just static analysis)."
+                .into(),
+            git_commit_standard: "feat(scope): concise summary\n\n\
+Why:\n\
+<reason>\n\n\
+Implementation:\n\
+- detail\n\n\
+Tests:\n\
+- detail\n\n\
+Validation:\n\
+- command\n\n\
+Compatibility:\n\
+<notes>\n\n\
+Commit types: feat, fix, refactor, test, docs, build, ci, perf, security, chore."
+                .into(),
+            changelog_policy: "Sections: Added, Changed, Deprecated, Removed, Fixed, Security."
+                .into(),
+            release_checklist: "[ ] Full gate green\n\
+[ ] Feature isolation green\n\
+[ ] Package list inspected\n\
+[ ] cargo package green\n\
+[ ] Cargo.lock committed if tracked\n\
+[ ] CHANGELOG updated\n\
+[ ] Version updated\n\
+[ ] README/docs current\n\
+[ ] CI green\n\
+[ ] Worktree clean\n\
+[ ] Release explicitly authorized"
+                .into(),
+            definition_of_done: "A milestone is complete only when relevant implementation, \
+tests, docs, full validation, feature isolation, packaging, Git state, and handoff/state \
+updates are complete."
+                .into(),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -98,11 +207,34 @@ pub struct Instance {
     pub project_name: String,
     pub target_dir: PathBuf,
 
-    // PROJECT_SPEC.md fields
+    // PROJECT_SPEC.md fields — Project Identity
+    #[serde(default)]
+    pub edition: String,
+    #[serde(default)]
+    pub msrv: String,
+    #[serde(default)]
+    pub workspace_members: Vec<String>,
+
+    // PROJECT_SPEC.md fields — Vision / Requirements
     pub vision: String,
+    #[serde(default)]
+    pub long_term_capabilities: Vec<String>,
     pub core_requirements: Vec<String>,
     pub non_goals: Vec<String>,
+    #[serde(default)]
+    pub architectural_principles: Vec<String>,
     pub feature_matrix: Vec<FeatureRow>,
+
+    // PROJECT_SPEC.md fields — API / data / CLI contracts
+    #[serde(default)]
+    pub public_api_surfaces: Vec<String>,
+    #[serde(default)]
+    pub persistence_notes: Vec<String>,
+    #[serde(default)]
+    pub security_invariants: Vec<String>,
+    #[serde(default)]
+    pub cli_contract: String,
+
     pub phases: Vec<String>,
     pub protected_areas: Vec<String>,
     pub raw_idea: String,
@@ -404,25 +536,58 @@ pub fn render_agents_md(template: &Template, instance: &Instance) -> Result<Stri
     )
 }
 
+/// `# {heading}` followed by one `- {item}` bullet per entry (kept even
+/// when empty — matches this codebase's existing convention elsewhere of
+/// always printing the header, never silently omitting a section).
+fn section_list(out: &mut String, heading: &str, items: &[String]) {
+    out.push_str(&format!("# {heading}\n\n"));
+    for item in items {
+        out.push_str(&format!("- {item}\n"));
+    }
+    out.push('\n');
+}
+
+/// `# {heading}` followed by a fenced ```text block, one item per line.
+fn section_block(out: &mut String, heading: &str, body: &str) {
+    out.push_str(&format!("# {heading}\n\n```text\n{}\n```\n\n", body.trim()));
+}
+
 pub fn render_project_spec(template: &Template, instance: &Instance) -> Result<String> {
     let mut out = String::new();
     out.push_str(&format!(
         "# PROJECT_SPEC.md — {}\n\n",
         instance.project_name
     ));
+
     out.push_str("# Project Identity\n\n");
-    out.push_str(&format!("**Project Name:** {}\n\n", instance.project_name));
+    out.push_str(&format!("**Project Name:** {}  \n", instance.project_name));
+    out.push_str(&format!("**Rust Edition:** {}  \n", instance.edition));
+    out.push_str(&format!("**MSRV:** {}  \n\n", instance.msrv));
+    if !instance.workspace_members.is_empty() {
+        out.push_str("## Workspace Members\n\n```text\n");
+        for m in &instance.workspace_members {
+            out.push_str(&format!("{m}\n"));
+        }
+        out.push_str("```\n\n");
+    }
+
     out.push_str("# Vision\n\n## One-Sentence Description\n\n");
     out.push_str(&instance.vision);
-    out.push_str("\n\n# Core Requirements\n\n");
-    for r in &instance.core_requirements {
-        out.push_str(&format!("- [ ] {r}\n"));
-    }
-    out.push_str("\n# Non-Goals\n\n");
-    for n in &instance.non_goals {
-        out.push_str(&format!("- {n}\n"));
-    }
-    out.push_str("\n# Feature Matrix\n\n");
+    out.push_str("\n\n");
+    section_list(
+        &mut out,
+        "Long-Term Capabilities",
+        &instance.long_term_capabilities,
+    );
+    section_list(&mut out, "Core Requirements", &instance.core_requirements);
+    section_list(&mut out, "Non-Goals", &instance.non_goals);
+    section_list(
+        &mut out,
+        "Architectural Principles",
+        &instance.architectural_principles,
+    );
+
+    out.push_str("# Feature Matrix\n\n");
     out.push_str("| Feature | Package | Default | Requires | Purpose |\n|---|---|---:|---|---|\n");
     for f in &instance.feature_matrix {
         let default = if f.default { "yes" } else { "no" };
@@ -431,7 +596,80 @@ pub fn render_project_spec(template: &Template, instance: &Instance) -> Result<S
             f.feature, f.package, default, f.requires, f.purpose
         ));
     }
-    out.push_str("\n# Project Phases\n\n```text\n");
+    out.push('\n');
+
+    section_list(
+        &mut out,
+        "Public API Guarantees",
+        &instance.public_api_surfaces,
+    );
+    section_list(
+        &mut out,
+        "Persistence / Serialization",
+        &instance.persistence_notes,
+    );
+    section_list(
+        &mut out,
+        "Integrity / Security Invariants",
+        &instance.security_invariants,
+    );
+
+    out.push_str("# CLI Contract\n\n");
+    out.push_str(&instance.cli_contract);
+    out.push_str("\n\n");
+
+    // Template-authored sections may also use {{ instance.* }} placeholders
+    // (e.g. Git Commit Standard mentioning the project name), same as
+    // AGENTS.md — render each through minijinja, not just copy verbatim.
+    let ctx = minijinja::context! { instance => instance };
+    section_block(
+        &mut out,
+        "Error Policy",
+        &render(&template.error_policy, ctx.clone())?,
+    );
+    section_block(
+        &mut out,
+        "Dependency Policy",
+        &render(&template.dependency_policy, ctx.clone())?,
+    );
+    section_block(
+        &mut out,
+        "Testing Strategy",
+        &render(&template.testing_strategy, ctx.clone())?,
+    );
+    section_block(
+        &mut out,
+        "Full Validation Gate",
+        &render(&template.full_validation_gate, ctx.clone())?,
+    );
+    section_block(
+        &mut out,
+        "Feature-Isolation Gate",
+        &render(&template.feature_isolation_gate, ctx.clone())?,
+    );
+    section_block(
+        &mut out,
+        "Package Gate",
+        &render(&template.package_gate, ctx.clone())?,
+    );
+    section_block(&mut out, "CI", &render(&template.ci_info, ctx.clone())?);
+    section_block(
+        &mut out,
+        "Git Commit Standard",
+        &render(&template.git_commit_standard, ctx.clone())?,
+    );
+    section_block(
+        &mut out,
+        "Changelog",
+        &render(&template.changelog_policy, ctx.clone())?,
+    );
+    section_block(
+        &mut out,
+        "Release Checklist",
+        &render(&template.release_checklist, ctx.clone())?,
+    );
+
+    out.push_str("# Project Phases\n\n```text\n");
     for (i, p) in instance.phases.iter().enumerate() {
         out.push_str(&format!("Phase {} — {}\n", i + 1, p));
     }
@@ -439,13 +677,18 @@ pub fn render_project_spec(template: &Template, instance: &Instance) -> Result<S
     for p in &instance.protected_areas {
         out.push_str(&format!("{p}\n"));
     }
-    out.push_str("```\n\n# Raw Project Idea\n\n> ");
+    out.push_str("```\n\n");
+
+    section_block(
+        &mut out,
+        "Definition of Done",
+        &render(&template.definition_of_done, ctx)?,
+    );
+
+    out.push_str("# Raw Project Idea\n\n> ");
     out.push_str(&instance.raw_idea.replace('\n', "\n> "));
-    out.push_str("\n\n");
-    out.push_str(&render(
-        &template.spec_boilerplate,
-        minijinja::context! { instance => instance },
-    )?);
+    out.push('\n');
+
     Ok(out)
 }
 

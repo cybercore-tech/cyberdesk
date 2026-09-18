@@ -927,41 +927,75 @@ pub async fn blueprints_list(State(st): State<AppState>) -> Response {
 }
 
 pub async fn blueprint_template_new_form(State(st): State<AppState>) -> Response {
-    let empty = blueprints::Template {
-        slug: String::new(),
-        name: String::new(),
-        agents_md: String::new(),
-        spec_boilerplate: String::new(),
-    };
+    let seeded = blueprints::Template::seed_defaults();
     blueprints_page(
         &st,
         "blueprint_template_edit.html",
-        context! { editing => false, template => empty },
+        context! { editing => false, template => seeded },
     )
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Default)]
 pub struct TemplateForm {
+    #[serde(default)]
     slug: String,
+    #[serde(default)]
     name: String,
+    #[serde(default)]
     agents_md: String,
-    spec_boilerplate: String,
+    #[serde(default)]
+    error_policy: String,
+    #[serde(default)]
+    dependency_policy: String,
+    #[serde(default)]
+    testing_strategy: String,
+    #[serde(default)]
+    full_validation_gate: String,
+    #[serde(default)]
+    feature_isolation_gate: String,
+    #[serde(default)]
+    package_gate: String,
+    #[serde(default)]
+    ci_info: String,
+    #[serde(default)]
+    git_commit_standard: String,
+    #[serde(default)]
+    changelog_policy: String,
+    #[serde(default)]
+    release_checklist: String,
+    #[serde(default)]
+    definition_of_done: String,
+}
+
+impl TemplateForm {
+    fn into_template(self) -> blueprints::Template {
+        blueprints::Template {
+            slug: blueprints::slugify(&self.slug),
+            name: self.name,
+            agents_md: self.agents_md,
+            error_policy: self.error_policy,
+            dependency_policy: self.dependency_policy,
+            testing_strategy: self.testing_strategy,
+            full_validation_gate: self.full_validation_gate,
+            feature_isolation_gate: self.feature_isolation_gate,
+            package_gate: self.package_gate,
+            ci_info: self.ci_info,
+            git_commit_standard: self.git_commit_standard,
+            changelog_policy: self.changelog_policy,
+            release_checklist: self.release_checklist,
+            definition_of_done: self.definition_of_done,
+        }
+    }
 }
 
 pub async fn blueprint_template_new(
     State(st): State<AppState>,
     Form(f): Form<TemplateForm>,
 ) -> Response {
-    let slug = blueprints::slugify(&f.slug);
-    if slug.is_empty() {
+    let template = f.into_template();
+    if template.slug.is_empty() {
         return err("template needs a slug");
     }
-    let template = blueprints::Template {
-        slug: slug.clone(),
-        name: f.name,
-        agents_md: f.agents_md,
-        spec_boilerplate: f.spec_boilerplate,
-    };
     match blueprints::save_template(&st.cfg.blueprints_dir, &template) {
         Ok(()) => Redirect::to("/blueprints").into_response(),
         Err(e) => err(e),
@@ -988,13 +1022,7 @@ pub async fn blueprint_template_edit(
     Path(_slug): Path<String>,
     Form(f): Form<TemplateForm>,
 ) -> Response {
-    let slug = blueprints::slugify(&f.slug);
-    let template = blueprints::Template {
-        slug: slug.clone(),
-        name: f.name,
-        agents_md: f.agents_md,
-        spec_boilerplate: f.spec_boilerplate,
-    };
+    let template = f.into_template();
     match blueprints::save_template(&st.cfg.blueprints_dir, &template) {
         Ok(()) => Redirect::to("/blueprints").into_response(),
         Err(e) => err(e),
@@ -1017,10 +1045,19 @@ pub struct InstanceNewForm {
     template_slug: String,
     project_name: String,
     target_dir: String,
+    edition: String,
+    msrv: String,
+    workspace_members: String,
     vision: String,
+    long_term_capabilities: String,
     core_requirements: String,
     non_goals: String,
+    architectural_principles: String,
     feature_matrix: String,
+    public_api_surfaces: String,
+    persistence_notes: String,
+    security_invariants: String,
+    cli_contract: String,
     phases: String,
     protected_areas: String,
     raw_idea: String,
@@ -1050,10 +1087,19 @@ pub async fn blueprint_instance_new(
         template_slug: f.template_slug,
         project_name: f.project_name,
         target_dir,
+        edition: f.edition,
+        msrv: f.msrv,
+        workspace_members: blueprints::parse_lines(&f.workspace_members),
         vision: f.vision,
+        long_term_capabilities: blueprints::parse_lines(&f.long_term_capabilities),
         core_requirements: blueprints::parse_lines(&f.core_requirements),
         non_goals: blueprints::parse_lines(&f.non_goals),
+        architectural_principles: blueprints::parse_lines(&f.architectural_principles),
         feature_matrix: blueprints::parse_feature_matrix(&f.feature_matrix),
+        public_api_surfaces: blueprints::parse_lines(&f.public_api_surfaces),
+        persistence_notes: blueprints::parse_lines(&f.persistence_notes),
+        security_invariants: blueprints::parse_lines(&f.security_invariants),
+        cli_contract: f.cli_contract,
         phases,
         protected_areas: blueprints::parse_lines(&f.protected_areas),
         raw_idea: f.raw_idea,
@@ -1081,8 +1127,15 @@ pub async fn blueprint_dashboard(State(st): State<AppState>, Path(slug): Path<St
         Ok(None) => return err(format!("no such blueprint instance: {slug}")),
         Err(e) => return err(e),
     };
+    let workspace_members_text = blueprints::format_lines(&instance.workspace_members);
+    let long_term_capabilities_text = blueprints::format_lines(&instance.long_term_capabilities);
     let core_requirements_text = blueprints::format_lines(&instance.core_requirements);
     let non_goals_text = blueprints::format_lines(&instance.non_goals);
+    let architectural_principles_text =
+        blueprints::format_lines(&instance.architectural_principles);
+    let public_api_surfaces_text = blueprints::format_lines(&instance.public_api_surfaces);
+    let persistence_notes_text = blueprints::format_lines(&instance.persistence_notes);
+    let security_invariants_text = blueprints::format_lines(&instance.security_invariants);
     let protected_areas_text = blueprints::format_lines(&instance.protected_areas);
     let phases_text = blueprints::format_lines(&instance.phases);
     let feature_matrix_text = blueprints::format_feature_matrix(&instance.feature_matrix);
@@ -1092,8 +1145,11 @@ pub async fn blueprint_dashboard(State(st): State<AppState>, Path(slug): Path<St
         &st,
         "blueprint_dashboard.html",
         context! {
-            instance, core_requirements_text, non_goals_text, protected_areas_text,
-            phases_text, feature_matrix_text, feature_state_text, validation_status_text,
+            instance, workspace_members_text, long_term_capabilities_text,
+            core_requirements_text, non_goals_text, architectural_principles_text,
+            public_api_surfaces_text, persistence_notes_text, security_invariants_text,
+            protected_areas_text, phases_text, feature_matrix_text, feature_state_text,
+            validation_status_text,
         },
     )
 }
@@ -1101,10 +1157,19 @@ pub async fn blueprint_dashboard(State(st): State<AppState>, Path(slug): Path<St
 #[derive(Deserialize)]
 pub struct InstanceSaveForm {
     project_name: String,
+    edition: String,
+    msrv: String,
+    workspace_members: String,
     vision: String,
+    long_term_capabilities: String,
     core_requirements: String,
     non_goals: String,
+    architectural_principles: String,
     feature_matrix: String,
+    public_api_surfaces: String,
+    persistence_notes: String,
+    security_invariants: String,
+    cli_contract: String,
     phases: String,
     protected_areas: String,
     raw_idea: String,
@@ -1139,10 +1204,19 @@ pub async fn blueprint_save(
         Err(e) => return err(e),
     };
     instance.project_name = f.project_name;
+    instance.edition = f.edition;
+    instance.msrv = f.msrv;
+    instance.workspace_members = blueprints::parse_lines(&f.workspace_members);
     instance.vision = f.vision;
+    instance.long_term_capabilities = blueprints::parse_lines(&f.long_term_capabilities);
     instance.core_requirements = blueprints::parse_lines(&f.core_requirements);
     instance.non_goals = blueprints::parse_lines(&f.non_goals);
+    instance.architectural_principles = blueprints::parse_lines(&f.architectural_principles);
     instance.feature_matrix = blueprints::parse_feature_matrix(&f.feature_matrix);
+    instance.public_api_surfaces = blueprints::parse_lines(&f.public_api_surfaces);
+    instance.persistence_notes = blueprints::parse_lines(&f.persistence_notes);
+    instance.security_invariants = blueprints::parse_lines(&f.security_invariants);
+    instance.cli_contract = f.cli_contract;
     instance.phases = blueprints::parse_lines(&f.phases);
     instance.protected_areas = blueprints::parse_lines(&f.protected_areas);
     instance.raw_idea = f.raw_idea;

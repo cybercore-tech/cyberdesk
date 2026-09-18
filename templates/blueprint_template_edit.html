@@ -4,8 +4,10 @@
 <div class="wrap">
 <div class="dash-head">
   <h1>{{ 'edit template' if editing else 'new blueprint template' }}</h1>
-  <p>A template's <code>AGENTS.md</code> is mostly static operating rules, shared verbatim across
-    every project that uses it — the per-project fields live on each instance, not here.</p>
+  <p>These sections are policy, not project facts — the same across every project built from
+    this template. Per-project content (vision, requirements, phases, current state) lives on
+    each instance, not here. New templates start pre-filled with real, ready-to-use defaults —
+    adjust them, don't start from a blank page.</p>
 </div>
 
 <div class="window">
@@ -15,17 +17,57 @@
     <form method="post" action="{{ '/blueprints/templates/' ~ template.slug ~ '/edit' if editing else '/blueprints/templates/new' }}">
       <p class="field-label">slug</p>
       <input class="text-input" style="width:100%" name="slug" placeholder="rust-agent-blueprint"
-             value="{{ template.slug | default('') }}" {{ 'readonly' if editing }} required>
+             value="{{ template.slug }}" {{ 'readonly' if editing }} required>
 
       <p class="field-label" style="margin-top:1rem">name</p>
       <input class="text-input" style="width:100%" name="name" placeholder="Rust Agent Blueprint"
-             value="{{ template.name | default('') }}" required>
+             value="{{ template.name }}" required>
 
-      <p class="field-label" style="margin-top:1rem">AGENTS.md (static operating rules — use <code>{{ '{{ instance.project_name }}' }}</code> etc. for mail-merge placeholders)</p>
-      <textarea class="text-input" style="width:100%" name="agents_md" rows="16" spellcheck="false">{{ template.agents_md | default('') }}</textarea>
+      <div class="cat-section">
+        <div class="cat-head" style="cursor:default"><h2>AGENTS.md</h2></div>
+        <p class="field-label">Full operating-rules text — mostly static across every project.
+          Use <code>{{ '{{ instance.project_name }}' }}</code> etc. for mail-merge placeholders
+          (any <code>instance.*</code> field from the schema is available).</p>
+        <textarea class="text-input" style="width:100%" name="agents_md" rows="16" spellcheck="false">{{ template.agents_md }}</textarea>
+      </div>
 
-      <p class="field-label" style="margin-top:1rem">PROJECT_SPEC.md boilerplate (Full Validation Gate, Package Gate, CI, Git Commit Standard, Changelog, Release Checklist, Definition of Done — the parts that don't vary per project)</p>
-      <textarea class="text-input" style="width:100%" name="spec_boilerplate" rows="16" spellcheck="false">{{ template.spec_boilerplate | default('') }}</textarea>
+      <div class="cat-section">
+        <div class="cat-head" style="cursor:default"><h2>PROJECT_SPEC.md policy sections</h2></div>
+        <p class="muted" style="font-size:0.8rem">Each of these also supports <code>{{ '{{ instance.* }}' }}</code> placeholders.</p>
+
+        <p class="field-label" style="margin-top:1rem">Error Policy</p>
+        <textarea class="text-input" style="width:100%" name="error_policy" rows="3">{{ template.error_policy }}</textarea>
+
+        <p class="field-label" style="margin-top:1rem">Dependency Policy</p>
+        <textarea class="text-input" style="width:100%" name="dependency_policy" rows="3">{{ template.dependency_policy }}</textarea>
+
+        <p class="field-label" style="margin-top:1rem">Testing Strategy (expected coverage)</p>
+        <textarea class="text-input" style="width:100%" name="testing_strategy" rows="8" spellcheck="false">{{ template.testing_strategy }}</textarea>
+
+        <p class="field-label" style="margin-top:1rem">Full Validation Gate</p>
+        <textarea class="text-input" style="width:100%" name="full_validation_gate" rows="10" spellcheck="false">{{ template.full_validation_gate }}</textarea>
+
+        <p class="field-label" style="margin-top:1rem">Feature-Isolation Gate</p>
+        <textarea class="text-input" style="width:100%" name="feature_isolation_gate" rows="4" spellcheck="false">{{ template.feature_isolation_gate }}</textarea>
+
+        <p class="field-label" style="margin-top:1rem">Package Gate</p>
+        <textarea class="text-input" style="width:100%" name="package_gate" rows="4" spellcheck="false">{{ template.package_gate }}</textarea>
+
+        <p class="field-label" style="margin-top:1rem">CI</p>
+        <textarea class="text-input" style="width:100%" name="ci_info" rows="5" spellcheck="false">{{ template.ci_info }}</textarea>
+
+        <p class="field-label" style="margin-top:1rem">Git Commit Standard</p>
+        <textarea class="text-input" style="width:100%" name="git_commit_standard" rows="10" spellcheck="false">{{ template.git_commit_standard }}</textarea>
+
+        <p class="field-label" style="margin-top:1rem">Changelog</p>
+        <textarea class="text-input" style="width:100%" name="changelog_policy" rows="2">{{ template.changelog_policy }}</textarea>
+
+        <p class="field-label" style="margin-top:1rem">Release Checklist</p>
+        <textarea class="text-input" style="width:100%" name="release_checklist" rows="10" spellcheck="false">{{ template.release_checklist }}</textarea>
+
+        <p class="field-label" style="margin-top:1rem">Definition of Done</p>
+        <textarea class="text-input" style="width:100%" name="definition_of_done" rows="3">{{ template.definition_of_done }}</textarea>
+      </div>
 
       <div style="margin-top:1.25rem">
         <button type="submit" class="btn-link">{{ 'save' if editing else 'create template' }}</button>

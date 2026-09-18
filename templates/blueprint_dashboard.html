@@ -54,9 +54,6 @@
         <p class="field-label">project name</p>
         <input class="text-input" style="width:100%" name="project_name" value="{{ instance.project_name }}" required>
 
-        <p class="field-label" style="margin-top:1rem">vision</p>
-        <input class="text-input" style="width:100%" name="vision" value="{{ instance.vision }}">
-
         <p class="field-label" style="margin-top:1rem">current phase</p>
         <select class="text-input" name="current_phase">
           {% for p in instance.phases %}
@@ -67,14 +64,53 @@
         <p class="field-label" style="margin-top:1rem">current milestone</p>
         <input class="text-input" style="width:100%" name="current_milestone" value="{{ instance.current_milestone }}">
 
-        <p class="field-label" style="margin-top:1rem">core requirements (one per line)</p>
-        <textarea class="text-input" style="width:100%" name="core_requirements" rows="5">{{ core_requirements_text }}</textarea>
+        <div class="cat-section">
+          <div class="cat-head" style="cursor:default"><h2>Project Identity</h2></div>
+          <p class="field-label">Rust edition</p>
+          <input class="text-input" style="width:100%" name="edition" value="{{ instance.edition }}">
 
-        <p class="field-label" style="margin-top:1rem">non-goals (one per line)</p>
-        <textarea class="text-input" style="width:100%" name="non_goals" rows="4">{{ non_goals_text }}</textarea>
+          <p class="field-label" style="margin-top:1rem">MSRV</p>
+          <input class="text-input" style="width:100%" name="msrv" value="{{ instance.msrv }}">
+
+          <p class="field-label" style="margin-top:1rem">workspace members (one per line)</p>
+          <textarea class="text-input" style="width:100%" name="workspace_members" rows="2">{{ workspace_members_text }}</textarea>
+        </div>
+
+        <div class="cat-section">
+          <div class="cat-head" style="cursor:default"><h2>Vision</h2></div>
+          <p class="field-label">one-sentence vision</p>
+          <input class="text-input" style="width:100%" name="vision" value="{{ instance.vision }}">
+
+          <p class="field-label" style="margin-top:1rem">long-term capabilities (one per line)</p>
+          <textarea class="text-input" style="width:100%" name="long_term_capabilities" rows="4">{{ long_term_capabilities_text }}</textarea>
+
+          <p class="field-label" style="margin-top:1rem">core requirements (one per line)</p>
+          <textarea class="text-input" style="width:100%" name="core_requirements" rows="5">{{ core_requirements_text }}</textarea>
+
+          <p class="field-label" style="margin-top:1rem">non-goals (one per line)</p>
+          <textarea class="text-input" style="width:100%" name="non_goals" rows="4">{{ non_goals_text }}</textarea>
+
+          <p class="field-label" style="margin-top:1rem">architectural principles (one per line)</p>
+          <textarea class="text-input" style="width:100%" name="architectural_principles" rows="4">{{ architectural_principles_text }}</textarea>
+        </div>
 
         <p class="field-label" style="margin-top:1rem">feature matrix — <code>feature|package|default(yes/no)|requires|purpose</code>, one per line</p>
         <textarea class="text-input" style="width:100%" name="feature_matrix" rows="5" spellcheck="false">{{ feature_matrix_text }}</textarea>
+
+        <div class="cat-section">
+          <div class="cat-head" style="cursor:default"><h2>API / Data / CLI Contracts</h2></div>
+          <p class="field-label">public API guarantees — protected surfaces (one per line)</p>
+          <textarea class="text-input" style="width:100%" name="public_api_surfaces" rows="3">{{ public_api_surfaces_text }}</textarea>
+
+          <p class="field-label" style="margin-top:1rem">persistence / serialization notes (one per line)</p>
+          <textarea class="text-input" style="width:100%" name="persistence_notes" rows="3">{{ persistence_notes_text }}</textarea>
+
+          <p class="field-label" style="margin-top:1rem">integrity / security invariants (one per line)</p>
+          <textarea class="text-input" style="width:100%" name="security_invariants" rows="3">{{ security_invariants_text }}</textarea>
+
+          <p class="field-label" style="margin-top:1rem">CLI contract</p>
+          <textarea class="text-input" style="width:100%" name="cli_contract" rows="2">{{ instance.cli_contract }}</textarea>
+        </div>
 
         <p class="field-label" style="margin-top:1rem">project phases, in order (one per line — the Current Phase dropdown above is built from this list)</p>
         <textarea class="text-input" style="width:100%" name="phases" rows="4">{{ phases_text }}</textarea>

@@ -27,26 +27,68 @@
       <p class="field-label" style="margin-top:1rem">target directory (absolute path — where the real files get written)</p>
       <input class="text-input" style="width:100%" name="target_dir" placeholder="/home/raven/Devspace/rust/vdb-rs" required>
 
-      <p class="field-label" style="margin-top:1rem">one-sentence vision</p>
-      <input class="text-input" style="width:100%" name="vision" placeholder="An embedded, crash-safe, Rust-native vector database.">
+      <div class="cat-section">
+        <div class="cat-head" style="cursor:default"><h2>Project Identity</h2></div>
+        <p class="field-label">Rust edition</p>
+        <input class="text-input" style="width:100%" name="edition" placeholder="2024">
 
-      <p class="field-label" style="margin-top:1rem">core requirements (one per line)</p>
-      <textarea class="text-input" style="width:100%" name="core_requirements" rows="5"></textarea>
+        <p class="field-label" style="margin-top:1rem">MSRV</p>
+        <input class="text-input" style="width:100%" name="msrv" placeholder="1.88 — verified via cargo +1.88.0 check, not just asserted">
 
-      <p class="field-label" style="margin-top:1rem">non-goals (one per line)</p>
-      <textarea class="text-input" style="width:100%" name="non_goals" rows="4"></textarea>
+        <p class="field-label" style="margin-top:1rem">workspace members (one per line — leave empty for a single crate)</p>
+        <textarea class="text-input" style="width:100%" name="workspace_members" rows="2"></textarea>
+      </div>
 
-      <p class="field-label" style="margin-top:1rem">feature matrix — one row per line: <code>feature|package|default(yes/no)|requires|purpose</code></p>
-      <textarea class="text-input" style="width:100%" name="feature_matrix" rows="4" spellcheck="false"></textarea>
+      <div class="cat-section">
+        <div class="cat-head" style="cursor:default"><h2>Vision</h2></div>
+        <p class="field-label">one-sentence vision</p>
+        <input class="text-input" style="width:100%" name="vision" placeholder="An embedded, crash-safe, Rust-native vector database.">
 
-      <p class="field-label" style="margin-top:1rem">project phases, in order (one per line)</p>
-      <textarea class="text-input" style="width:100%" name="phases" rows="4"></textarea>
+        <p class="field-label" style="margin-top:1rem">long-term capabilities (one per line)</p>
+        <textarea class="text-input" style="width:100%" name="long_term_capabilities" rows="4"></textarea>
 
-      <p class="field-label" style="margin-top:1rem">protected areas (one per line)</p>
-      <textarea class="text-input" style="width:100%" name="protected_areas" rows="3"></textarea>
+        <p class="field-label" style="margin-top:1rem">core requirements (one per line)</p>
+        <textarea class="text-input" style="width:100%" name="core_requirements" rows="5"></textarea>
 
-      <p class="field-label" style="margin-top:1rem">raw project idea</p>
-      <textarea class="text-input" style="width:100%" name="raw_idea" rows="4"></textarea>
+        <p class="field-label" style="margin-top:1rem">non-goals (one per line)</p>
+        <textarea class="text-input" style="width:100%" name="non_goals" rows="4"></textarea>
+
+        <p class="field-label" style="margin-top:1rem">architectural principles (one per line)</p>
+        <textarea class="text-input" style="width:100%" name="architectural_principles" rows="4"></textarea>
+      </div>
+
+      <div class="cat-section">
+        <div class="cat-head" style="cursor:default"><h2>Feature Matrix</h2></div>
+        <p class="field-label">one row per line: <code>feature|package|default(yes/no)|requires|purpose</code></p>
+        <textarea class="text-input" style="width:100%" name="feature_matrix" rows="4" spellcheck="false"></textarea>
+      </div>
+
+      <div class="cat-section">
+        <div class="cat-head" style="cursor:default"><h2>API / Data / CLI Contracts</h2></div>
+        <p class="field-label">public API guarantees — protected surfaces (one per line)</p>
+        <textarea class="text-input" style="width:100%" name="public_api_surfaces" rows="3"></textarea>
+
+        <p class="field-label" style="margin-top:1rem">persistence / serialization notes (one per line)</p>
+        <textarea class="text-input" style="width:100%" name="persistence_notes" rows="3"></textarea>
+
+        <p class="field-label" style="margin-top:1rem">integrity / security invariants (one per line)</p>
+        <textarea class="text-input" style="width:100%" name="security_invariants" rows="3"></textarea>
+
+        <p class="field-label" style="margin-top:1rem">CLI contract</p>
+        <textarea class="text-input" style="width:100%" name="cli_contract" rows="2" placeholder="No CLI at MVP. / Describe the real one."></textarea>
+      </div>
+
+      <div class="cat-section">
+        <div class="cat-head" style="cursor:default"><h2>Phases &amp; Protection</h2></div>
+        <p class="field-label">project phases, in order (one per line)</p>
+        <textarea class="text-input" style="width:100%" name="phases" rows="4"></textarea>
+
+        <p class="field-label" style="margin-top:1rem">protected areas (one per line)</p>
+        <textarea class="text-input" style="width:100%" name="protected_areas" rows="3"></textarea>
+
+        <p class="field-label" style="margin-top:1rem">raw project idea</p>
+        <textarea class="text-input" style="width:100%" name="raw_idea" rows="4"></textarea>
+      </div>
 
       <div style="margin-top:1.25rem">
         <button type="submit" class="btn-link">create + export</button>
