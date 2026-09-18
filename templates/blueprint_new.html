@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}new blueprint instance · cyberdesk{% endblock %}
+{% block body %}
+<div class="dash-head">
+  <h1>new project</h1>
+  <p>Fill in the real fields once — <code>AGENTS.md</code>/<code>PROJECT_SPEC.md</code>/
+    <code>PROJECT_STATE.md</code>/<code>AGENT_HANDOFF.md</code> get generated and written into
+    the target directory (and git-committed there, if it's a repo).</p>
+</div>
+
+<div class="window">
+  <div class="titlebar"><span class="dot dot-a"></span><span class="dot dot-b"></span><span class="dot dot-c"></span>
+    <span class="titlebar-text">new instance</span></div>
+  <div class="window-body">
+    <form method="post" action="/blueprints/new">
+      <p class="field-label">template</p>
+      <select class="text-input" name="template_slug" required>
+        {% for t in templates %}
+        <option value="{{ t.slug }}">{{ t.name }}</option>
+        {% endfor %}
+      </select>
+
+      <p class="field-label" style="margin-top:1rem">project name</p>
+      <input class="text-input" style="width:100%" name="project_name" placeholder="vdb-rs" required>
+
+      <p class="field-label" style="margin-top:1rem">target directory (absolute path — where the real files get written)</p>
+      <input class="text-input" style="width:100%" name="target_dir" placeholder="/home/raven/Devspace/rust/vdb-rs" required>
+
+      <p class="field-label" style="margin-top:1rem">one-sentence vision</p>
+      <input class="text-input" style="width:100%" name="vision" placeholder="An embedded, crash-safe, Rust-native vector database.">
+
+      <p class="field-label" style="margin-top:1rem">core requirements (one per line)</p>
+      <textarea class="text-input" style="width:100%" name="core_requirements" rows="5"></textarea>
+
+      <p class="field-label" style="margin-top:1rem">non-goals (one per line)</p>
+      <textarea class="text-input" style="width:100%" name="non_goals" rows="4"></textarea>
+
+      <p class="field-label" style="margin-top:1rem">feature matrix — one row per line: <code>feature|package|default(yes/no)|requires|purpose</code></p>
+      <textarea class="text-input" style="width:100%" name="feature_matrix" rows="4" spellcheck="false"></textarea>
+
+      <p class="field-label" style="margin-top:1rem">project phases, in order (one per line)</p>
+      <textarea class="text-input" style="width:100%" name="phases" rows="4"></textarea>
+
+      <p class="field-label" style="margin-top:1rem">protected areas (one per line)</p>
+      <textarea class="text-input" style="width:100%" name="protected_areas" rows="3"></textarea>
+
+      <p class="field-label" style="margin-top:1rem">raw project idea</p>
+      <textarea class="text-input" style="width:100%" name="raw_idea" rows="4"></textarea>
+
+      <div style="margin-top:1.25rem">
+        <button type="submit" class="btn-link">create + export</button>
+        <a class="btn-link" href="/blueprints">cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

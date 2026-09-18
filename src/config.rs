@@ -24,6 +24,15 @@ pub struct Config {
     /// its own tab icon without a rebuild. Falls back to the compiled-in
     /// cyberdesk favicon when unset or unreadable.
     pub favicon_path: Option<PathBuf>,
+    /// Where blueprint *templates* (schema definitions, reusable across
+    /// projects) live. Deliberately outside `root` (the vault) — nothing
+    /// under here is a darknotes note, and `vault::all_notes`/
+    /// `tree_nested` would wrongly sweep it in if it sat inside the vault.
+    /// Per-project *instances*' own data lives inside each project's own
+    /// target directory instead (`<target>/.blueprint/instance.json`),
+    /// not here — this only holds the shared template definitions plus a
+    /// small index of which target directories are tracked.
+    pub blueprints_dir: PathBuf,
 }
 
 impl Config {
@@ -41,7 +50,12 @@ impl Config {
             ),
             site_name: std::env::var("CYBERDESK_SITE_NAME").unwrap_or_else(|_| "cyberdesk".into()),
             logo_text: std::env::var("CYBERDESK_LOGO_TEXT").ok(),
-            favicon_path: std::env::var("CYBERDESK_FAVICON_PATH").ok().map(PathBuf::from),
+            favicon_path: std::env::var("CYBERDESK_FAVICON_PATH")
+                .ok()
+                .map(PathBuf::from),
+            blueprints_dir: std::env::var("CYBERDESK_BLUEPRINTS_DIR")
+                .map(PathBuf::from)
+                .unwrap_or_else(|_| cybercore::paths::sysops_root().join("cyberdesk/_blueprints")),
         }
     }
 }

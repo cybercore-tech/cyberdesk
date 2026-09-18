@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}{{ 'edit' if editing else 'new' }} blueprint template · cyberdesk{% endblock %}
+{% block body %}
+<div class="dash-head">
+  <h1>{{ 'edit template' if editing else 'new blueprint template' }}</h1>
+  <p>A template's <code>AGENTS.md</code> is mostly static operating rules, shared verbatim across
+    every project that uses it — the per-project fields live on each instance, not here.</p>
+</div>
+
+<div class="window">
+  <div class="titlebar"><span class="dot dot-a"></span><span class="dot dot-b"></span><span class="dot dot-c"></span>
+    <span class="titlebar-text">template</span></div>
+  <div class="window-body">
+    <form method="post" action="{{ '/blueprints/templates/' ~ template.slug ~ '/edit' if editing else '/blueprints/templates/new' }}">
+      <p class="field-label">slug</p>
+      <input class="text-input" style="width:100%" name="slug" placeholder="rust-agent-blueprint"
+             value="{{ template.slug | default('') }}" {{ 'readonly' if editing }} required>
+
+      <p class="field-label" style="margin-top:1rem">name</p>
+      <input class="text-input" style="width:100%" name="name" placeholder="Rust Agent Blueprint"
+             value="{{ template.name | default('') }}" required>
+
+      <p class="field-label" style="margin-top:1rem">AGENTS.md (static operating rules — use <code>{{ '{{ instance.project_name }}' }}</code> etc. for mail-merge placeholders)</p>
+      <textarea class="text-input" style="width:100%" name="agents_md" rows="16" spellcheck="false">{{ template.agents_md | default('') }}</textarea>
+
+      <p class="field-label" style="margin-top:1rem">PROJECT_SPEC.md boilerplate (Full Validation Gate, Package Gate, CI, Git Commit Standard, Changelog, Release Checklist, Definition of Done — the parts that don't vary per project)</p>
+      <textarea class="text-input" style="width:100%" name="spec_boilerplate" rows="16" spellcheck="false">{{ template.spec_boilerplate | default('') }}</textarea>
+
+      <div style="margin-top:1.25rem">
+        <button type="submit" class="btn-link">{{ 'save' if editing else 'create template' }}</button>
+        <a class="btn-link" href="/blueprints">cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

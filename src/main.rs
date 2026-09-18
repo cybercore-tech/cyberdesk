@@ -1,6 +1,7 @@
 //! cyberdesk — a local, git-backed markdown notes portal + editor for the
 //! darknotes vault. One binary, server-rendered, no npm.
 
+mod blueprints;
 mod config;
 mod git;
 mod lint;
@@ -43,7 +44,11 @@ async fn main() -> anyhow::Result<()> {
             cfg.root.display()
         );
     }
-    tracing::info!("vault: {}  theme: {}", cfg.root.display(), theme::active_name());
+    tracing::info!(
+        "vault: {}  theme: {}",
+        cfg.root.display(),
+        theme::active_name()
+    );
 
     let state = AppState {
         render: Renderer::new(cfg.site_name.clone(), cfg.logo_text.clone()),
@@ -66,6 +71,28 @@ async fn main() -> anyhow::Result<()> {
         .route("/repo", get(routes::repo_page))
         .route("/theme.css", get(routes::theme_css))
         .route("/theme/set/:slug", get(routes::theme_set))
+        .route("/api/theme/css/:slug", get(routes::api_theme_css))
+        .route("/vendor/components.css", get(routes::components_css))
+        .route("/blueprints", get(routes::blueprints_list))
+        .route(
+            "/blueprints/templates/new",
+            get(routes::blueprint_template_new_form).post(routes::blueprint_template_new),
+        )
+        .route(
+            "/blueprints/templates/:slug/edit",
+            get(routes::blueprint_template_edit_form).post(routes::blueprint_template_edit),
+        )
+        .route(
+            "/blueprints/new",
+            get(routes::blueprint_instance_new_form).post(routes::blueprint_instance_new),
+        )
+        .route("/blueprints/:slug", get(routes::blueprint_dashboard))
+        .route("/blueprints/:slug/save", post(routes::blueprint_save))
+        .route("/blueprints/:slug/handoff", post(routes::blueprint_handoff))
+        .route(
+            "/api/blueprints/:slug/preview",
+            get(routes::api_blueprint_preview),
+        )
         .route("/api/titles", get(routes::api_titles))
         .route("/api/raw/*path", get(routes::api_raw))
         .route("/api/save", post(routes::api_save))

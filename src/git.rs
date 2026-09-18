@@ -66,12 +66,21 @@ pub fn web_url(remote: &str) -> String {
 
 /// `git add -A` + commit. No-ops cleanly if there's nothing staged.
 pub fn commit(root: &Path, message: &str) {
-    if run(root, &["rev-parse", "--is-inside-work-tree"]).map(|o| o.status.success()).unwrap_or(false) {
+    if run(root, &["rev-parse", "--is-inside-work-tree"])
+        .map(|o| o.status.success())
+        .unwrap_or(false)
+    {
         let _ = run(root, &["add", "-A"]);
         let out = run(root, &["commit", "-m", message]);
         match out {
             Ok(o) if o.status.success() => {
-                tracing::info!("git: {}", String::from_utf8_lossy(&o.stdout).lines().next().unwrap_or(""));
+                tracing::info!(
+                    "git: {}",
+                    String::from_utf8_lossy(&o.stdout)
+                        .lines()
+                        .next()
+                        .unwrap_or("")
+                );
             }
             Ok(o) => {
                 let s = String::from_utf8_lossy(&o.stdout);
@@ -82,6 +91,38 @@ pub fn commit(root: &Path, message: &str) {
             Err(e) => tracing::warn!("git commit failed: {e}"),
         }
     }
+}
+
+/// Same as [`commit`], but for targets that might not even be a git repo
+/// (an arbitrary external project directory, unlike the vault's own
+/// known-good repo) — surfaces that as a real error instead of a log
+/// line the caller never sees. "Nothing to commit" is treated as
+/// success, not an error — there was simply no change to record.
+pub fn commit_result(root: &Path, message: &str) -> anyhow::Result<()> {
+    let is_repo = run(root, &["rev-parse", "--is-inside-work-tree"])
+        .map(|o| o.status.success())
+        .unwrap_or(false);
+    if !is_repo {
+        anyhow::bail!("{} is not a git repository", root.display());
+    }
+    run(root, &["add", "-A"]).map_err(|e| anyhow::anyhow!("git add failed: {e}"))?;
+    let out = run(root, &["commit", "-m", message])
+        .map_err(|e| anyhow::anyhow!("git commit failed: {e}"))?;
+    if out.status.success() {
+        tracing::info!(
+            "git: {}",
+            String::from_utf8_lossy(&out.stdout)
+                .lines()
+                .next()
+                .unwrap_or("")
+        );
+        return Ok(());
+    }
+    let s = String::from_utf8_lossy(&out.stdout);
+    if s.contains("nothing to commit") {
+        return Ok(());
+    }
+    anyhow::bail!("git commit failed: {}", s.trim())
 }
 
 pub fn push(root: &Path) {

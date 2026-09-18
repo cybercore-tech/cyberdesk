@@ -23,6 +23,10 @@ pub fn build_env() -> Environment<'static> {
     tpl!(env, "lint.html");
     tpl!(env, "repo.html");
     tpl!(env, "api.html");
+    tpl!(env, "blueprint_list.html");
+    tpl!(env, "blueprint_template_edit.html");
+    tpl!(env, "blueprint_new.html");
+    tpl!(env, "blueprint_dashboard.html");
     env
 }
 
@@ -46,11 +50,16 @@ impl Renderer {
         }
     }
 
-    pub fn page(&self, name: &str, ctx: Value, nav: &str) -> Result<Html<String>, minijinja::Error> {
+    pub fn page(
+        &self,
+        name: &str,
+        ctx: Value,
+        nav: &str,
+    ) -> Result<Html<String>, minijinja::Error> {
         let t = self.env.get_template(name)?;
         let merged = context! { ..ctx, ..context! {
             css => self.css, theme => self.theme, nav => nav, site_name => self.site_name,
-            logo_text => self.logo_text,
+            logo_text => self.logo_text, theme_names => crate::theme::names(),
         }};
         Ok(Html(t.render(merged)?))
     }

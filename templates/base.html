@@ -16,6 +16,8 @@
 {{ css|safe }}
 </style>
 <link rel="stylesheet" href="/theme.css">
+<!-- shared cybercore component styles: cards, badges, tables, theme picker, popup viewers -->
+<link rel="stylesheet" href="/vendor/components.css">
 <style>
 :root {
   /* --font-mono / --font-ui / --fs-* / --space-* / --radius-* come from
@@ -525,6 +527,7 @@ body::after { content: ""; position: fixed; inset: 0; z-index: 500; pointer-even
     <a href="/all" class="{{ 'on' if nav == 'all' }}">📄 all</a>
     <a href="/folders" class="{{ 'on' if nav == 'folders' }}">🗂 folders</a>
     <a href="/templates" class="{{ 'on' if nav == 'templates' }}">🧩 templates</a>
+    <a href="/blueprints" class="{{ 'on' if nav == 'blueprints' }}">📐 blueprints</a>
     <a href="/lint" class="{{ 'on' if nav == 'lint' }}">🩹 lint</a>
     <a href="/repo" class="{{ 'on' if nav == 'repo' }}">🌿 repo</a>
     <a href="/api" class="{{ 'on' if nav == 'api' }}">🔌 api</a>
@@ -548,13 +551,18 @@ body::after { content: ""; position: fixed; inset: 0; z-index: 500; pointer-even
       <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
       darkstardevx/cyberdesk
     </a>
-    <div>
-      <label for="themesel">cybercore theme</label>
-      <select id="themesel">
-        {% for t in themes | default([]) %}
-        <option value="{{ t }}" {{ 'selected' if t == theme_default }}>{{ t | replace("-", " ") | title }}</option>
+    <div class="theme-dropdown-wrap">
+      <button type="button" class="btn-ghost" id="theme-picker-btn"
+              onclick="toggleDropdown(event, 'theme-dropdown')"
+              aria-haspopup="listbox" aria-expanded="false">
+        <span id="theme-picker-label">{{ theme }}</span> <span class="caret-down">&#9662;</span>
+      </button>
+      <div id="theme-dropdown" class="theme-dropdown" role="listbox" hidden>
+        {% for t in theme_names | default([]) %}
+        <div class="theme-item {{ 'selected' if t == theme }}" data-value="{{ t }}"
+             role="option" onclick="selectTheme('{{ t }}')">{{ t | replace("-", " ") }}</div>
         {% endfor %}
-      </select>
+      </div>
     </div>
   </div>
 </aside>
@@ -924,15 +932,56 @@ body::after { content: ""; position: fixed; inset: 0; z-index: 500; pointer-even
     card.addEventListener('pointerleave', popHide);
   });
 
-  // ── cybercore theme switcher ────────────────────────────
-  var tsel = g('themesel');
-  if (tsel) {
-    var mm = document.cookie.match(/(?:^|; )cyberdesk_theme=([^;]+)/);
-    if (mm) { try { tsel.value = decodeURIComponent(mm[1]); } catch (e) {} }
-    tsel.addEventListener('change', function () {
-      location.href = '/theme/set/' + encodeURIComponent(tsel.value);
+  // ── cybercore theme switcher — ported from cyberdeck's dropdown ──
+  // (see cyberdeck/src/views.rs for the source this mirrors). Applies
+  // instantly via localStorage + a <style id="theme-vars"> override, no
+  // page reload — /api/theme/css/:slug also sets the cyberdesk_theme
+  // cookie server-side, so a plain reload without JS still lands on the
+  // same theme via the existing /theme.css cookie fallback.
+  function applyTheme(name) {
+    fetch('/api/theme/css/' + encodeURIComponent(name))
+      .then(function (r) { return r.text(); })
+      .then(function (css) {
+        var el = g('theme-vars');
+        if (!el) { el = document.createElement('style'); el.id = 'theme-vars'; document.head.appendChild(el); }
+        el.textContent = css;
+      });
+    localStorage.setItem('cyberdesk-theme', name);
+    var label = g('theme-picker-label');
+    if (label) label.textContent = name;
+    document.querySelectorAll('#theme-dropdown .theme-item').forEach(function (el) {
+      el.classList.toggle('selected', el.dataset.value === name);
     });
   }
+  function selectTheme(name) {
+    applyTheme(name);
+    closeAllDropdowns();
+  }
+  function toggleDropdown(evt, id) {
+    var dd = g(id);
+    var open = !dd.hidden;
+    closeAllDropdowns();
+    if (open) return;
+    var r = evt.currentTarget.getBoundingClientRect();
+    dd.style.top = (r.bottom + 6) + 'px';
+    dd.style.left = Math.max(12, r.right - dd.offsetWidth) + 'px';
+    dd.hidden = false;
+    evt.currentTarget.setAttribute('aria-expanded', 'true');
+  }
+  function closeAllDropdowns() {
+    document.querySelectorAll('.theme-dropdown').forEach(function (dd) { dd.hidden = true; });
+    var btn = g('theme-picker-btn');
+    if (btn) btn.setAttribute('aria-expanded', 'false');
+  }
+  document.addEventListener('click', function (e) {
+    if (!e.target.closest('.theme-dropdown-wrap')) closeAllDropdowns();
+  });
+  (function () {
+    var saved = localStorage.getItem('cyberdesk-theme');
+    if (saved && document.querySelector('#theme-dropdown .theme-item[data-value="' + CSS.escape(saved) + '"]')) {
+      applyTheme(saved);
+    }
+  })();
 
   // ── pop-up file editor ──────────────────────────────────
   var fed = g('fed'), ta = g('fed-ta'), tt = g('fed-tt'),

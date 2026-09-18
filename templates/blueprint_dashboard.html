@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+{% block title %}{{ instance.project_name }} · blueprint{% endblock %}
+{% block body %}
+<div class="dash-head">
+  <h1>{{ instance.project_name }}</h1>
+  <p><code>{{ instance.target_dir }}</code> — <span class="badge status-running">{{ instance.current_phase }}</span></p>
+</div>
+
+<div class="card-actions" style="margin-bottom:1.5rem">
+  <button type="button" onclick="openViewer()">preview generated files</button>
+  <a class="btn-link" href="/blueprints">← all blueprints</a>
+</div>
+
+<div class="cat-section">
+  <div class="cat-head" style="cursor:default"><h2>feature state</h2></div>
+  {% if instance.feature_state | length == 0 %}
+  <div class="empty-state">No features recorded yet.</div>
+  {% else %}
+  <table class="res-table">
+    <tr><th>feature</th><th>status</th><th>isolation tested?</th><th>notes</th></tr>
+    {% for f in instance.feature_state %}
+    <tr><td><code>{{ f.feature }}</code></td><td>{{ f.status }}</td><td>{{ 'yes' if f.isolation_tested else 'no' }}</td><td>{{ f.notes }}</td></tr>
+    {% endfor %}
+  </table>
+  {% endif %}
+</div>
+
+<div class="cat-section">
+  <div class="cat-head" style="cursor:default"><h2>validation status</h2></div>
+  {% if instance.validation_status | length == 0 %}
+  <div class="empty-state">No validation gates recorded yet.</div>
+  {% else %}
+  <table class="res-table">
+    <tr><th>gate</th><th>status</th><th>notes</th></tr>
+    {% for v in instance.validation_status %}
+    <tr>
+      <td>{{ v.gate }}</td>
+      <td><span class="badge {{ 'status-running' if v.status == 'pass' else ('status-unknown' if v.status == 'fail' else 'status-stopped') }}">
+        {{ 'PASS' if v.status == 'pass' else ('FAIL' if v.status == 'fail' else 'UNKNOWN') }}
+      </span></td>
+      <td>{{ v.notes }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% endif %}
+</div>
+
+<div class="cat-section">
+  <div class="cat-head" style="cursor:default"><h2>edit living state</h2></div>
+  <div class="window">
+    <div class="window-body">
+      <form method="post" action="/blueprints/{{ instance.slug }}/save">
+        <p class="field-label">project name</p>
+        <input class="text-input" style="width:100%" name="project_name" value="{{ instance.project_name }}" required>
+
+        <p class="field-label" style="margin-top:1rem">vision</p>
+        <input class="text-input" style="width:100%" name="vision" value="{{ instance.vision }}">
+
+        <p class="field-label" style="margin-top:1rem">current phase</p>
+        <select class="text-input" name="current_phase">
+          {% for p in instance.phases %}
+          <option value="{{ p }}" {{ 'selected' if p == instance.current_phase }}>{{ p }}</option>
+          {% endfor %}
+        </select>
+
+        <p class="field-label" style="margin-top:1rem">current milestone</p>
+        <input class="text-input" style="width:100%" name="current_milestone" value="{{ instance.current_milestone }}">
+
+        <p class="field-label" style="margin-top:1rem">core requirements (one per line)</p>
+        <textarea class="text-input" style="width:100%" name="core_requirements" rows="5">{{ core_requirements_text }}</textarea>
+
+        <p class="field-label" style="margin-top:1rem">non-goals (one per line)</p>
+        <textarea class="text-input" style="width:100%" name="non_goals" rows="4">{{ non_goals_text }}</textarea>
+
+        <p class="field-label" style="margin-top:1rem">feature matrix — <code>feature|package|default(yes/no)|requires|purpose</code>, one per line</p>
+        <textarea class="text-input" style="width:100%" name="feature_matrix" rows="5" spellcheck="false">{{ feature_matrix_text }}</textarea>
+
+        <p class="field-label" style="margin-top:1rem">project phases, in order (one per line — the Current Phase dropdown above is built from this list)</p>
+        <textarea class="text-input" style="width:100%" name="phases" rows="4">{{ phases_text }}</textarea>
+
+        <p class="field-label" style="margin-top:1rem">protected areas (one per line)</p>
+        <textarea class="text-input" style="width:100%" name="protected_areas" rows="3">{{ protected_areas_text }}</textarea>
+
+        <p class="field-label" style="margin-top:1rem">raw project idea</p>
+        <textarea class="text-input" style="width:100%" name="raw_idea" rows="3">{{ instance.raw_idea }}</textarea>
+
+        <p class="field-label" style="margin-top:1rem">feature state — <code>feature|status|isolation_tested(yes/no)|notes</code>, one per line</p>
+        <textarea class="text-input" style="width:100%" name="feature_state" rows="5" spellcheck="false">{{ feature_state_text }}</textarea>
+
+        <p class="field-label" style="margin-top:1rem">validation status — <code>gate|PASS|FAIL|UNKNOWN|notes</code>, one per line</p>
+        <textarea class="text-input" style="width:100%" name="validation_status" rows="5" spellcheck="false">{{ validation_status_text }}</textarea>
+
+        <p class="field-label" style="margin-top:1rem">current failure</p>
+        <textarea class="text-input" style="width:100%" name="current_failure" rows="2">{{ instance.current_failure }}</textarea>
+
+        <p class="field-label" style="margin-top:1rem">next intended work</p>
+        <textarea class="text-input" style="width:100%" name="next_intended_work" rows="3">{{ instance.next_intended_work }}</textarea>
+
+        <p class="field-label" style="margin-top:1rem">notes for next agent</p>
+        <textarea class="text-input" style="width:100%" name="notes_for_next_agent" rows="3">{{ instance.notes_for_next_agent }}</textarea>
+
+        <div style="margin-top:1.25rem">
+          <button type="submit" class="btn-link">save + regenerate files</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="cat-section">
+  <div class="cat-head" style="cursor:default"><h2>session handoff log</h2></div>
+  <div class="window" style="margin-bottom:1rem">
+    <div class="window-body">
+      <form method="post" action="/blueprints/{{ instance.slug }}/handoff">
+        <p class="field-label">append a new AGENT_HANDOFF.md entry</p>
+        <textarea class="text-input" style="width:100%" name="summary" rows="3" placeholder="What happened this session, what's next…" required></textarea>
+        <div style="margin-top:0.75rem"><button type="submit" class="btn-link">append entry</button></div>
+      </form>
+    </div>
+  </div>
+  {% if instance.handoff_log | length == 0 %}
+  <div class="empty-state">No handoff entries yet.</div>
+  {% else %}
+  {% for entry in instance.handoff_log | reverse %}
+  <div class="card" style="margin-bottom:0.75rem">
+    <p class="card-meta"><code>{{ entry.at }}</code></p>
+    <p>{{ entry.summary }}</p>
+  </div>
+  {% endfor %}
+  {% endif %}
+</div>
+
+<div class="viewer-overlay" id="preview-overlay" hidden onclick="if(event.target===this) closeViewer()">
+  <div class="window viewer-window">
+    <div class="titlebar"><span class="dot dot-a"></span><span class="dot dot-b"></span><span class="dot dot-c"></span>
+      <span class="titlebar-text">generated files preview</span>
+      <a class="win-close" href="#" onclick="event.preventDefault(); closeViewer();">✕</a>
+    </div>
+    <div class="viewer-body" id="preview-body">
+      <div class="markdown-body">loading…</div>
+    </div>
+  </div>
+</div>
+
+<script>
+function openViewer() {
+  var overlay = document.getElementById('preview-overlay');
+  var body = document.getElementById('preview-body');
+  body.innerHTML = '<div class="markdown-body">loading…</div>';
+  overlay.hidden = false;
+  fetch('/api/blueprints/{{ instance.slug }}/preview')
+    .then(function (r) { return r.text(); })
+    .then(function (html) { body.innerHTML = '<div class="markdown-body">' + html + '</div>'; })
+    .catch(function () { body.innerHTML = '<div class="markdown-body">failed to load preview</div>'; });
+}
+function closeViewer() {
+  document.getElementById('preview-overlay').hidden = true;
+}
+document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeViewer(); });
+</script>
+{% endblock %}

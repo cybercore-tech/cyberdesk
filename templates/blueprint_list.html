@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}blueprints · cyberdesk{% endblock %}
+{% block body %}
+<div class="dash-head">
+  <h1>blueprints</h1>
+  <p>Structured <code>AGENTS.md</code>/<code>PROJECT_SPEC.md</code>/<code>PROJECT_STATE.md</code>/
+    <code>AGENT_HANDOFF.md</code> authoring — real fields instead of hand-edited prose that can
+    silently drift from what's actually true.</p>
+</div>
+
+<div class="cat-section">
+  <div class="cat-head" style="cursor:default">
+    <h2>templates</h2>
+    <span class="cat-count">{{ templates | length }}</span>
+    <span style="flex:1"></span>
+    <a class="btn-link" href="/blueprints/templates/new">+ new template</a>
+  </div>
+  {% if templates | length == 0 %}
+  <div class="empty-state">No blueprint templates yet. <a class="btn-link" href="/blueprints/templates/new">Create one</a>.</div>
+  {% else %}
+  <div class="grid">
+    {% for t in templates %}
+    <div class="card">
+      <div class="card-head"><span class="card-title">{{ t.name }}</span></div>
+      <p class="card-desc">{{ t.slug }}</p>
+      <div class="card-actions">
+        <a href="/blueprints/templates/{{ t.slug }}/edit">edit</a>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+
+<div class="cat-section">
+  <div class="cat-head" style="cursor:default">
+    <h2>projects</h2>
+    <span class="cat-count">{{ projects | length }}</span>
+    <span style="flex:1"></span>
+    <a class="btn-link" href="/blueprints/new">+ new instance</a>
+  </div>
+  {% if projects | length == 0 %}
+  <div class="empty-state">No projects tracked yet. <a class="btn-link" href="/blueprints/new">Create one</a>.</div>
+  {% else %}
+  <div class="grid">
+    {% for p in projects %}
+    <div class="card">
+      <div class="card-head"><span class="card-title">{{ p.project_name }}</span></div>
+      <p class="card-meta"><code>{{ p.target_dir }}</code></p>
+      <div class="card-actions">
+        <a href="/blueprints/{{ p.slug }}">open dashboard</a>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

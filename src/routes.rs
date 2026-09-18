@@ -9,7 +9,7 @@ use axum::Form;
 use minijinja::{context, Value};
 use serde::Deserialize;
 
-use crate::{git, lint, render, theme, vault, AppState};
+use crate::{blueprints, git, lint, render, theme, vault, AppState};
 
 /// GitHub page for the app's own source.
 const REPO_URL: &str = "https://github.com/darkstardevx/cyberdesk";
@@ -39,7 +39,9 @@ fn err(msg: impl std::fmt::Display) -> Response {
         .into_response()
 }
 fn html_escape(s: &str) -> String {
-    s.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;")
+    s.replace('&', "&amp;")
+        .replace('<', "&lt;")
+        .replace('>', "&gt;")
 }
 
 /// Common context every page needs (sidebar tree + the `＋ new` form data +
@@ -92,7 +94,10 @@ pub async fn portal(State(st): State<AppState>) -> Response {
     let root = &st.cfg.root;
     let notes = vault::all_notes(root);
     let total = notes.len();
-    let needs_review = notes.iter().filter(|n| n.tags.iter().any(|t| t == "needs-review")).count();
+    let needs_review = notes
+        .iter()
+        .filter(|n| n.tags.iter().any(|t| t == "needs-review"))
+        .count();
     let recent: Vec<_> = vault::recent(root, 12)
         .into_iter()
         .map(|(rel, title)| context! { rel => rel, title => title })
@@ -134,7 +139,9 @@ pub async fn view(State(st): State<AppState>, Path(rel): Path<String>) -> Respon
                 .collect();
             let body_html = render::wikilinks(&render::html(&n.body), &|stem: &str| {
                 idx.get(stem).cloned().or_else(|| {
-                    idx.iter().find(|(k, _)| k.eq_ignore_ascii_case(stem)).map(|(_, v)| v.clone())
+                    idx.iter()
+                        .find(|(k, _)| k.eq_ignore_ascii_case(stem))
+                        .map(|(_, v)| v.clone())
                 })
             });
 
@@ -179,7 +186,9 @@ pub async fn edit(State(st): State<AppState>, Path(rel): Path<String>) -> Respon
     let raw = vault::read_raw(root, &rel).unwrap_or_default();
     match vault::safe_rel(&rel) {
         Ok(_) => {
-            let title = vault::read(root, &rel).map(|n| n.title).unwrap_or_else(|_| rel.clone());
+            let title = vault::read(root, &rel)
+                .map(|n| n.title)
+                .unwrap_or_else(|_| rel.clone());
             page(
                 &st,
                 "edit.html",
@@ -263,8 +272,16 @@ fn on(s: &str) -> bool {
 
 pub async fn create(State(st): State<AppState>, Form(f): Form<NewForm>) -> Response {
     let root = &st.cfg.root;
-    let template = if f.template.trim().is_empty() { "note" } else { f.template.trim() };
-    let folder = if f.folder == "__new__" { f.new_folder.trim() } else { f.folder.trim() };
+    let template = if f.template.trim().is_empty() {
+        "note"
+    } else {
+        f.template.trim()
+    };
+    let folder = if f.folder == "__new__" {
+        f.new_folder.trim()
+    } else {
+        f.folder.trim()
+    };
 
     let mut tags: Vec<String> = f
         .tags
@@ -359,7 +376,12 @@ pub async fn all(State(st): State<AppState>) -> Response {
         .map(|n| context! { rel => n.rel, title => n.title, tags => n.tags })
         .collect();
     let n = notes.len();
-    page(&st, "list.html", context! { heading => "all notes", notes, n }, "")
+    page(
+        &st,
+        "list.html",
+        context! { heading => "all notes", notes, n },
+        "",
+    )
 }
 
 pub async fn by_tag(State(st): State<AppState>, Path(tag): Path<String>) -> Response {
@@ -368,7 +390,12 @@ pub async fn by_tag(State(st): State<AppState>, Path(tag): Path<String>) -> Resp
         .map(|n| context! { rel => n.rel, title => n.title, tags => n.tags })
         .collect();
     let n = notes.len();
-    page(&st, "list.html", context! { heading => format!("#{tag}"), notes, n }, "")
+    page(
+        &st,
+        "list.html",
+        context! { heading => format!("#{tag}"), notes, n },
+        "",
+    )
 }
 
 pub async fn templates_page(State(st): State<AppState>) -> Response {
@@ -427,7 +454,12 @@ pub async fn folders_page(State(st): State<AppState>) -> Response {
     let n_folders = vault::folders(root).len();
     let n_notes = vault::all_notes(root).len();
     // `tree` is already supplied by shell(); the page renders its dir nodes
-    page(&st, "folders.html", context! { n_folders, n_notes }, "folders")
+    page(
+        &st,
+        "folders.html",
+        context! { n_folders, n_notes },
+        "folders",
+    )
 }
 
 // ── lint ──────────────────────────────────────────────────────────────────
@@ -473,7 +505,11 @@ pub async fn lint_page(State(st): State<AppState>, Query(q): Query<LintQ>) -> Re
         .collect();
 
     let total_issues: usize = reports.iter().map(|r| r.issues.len()).sum();
-    let fixable: usize = reports.iter().flat_map(|r| &r.issues).filter(|i| i.fixable).count();
+    let fixable: usize = reports
+        .iter()
+        .flat_map(|r| &r.issues)
+        .filter(|i| i.fixable)
+        .count();
     page(
         &st,
         "lint.html",
@@ -520,7 +556,11 @@ pub async fn lint_fix(State(st): State<AppState>, Form(f): Form<LintFix>) -> Res
 pub async fn api_lint(State(st): State<AppState>) -> impl IntoResponse {
     let reports = lint::scan(&st.cfg.root);
     let total_issues: usize = reports.iter().map(|r| r.issues.len()).sum();
-    let fixable: usize = reports.iter().flat_map(|r| &r.issues).filter(|i| i.fixable).count();
+    let fixable: usize = reports
+        .iter()
+        .flat_map(|r| &r.issues)
+        .filter(|i| i.fixable)
+        .count();
     axum::Json(serde_json::json!({
         "reports": reports,
         "total_issues": total_issues,
@@ -560,6 +600,29 @@ pub async fn theme_set(Path(slug): Path<String>, headers: HeaderMap) -> Response
         .unwrap_or("/")
         .to_string();
     let mut res = Redirect::to(&back).into_response();
+    if let Ok(v) = HeaderValue::from_str(&set_cookie) {
+        res.headers_mut().insert(header::SET_COOKIE, v);
+    }
+    res
+}
+
+/// Raw `:root{}` CSS for one theme slug, for the JS theme-picker dropdown
+/// to fetch on selection (no page reload) — mirrors `theme_set`'s cookie
+/// write (so a plain reload without JS still lands on the same theme via
+/// `/theme.css`) but returns CSS instead of redirecting.
+pub async fn api_theme_css(Path(slug): Path<String>) -> Response {
+    let Some(css) = theme::css_for_slug(&slug) else {
+        return (StatusCode::NOT_FOUND, format!("unknown theme: {slug}")).into_response();
+    };
+    let set_cookie = format!("cyberdesk_theme={slug}; Path=/; Max-Age=31536000; SameSite=Lax");
+    let mut res = (
+        [
+            (header::CONTENT_TYPE, "text/css; charset=utf-8"),
+            (header::CACHE_CONTROL, "no-store"),
+        ],
+        css,
+    )
+        .into_response();
     if let Ok(v) = HeaderValue::from_str(&set_cookie) {
         res.headers_mut().insert(header::SET_COOKIE, v);
     }
@@ -675,7 +738,11 @@ pub struct ApiTidy {
 /// Mechanically lint `content` without touching the filesystem — the editor's
 /// "tidy" button. Returns `{ content, changed }`.
 pub async fn api_tidy(axum::Json(f): axum::Json<ApiTidy>) -> Response {
-    let stem = if f.rel.trim().is_empty() { "note" } else { stem_of(f.rel.trim()) };
+    let stem = if f.rel.trim().is_empty() {
+        "note"
+    } else {
+        stem_of(f.rel.trim())
+    };
     let out = lint::tidy_str(&f.content, stem);
     let changed = out != f.content;
     axum::Json(serde_json::json!({ "content": out, "changed": changed })).into_response()
@@ -687,7 +754,10 @@ pub struct ApiDelete {
 }
 
 /// Delete a file from the pop-up editor (with a git commit). JSON in/out.
-pub async fn api_delete(State(st): State<AppState>, axum::Json(f): axum::Json<ApiDelete>) -> Response {
+pub async fn api_delete(
+    State(st): State<AppState>,
+    axum::Json(f): axum::Json<ApiDelete>,
+) -> Response {
     let root = &st.cfg.root;
     let rel = f.rel.trim();
     match vault::delete(root, rel) {
@@ -723,7 +793,8 @@ pub async fn api_move(State(st): State<AppState>, axum::Json(f): axum::Json<ApiM
                 let r = root.clone();
                 tokio::task::spawn_blocking(move || git::push(&r));
             }
-            axum::Json(serde_json::json!({ "ok": true, "from": f.from.trim(), "to": to })).into_response()
+            axum::Json(serde_json::json!({ "ok": true, "from": f.from.trim(), "to": to }))
+                .into_response()
         }
         Err(e) => (
             StatusCode::BAD_REQUEST,
@@ -737,7 +808,10 @@ pub async fn api_move(State(st): State<AppState>, axum::Json(f): axum::Json<ApiM
 pub async fn cm_js() -> impl IntoResponse {
     (
         [
-            (header::CONTENT_TYPE, "application/javascript; charset=utf-8"),
+            (
+                header::CONTENT_TYPE,
+                "application/javascript; charset=utf-8",
+            ),
             (header::CACHE_CONTROL, "public, max-age=31536000, immutable"),
         ],
         include_str!("../assets/cm.bundle.js"),
@@ -761,6 +835,18 @@ pub async fn tokens_css() -> impl IntoResponse {
             (header::CACHE_CONTROL, "public, max-age=86400"),
         ],
         cybercore::tokens::CSS,
+    )
+}
+
+/// Shared cybercore component styles (cards / badges / tables / theme
+/// picker / popup viewers) — the same visual language cyberdeck uses.
+pub async fn components_css() -> impl IntoResponse {
+    (
+        [
+            (header::CONTENT_TYPE, "text/css; charset=utf-8"),
+            (header::CACHE_CONTROL, "public, max-age=86400"),
+        ],
+        cybercore::components::CSS,
     )
 }
 
@@ -817,4 +903,331 @@ pub async fn favicon_svg(State(st): State<AppState>) -> impl IntoResponse {
 
 pub async fn healthz() -> &'static str {
     "ok"
+}
+
+// ── Blueprints ───────────────────────────────────────────────────────
+
+fn blueprints_page(st: &AppState, name: &str, ctx: Value) -> Response {
+    match st.render.page(name, ctx, "blueprints") {
+        Ok(html) => html.into_response(),
+        Err(e) => err(e),
+    }
+}
+
+pub async fn blueprints_list(State(st): State<AppState>) -> Response {
+    let templates = match blueprints::list_templates(&st.cfg.blueprints_dir) {
+        Ok(t) => t,
+        Err(e) => return err(e),
+    };
+    let projects = match blueprints::list_tracked_projects(&st.cfg.blueprints_dir) {
+        Ok(p) => p,
+        Err(e) => return err(e),
+    };
+    blueprints_page(&st, "blueprint_list.html", context! { templates, projects })
+}
+
+pub async fn blueprint_template_new_form(State(st): State<AppState>) -> Response {
+    let empty = blueprints::Template {
+        slug: String::new(),
+        name: String::new(),
+        agents_md: String::new(),
+        spec_boilerplate: String::new(),
+    };
+    blueprints_page(
+        &st,
+        "blueprint_template_edit.html",
+        context! { editing => false, template => empty },
+    )
+}
+
+#[derive(Deserialize)]
+pub struct TemplateForm {
+    slug: String,
+    name: String,
+    agents_md: String,
+    spec_boilerplate: String,
+}
+
+pub async fn blueprint_template_new(
+    State(st): State<AppState>,
+    Form(f): Form<TemplateForm>,
+) -> Response {
+    let slug = blueprints::slugify(&f.slug);
+    if slug.is_empty() {
+        return err("template needs a slug");
+    }
+    let template = blueprints::Template {
+        slug: slug.clone(),
+        name: f.name,
+        agents_md: f.agents_md,
+        spec_boilerplate: f.spec_boilerplate,
+    };
+    match blueprints::save_template(&st.cfg.blueprints_dir, &template) {
+        Ok(()) => Redirect::to("/blueprints").into_response(),
+        Err(e) => err(e),
+    }
+}
+
+pub async fn blueprint_template_edit_form(
+    State(st): State<AppState>,
+    Path(slug): Path<String>,
+) -> Response {
+    match blueprints::load_template(&st.cfg.blueprints_dir, &slug) {
+        Ok(Some(t)) => blueprints_page(
+            &st,
+            "blueprint_template_edit.html",
+            context! { editing => true, template => t },
+        ),
+        Ok(None) => err(format!("no such template: {slug}")),
+        Err(e) => err(e),
+    }
+}
+
+pub async fn blueprint_template_edit(
+    State(st): State<AppState>,
+    Path(_slug): Path<String>,
+    Form(f): Form<TemplateForm>,
+) -> Response {
+    let slug = blueprints::slugify(&f.slug);
+    let template = blueprints::Template {
+        slug: slug.clone(),
+        name: f.name,
+        agents_md: f.agents_md,
+        spec_boilerplate: f.spec_boilerplate,
+    };
+    match blueprints::save_template(&st.cfg.blueprints_dir, &template) {
+        Ok(()) => Redirect::to("/blueprints").into_response(),
+        Err(e) => err(e),
+    }
+}
+
+pub async fn blueprint_instance_new_form(State(st): State<AppState>) -> Response {
+    let templates = match blueprints::list_templates(&st.cfg.blueprints_dir) {
+        Ok(t) => t,
+        Err(e) => return err(e),
+    };
+    if templates.is_empty() {
+        return err("no blueprint templates yet — create one first at /blueprints/templates/new");
+    }
+    blueprints_page(&st, "blueprint_new.html", context! { templates })
+}
+
+#[derive(Deserialize)]
+pub struct InstanceNewForm {
+    template_slug: String,
+    project_name: String,
+    target_dir: String,
+    vision: String,
+    core_requirements: String,
+    non_goals: String,
+    feature_matrix: String,
+    phases: String,
+    protected_areas: String,
+    raw_idea: String,
+}
+
+pub async fn blueprint_instance_new(
+    State(st): State<AppState>,
+    Form(f): Form<InstanceNewForm>,
+) -> Response {
+    let template = match blueprints::load_template(&st.cfg.blueprints_dir, &f.template_slug) {
+        Ok(Some(t)) => t,
+        Ok(None) => return err(format!("no such template: {}", f.template_slug)),
+        Err(e) => return err(e),
+    };
+    let slug = blueprints::slugify(&f.project_name);
+    if slug.is_empty() {
+        return err("project needs a name");
+    }
+    let target_dir = std::path::PathBuf::from(f.target_dir.trim());
+    if !target_dir.is_absolute() {
+        return err("target directory must be an absolute path");
+    }
+    let phases = blueprints::parse_lines(&f.phases);
+    let current_phase = phases.first().cloned().unwrap_or_default();
+    let instance = blueprints::Instance {
+        slug: slug.clone(),
+        template_slug: f.template_slug,
+        project_name: f.project_name,
+        target_dir,
+        vision: f.vision,
+        core_requirements: blueprints::parse_lines(&f.core_requirements),
+        non_goals: blueprints::parse_lines(&f.non_goals),
+        feature_matrix: blueprints::parse_feature_matrix(&f.feature_matrix),
+        phases,
+        protected_areas: blueprints::parse_lines(&f.protected_areas),
+        raw_idea: f.raw_idea,
+        current_phase,
+        current_milestone: String::new(),
+        feature_state: Vec::new(),
+        validation_status: Vec::new(),
+        current_failure: String::new(),
+        next_intended_work: String::new(),
+        notes_for_next_agent: String::new(),
+        handoff_log: Vec::new(),
+    };
+    if let Err(e) = blueprints::save_instance(&st.cfg.blueprints_dir, &instance) {
+        return err(e);
+    }
+    if let Err(e) = blueprints::export(&template, &instance) {
+        return err(format!("saved, but export failed: {e}"));
+    }
+    Redirect::to(&format!("/blueprints/{slug}")).into_response()
+}
+
+pub async fn blueprint_dashboard(State(st): State<AppState>, Path(slug): Path<String>) -> Response {
+    let instance = match blueprints::load_instance_by_slug(&st.cfg.blueprints_dir, &slug) {
+        Ok(Some(i)) => i,
+        Ok(None) => return err(format!("no such blueprint instance: {slug}")),
+        Err(e) => return err(e),
+    };
+    let core_requirements_text = blueprints::format_lines(&instance.core_requirements);
+    let non_goals_text = blueprints::format_lines(&instance.non_goals);
+    let protected_areas_text = blueprints::format_lines(&instance.protected_areas);
+    let phases_text = blueprints::format_lines(&instance.phases);
+    let feature_matrix_text = blueprints::format_feature_matrix(&instance.feature_matrix);
+    let feature_state_text = blueprints::format_feature_state(&instance.feature_state);
+    let validation_status_text = blueprints::format_validation_status(&instance.validation_status);
+    blueprints_page(
+        &st,
+        "blueprint_dashboard.html",
+        context! {
+            instance, core_requirements_text, non_goals_text, protected_areas_text,
+            phases_text, feature_matrix_text, feature_state_text, validation_status_text,
+        },
+    )
+}
+
+#[derive(Deserialize)]
+pub struct InstanceSaveForm {
+    project_name: String,
+    vision: String,
+    core_requirements: String,
+    non_goals: String,
+    feature_matrix: String,
+    phases: String,
+    protected_areas: String,
+    raw_idea: String,
+    current_phase: String,
+    current_milestone: String,
+    feature_state: String,
+    validation_status: String,
+    current_failure: String,
+    next_intended_work: String,
+    notes_for_next_agent: String,
+}
+
+pub async fn blueprint_save(
+    State(st): State<AppState>,
+    Path(slug): Path<String>,
+    Form(f): Form<InstanceSaveForm>,
+) -> Response {
+    let mut instance = match blueprints::load_instance_by_slug(&st.cfg.blueprints_dir, &slug) {
+        Ok(Some(i)) => i,
+        Ok(None) => return err(format!("no such blueprint instance: {slug}")),
+        Err(e) => return err(e),
+    };
+    let template = match blueprints::load_template(&st.cfg.blueprints_dir, &instance.template_slug)
+    {
+        Ok(Some(t)) => t,
+        Ok(None) => {
+            return err(format!(
+                "template {} no longer exists",
+                instance.template_slug
+            ))
+        }
+        Err(e) => return err(e),
+    };
+    instance.project_name = f.project_name;
+    instance.vision = f.vision;
+    instance.core_requirements = blueprints::parse_lines(&f.core_requirements);
+    instance.non_goals = blueprints::parse_lines(&f.non_goals);
+    instance.feature_matrix = blueprints::parse_feature_matrix(&f.feature_matrix);
+    instance.phases = blueprints::parse_lines(&f.phases);
+    instance.protected_areas = blueprints::parse_lines(&f.protected_areas);
+    instance.raw_idea = f.raw_idea;
+    instance.current_phase = f.current_phase;
+    instance.current_milestone = f.current_milestone;
+    instance.feature_state = blueprints::parse_feature_state(&f.feature_state);
+    instance.validation_status = blueprints::parse_validation_status(&f.validation_status);
+    instance.current_failure = f.current_failure;
+    instance.next_intended_work = f.next_intended_work;
+    instance.notes_for_next_agent = f.notes_for_next_agent;
+
+    if let Err(e) = blueprints::save_instance(&st.cfg.blueprints_dir, &instance) {
+        return err(e);
+    }
+    if let Err(e) = blueprints::export(&template, &instance) {
+        return err(format!("saved, but export failed: {e}"));
+    }
+    Redirect::to(&format!("/blueprints/{slug}")).into_response()
+}
+
+#[derive(Deserialize)]
+pub struct HandoffForm {
+    summary: String,
+}
+
+pub async fn blueprint_handoff(
+    State(st): State<AppState>,
+    Path(slug): Path<String>,
+    Form(f): Form<HandoffForm>,
+) -> Response {
+    let instance = match blueprints::append_handoff(&st.cfg.blueprints_dir, &slug, f.summary) {
+        Ok(i) => i,
+        Err(e) => return err(e),
+    };
+    let template = match blueprints::load_template(&st.cfg.blueprints_dir, &instance.template_slug)
+    {
+        Ok(Some(t)) => t,
+        Ok(None) => {
+            return err(format!(
+                "template {} no longer exists",
+                instance.template_slug
+            ))
+        }
+        Err(e) => return err(e),
+    };
+    if let Err(e) = blueprints::export(&template, &instance) {
+        return err(format!("saved, but export failed: {e}"));
+    }
+    Redirect::to(&format!("/blueprints/{slug}")).into_response()
+}
+
+/// Live preview of the generated files, rendered as HTML for the popup
+/// viewer (same `.viewer-body.markdown-body` pattern the "View Output"
+/// modal already uses).
+pub async fn api_blueprint_preview(
+    State(st): State<AppState>,
+    Path(slug): Path<String>,
+) -> Response {
+    let instance = match blueprints::load_instance_by_slug(&st.cfg.blueprints_dir, &slug) {
+        Ok(Some(i)) => i,
+        Ok(None) => return err(format!("no such blueprint instance: {slug}")),
+        Err(e) => return err(e),
+    };
+    let template = match blueprints::load_template(&st.cfg.blueprints_dir, &instance.template_slug)
+    {
+        Ok(Some(t)) => t,
+        Ok(None) => {
+            return err(format!(
+                "template {} no longer exists",
+                instance.template_slug
+            ))
+        }
+        Err(e) => return err(e),
+    };
+    let mut combined = String::new();
+    match blueprints::render_agents_md(&template, &instance) {
+        Ok(s) => combined.push_str(&s),
+        Err(e) => return err(e),
+    }
+    combined.push_str("\n\n---\n\n");
+    match blueprints::render_project_spec(&template, &instance) {
+        Ok(s) => combined.push_str(&s),
+        Err(e) => return err(e),
+    }
+    combined.push_str("\n\n---\n\n");
+    combined.push_str(&blueprints::render_project_state(&instance));
+    Html(render::html(&combined)).into_response()
 }
