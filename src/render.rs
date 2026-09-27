@@ -22,7 +22,9 @@ pub fn wikilinks(html: &str, resolve: &impl Fn(&str) -> Option<String>) -> Strin
         };
         match resolve(target) {
             Some(rel) => out.push_str(&format!("<a class=\"wl\" href=\"/n/{rel}\">{label}</a>")),
-            None => out.push_str(&format!("<a class=\"wl broken\" href=\"/e/{target}.md\" title=\"no such note\">{label}</a>")),
+            None => out.push_str(&format!(
+                "<a class=\"wl broken\" href=\"/e/{target}.md\" title=\"no such note\">{label}</a>"
+            )),
         }
     }
     out.push_str(rest);
@@ -39,7 +41,12 @@ pub fn wikilink_targets(md: &str) -> Vec<String> {
         let Some(j) = rest.find("]]") else { break };
         let inner = &rest[..j];
         rest = &rest[j + 2..];
-        let target = inner.split('|').next().unwrap_or("").trim().trim_end_matches(".md");
+        let target = inner
+            .split('|')
+            .next()
+            .unwrap_or("")
+            .trim()
+            .trim_end_matches(".md");
         if !target.is_empty() {
             out.push(target.to_string());
         }

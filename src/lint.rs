@@ -94,7 +94,10 @@ pub fn scan(root: &Path) -> Vec<NoteReport> {
         let mut issues = Vec::new();
         let raw = vault::read_raw(root, &n.rel).unwrap_or_default();
         let hs = headings(&n.body);
-        let stem = Path::new(&n.rel).file_stem().and_then(|s| s.to_str()).unwrap_or("");
+        let stem = Path::new(&n.rel)
+            .file_stem()
+            .and_then(|s| s.to_str())
+            .unwrap_or("");
         let humanized = stem.replace(['-', '_'], " ");
 
         // ── title ──
@@ -102,8 +105,11 @@ pub fn scan(root: &Path) -> Vec<NoteReport> {
             .strip_prefix("---\n")
             .and_then(|r| r.split("\n---").next())
             .and_then(|fm| {
-                fm.lines()
-                    .find_map(|l| l.trim().strip_prefix("title:").map(|v| v.trim().trim_matches('"').to_string()))
+                fm.lines().find_map(|l| {
+                    l.trim()
+                        .strip_prefix("title:")
+                        .map(|v| v.trim().trim_matches('"').to_string())
+                })
             });
         let title_str = fm_title.clone().unwrap_or_default();
         if title_str.is_empty() {
@@ -137,9 +143,21 @@ pub fn scan(root: &Path) -> Vec<NoteReport> {
         // ── headings ──
         let h1s = hs.iter().filter(|(l, _)| *l == 1).count();
         if h1s == 0 {
-            issues.push(Issue { kind: "no_h1", detail: "no H1 heading".into(), fixable: false, before: String::new(), after: String::new() });
+            issues.push(Issue {
+                kind: "no_h1",
+                detail: "no H1 heading".into(),
+                fixable: false,
+                before: String::new(),
+                after: String::new(),
+            });
         } else if h1s > 1 {
-            issues.push(Issue { kind: "multi_h1", detail: format!("{h1s} H1 headings"), fixable: false, before: String::new(), after: String::new() });
+            issues.push(Issue {
+                kind: "multi_h1",
+                detail: format!("{h1s} H1 headings"),
+                fixable: false,
+                before: String::new(),
+                after: String::new(),
+            });
         }
         let mut prev = 0usize;
         for (l, txt) in &hs {
@@ -158,19 +176,44 @@ pub fn scan(root: &Path) -> Vec<NoteReport> {
 
         // ── formatting ──
         if raw.contains('\r') {
-            issues.push(Issue { kind: "crlf", detail: "CRLF line endings".into(), fixable: true, before: "\\r\\n".into(), after: "\\n".into() });
+            issues.push(Issue {
+                kind: "crlf",
+                detail: "CRLF line endings".into(),
+                fixable: true,
+                before: "\\r\\n".into(),
+                after: "\\n".into(),
+            });
         }
-        let tw = raw.lines().filter(|l| l.ends_with(' ') || l.ends_with('\t')).count();
+        let tw = raw
+            .lines()
+            .filter(|l| l.ends_with(' ') || l.ends_with('\t'))
+            .count();
         if tw > 0 {
-            issues.push(Issue { kind: "trailing_ws", detail: format!("{tw} line(s) with trailing whitespace"), fixable: true, before: format!("{tw} lines"), after: "trimmed".into() });
+            issues.push(Issue {
+                kind: "trailing_ws",
+                detail: format!("{tw} line(s) with trailing whitespace"),
+                fixable: true,
+                before: format!("{tw} lines"),
+                after: "trimmed".into(),
+            });
         }
         if raw.contains("\n\n\n") {
-            issues.push(Issue { kind: "blank_runs", detail: "3+ consecutive blank lines".into(), fixable: true, before: "\\n\\n\\n".into(), after: "\\n\\n".into() });
+            issues.push(Issue {
+                kind: "blank_runs",
+                detail: "3+ consecutive blank lines".into(),
+                fixable: true,
+                before: "\\n\\n\\n".into(),
+                after: "\\n\\n".into(),
+            });
         }
 
         // ── links ──
         for cap in regex_lite_wikilinks(&n.body) {
-            let target = if cap.ends_with(".md") { cap.clone() } else { format!("{cap}.md") };
+            let target = if cap.ends_with(".md") {
+                cap.clone()
+            } else {
+                format!("{cap}.md")
+            };
             let hit = existing.iter().any(|r| r.ends_with(&target) || **r == cap);
             if !hit {
                 issues.push(Issue {
@@ -209,7 +252,11 @@ pub fn scan(root: &Path) -> Vec<NoteReport> {
         }
 
         if !issues.is_empty() {
-            reports.push(NoteReport { rel: n.rel.clone(), title: n.title.clone(), issues });
+            reports.push(NoteReport {
+                rel: n.rel.clone(),
+                title: n.title.clone(),
+                issues,
+            });
         }
     }
     reports.sort_by(|a, b| b.issues.len().cmp(&a.issues.len()));
@@ -251,10 +298,16 @@ fn hardware_issues(body: &str) -> Vec<Issue> {
 
     // Thermal — "Zone N: NN.NN°C" / "Peak temperature: NN.NN°C" lines.
     for line in body.lines() {
-        let Some(idx) = line.find("°C") else { continue };
+        let Some(idx) = line.find("°C") else {
+            continue;
+        };
         let head = &line[..idx];
-        let Some(cut) = head.rfind(|c: char| !c.is_ascii_digit() && c != '.') else { continue };
-        let Ok(temp) = head[cut + 1..].trim().parse::<f64>() else { continue };
+        let Some(cut) = head.rfind(|c: char| !c.is_ascii_digit() && c != '.') else {
+            continue;
+        };
+        let Ok(temp) = head[cut + 1..].trim().parse::<f64>() else {
+            continue;
+        };
         if temp >= 90.0 {
             out.push(Issue {
                 kind: "thermal_critical",
@@ -277,8 +330,12 @@ fn hardware_issues(body: &str) -> Vec<Issue> {
     // Battery health — the energy-source block's own `capacity:` field is
     // energy-full ÷ energy-full-design, i.e. wear, not charge level.
     for line in body.lines() {
-        let Some(rest) = line.trim().strip_prefix("capacity:") else { continue };
-        let Ok(pct) = rest.trim().trim_end_matches('%').parse::<f64>() else { continue };
+        let Some(rest) = line.trim().strip_prefix("capacity:") else {
+            continue;
+        };
+        let Ok(pct) = rest.trim().trim_end_matches('%').parse::<f64>() else {
+            continue;
+        };
         if pct < 60.0 {
             out.push(Issue {
                 kind: "battery_degraded",
@@ -341,7 +398,11 @@ fn regex_lite_wikilinks(body: &str) -> Vec<String> {
 /// single trailing newline. Pure — no filesystem.
 pub fn tidy_str(raw: &str, stem: &str) -> String {
     let mut t = raw.replace("\r\n", "\n").replace('\r', "\n");
-    t = t.split('\n').map(|l| l.trim_end()).collect::<Vec<_>>().join("\n");
+    t = t
+        .split('\n')
+        .map(|l| l.trim_end())
+        .collect::<Vec<_>>()
+        .join("\n");
     while t.contains("\n\n\n") {
         t = t.replace("\n\n\n", "\n\n");
     }
@@ -374,7 +435,10 @@ pub fn tidy_str(raw: &str, stem: &str) -> String {
 
 pub fn apply_mechanical(root: &Path, rel: &str) -> Option<String> {
     let raw = vault::read_raw(root, rel).ok()?;
-    let stem = Path::new(rel).file_stem().and_then(|s| s.to_str()).unwrap_or("note");
+    let stem = Path::new(rel)
+        .file_stem()
+        .and_then(|s| s.to_str())
+        .unwrap_or("note");
     let t = tidy_str(&raw, stem);
     (t != raw).then_some(t)
 }

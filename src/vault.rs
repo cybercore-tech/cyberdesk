@@ -53,7 +53,10 @@ fn parse(raw: &str) -> (Option<String>, Vec<String>, String) {
     if let Some(rest) = raw.strip_prefix("---\n") {
         if let Some(end) = rest.find("\n---\n").or_else(|| rest.find("\n---")) {
             let fm = &rest[..end];
-            let body = rest[end..].trim_start_matches('\n').trim_start_matches("---").trim_start_matches('\n');
+            let body = rest[end..]
+                .trim_start_matches('\n')
+                .trim_start_matches("---")
+                .trim_start_matches('\n');
             let mut title = None;
             let mut tags = Vec::new();
             for line in fm.lines() {
@@ -95,8 +98,15 @@ pub fn read(root: &Path, rel: &str) -> Result<Note> {
     let p = abs(root, rel)?;
     let raw = std::fs::read_to_string(&p).with_context(|| format!("read {}", p.display()))?;
     let (title, tags, body) = parse(&raw);
-    let title = title.filter(|t| !t.is_empty()).unwrap_or_else(|| title_from(&body, rel));
-    Ok(Note { rel: rel.to_string(), title, tags, body })
+    let title = title
+        .filter(|t| !t.is_empty())
+        .unwrap_or_else(|| title_from(&body, rel));
+    Ok(Note {
+        rel: rel.to_string(),
+        title,
+        tags,
+        body,
+    })
 }
 
 /// Raw file contents (frontmatter included) — what the editor shows.
@@ -124,7 +134,10 @@ pub fn delete(root: &Path, rel: &str) -> Result<()> {
 }
 
 pub fn exists(root: &Path, rel: &str) -> bool {
-    safe_rel(rel).ok().map(|r| root.join(r).is_file()).unwrap_or(false)
+    safe_rel(rel)
+        .ok()
+        .map(|r| root.join(r).is_file())
+        .unwrap_or(false)
 }
 
 /// Options for [`create_note`].
@@ -144,7 +157,11 @@ pub struct NewNote<'a> {
 /// Create a note from `_templates/<template>.md`, substituting `{{title}}`,
 /// `{{date}}`, `{{slug}}` and any `opts.fields`. Returns the new note's rel path.
 pub fn create_note(root: &Path, opts: &NewNote) -> Result<String> {
-    let stem_src = opts.filename.map(str::trim).filter(|s| !s.is_empty()).unwrap_or(opts.title);
+    let stem_src = opts
+        .filename
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+        .unwrap_or(opts.title);
     let slug = slugify(stem_src.trim_end_matches(".md"));
     if slug.is_empty() {
         bail!("need a title or file name");
@@ -163,9 +180,12 @@ pub fn create_note(root: &Path, opts: &NewNote) -> Result<String> {
         bail!("a note named {rel} already exists");
     }
 
-    let tpl_path = root.join("_templates").join(format!("{}.md", slugify(opts.template)));
-    let tpl = std::fs::read_to_string(&tpl_path)
-        .unwrap_or_else(|_| "---\ntitle: \"{{title}}\"\ntags: []\ncreated: {{date}}\n---\n\n# {{title}}\n\n".into());
+    let tpl_path = root
+        .join("_templates")
+        .join(format!("{}.md", slugify(opts.template)));
+    let tpl = std::fs::read_to_string(&tpl_path).unwrap_or_else(|_| {
+        "---\ntitle: \"{{title}}\"\ntags: []\ncreated: {{date}}\n---\n\n# {{title}}\n\n".into()
+    });
     let today = chrono::Local::now().format("%Y-%m-%d").to_string();
     let mut filled = tpl
         .replace("{{title}}", opts.title)
@@ -290,7 +310,9 @@ pub struct Node {
 fn quick_title(path: &Path, stem: &str) -> String {
     use std::io::{BufRead, BufReader};
     let humanized = || stem.replace(['-', '_'], " ");
-    let Ok(f) = std::fs::File::open(path) else { return humanized() };
+    let Ok(f) = std::fs::File::open(path) else {
+        return humanized();
+    };
     let mut r = BufReader::new(f);
     let mut line = String::new();
     let (mut in_fm, mut first) = (false, true);
@@ -330,17 +352,33 @@ pub fn tree_nested(root: &Path) -> Vec<Node> {
     fn build(dir: &Path, root: &Path) -> Vec<Node> {
         let mut dirs: Vec<Node> = Vec::new();
         let mut files: Vec<Node> = Vec::new();
-        let Ok(rd) = std::fs::read_dir(dir) else { return Vec::new() };
+        let Ok(rd) = std::fs::read_dir(dir) else {
+            return Vec::new();
+        };
         for e in rd.flatten() {
             let name = e.file_name().to_string_lossy().to_string();
             if hidden(&name) {
                 continue;
             }
-            let rel = e.path().strip_prefix(root).unwrap().to_string_lossy().to_string();
+            let rel = e
+                .path()
+                .strip_prefix(root)
+                .unwrap()
+                .to_string_lossy()
+                .to_string();
             if e.path().is_dir() {
                 let children = build(&e.path(), root);
-                let count = children.iter().map(|c| if c.is_dir { c.count } else { 1 }).sum();
-                dirs.push(Node { name, rel, is_dir: true, children, count });
+                let count = children
+                    .iter()
+                    .map(|c| if c.is_dir { c.count } else { 1 })
+                    .sum();
+                dirs.push(Node {
+                    name,
+                    rel,
+                    is_dir: true,
+                    children,
+                    count,
+                });
             } else if name.ends_with(".md") && name != "MANIFEST.md" && name != "README.md" {
                 let stem = name.trim_end_matches(".md");
                 files.push(Node {
@@ -368,7 +406,12 @@ pub fn all_notes(root: &Path) -> Vec<Note> {
         .filter_map(|e| e.ok())
         .filter(|e| e.file_type().is_file() && e.path().extension().map_or(false, |x| x == "md"))
         .filter_map(|e| {
-            let rel = e.path().strip_prefix(root).ok()?.to_string_lossy().to_string();
+            let rel = e
+                .path()
+                .strip_prefix(root)
+                .ok()?
+                .to_string_lossy()
+                .to_string();
             if rel == "MANIFEST.md" || rel == "README.md" || rel.starts_with("_templates/") {
                 return None;
             }
@@ -387,7 +430,12 @@ pub fn recent(root: &Path, n: usize) -> Vec<(String, String)> {
         .filter_map(|e| e.ok())
         .filter(|e| e.file_type().is_file() && e.path().extension().map_or(false, |x| x == "md"))
         .filter_map(|e| {
-            let rel = e.path().strip_prefix(root).ok()?.to_string_lossy().to_string();
+            let rel = e
+                .path()
+                .strip_prefix(root)
+                .ok()?
+                .to_string_lossy()
+                .to_string();
             if rel == "MANIFEST.md" || rel == "README.md" || rel.starts_with("_templates/") {
                 return None;
             }
@@ -400,7 +448,9 @@ pub fn recent(root: &Path, n: usize) -> Vec<(String, String)> {
         .into_iter()
         .take(n)
         .map(|(_, rel)| {
-            let title = read(root, &rel).map(|nt| nt.title).unwrap_or_else(|_| rel.clone());
+            let title = read(root, &rel)
+                .map(|nt| nt.title)
+                .unwrap_or_else(|_| rel.clone());
             (rel, title)
         })
         .collect()
@@ -429,7 +479,12 @@ pub fn folders(root: &Path) -> Vec<String> {
         .filter_map(|e| e.ok())
         .filter(|e| e.file_type().is_dir())
         .filter_map(|e| {
-            let rel = e.path().strip_prefix(root).ok()?.to_string_lossy().to_string();
+            let rel = e
+                .path()
+                .strip_prefix(root)
+                .ok()?
+                .to_string_lossy()
+                .to_string();
             (rel != "_templates").then_some(rel)
         })
         .collect();
@@ -474,7 +529,11 @@ pub fn search(root: &Path, q: &str) -> Vec<Hit> {
                     format!("…{}…", bl[s..e].replace('\n', " ").trim())
                 })
                 .unwrap_or_default();
-            hits.push(Hit { rel: n.rel, title: n.title, snippet });
+            hits.push(Hit {
+                rel: n.rel,
+                title: n.title,
+                snippet,
+            });
         }
         if hits.len() >= 200 {
             break;
@@ -505,5 +564,8 @@ pub fn by_tag(root: &Path, tag: &str) -> Vec<Note> {
 
 /// All note titles (for the search datalist / link completion).
 pub fn titles(root: &Path) -> Vec<(String, String)> {
-    all_notes(root).into_iter().map(|n| (n.rel, n.title)).collect()
+    all_notes(root)
+        .into_iter()
+        .map(|n| (n.rel, n.title))
+        .collect()
 }
