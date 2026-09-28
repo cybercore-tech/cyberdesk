@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="A local, Git-backed workspace for notes, code, and project blueprints. Built in Rust. Styled by Cybercore.">
+<meta name="theme-color" content="#080b12">
+<meta property="og:title" content="Cyberdesk / Cybercore">
+<meta property="og:description" content="A local, Git-backed workspace for notes, code, and project blueprints. Built in Rust. Styled by Cybercore.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://cybercore-tech.github.io/cyberdesk/">
+<title>Cyberdesk — Your local knowledge workspace / Cybercore</title>
+<link rel="canonical" href="https://cybercore-tech.github.io/cyberdesk/">
+<link rel="icon" href="assets/mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="styles.css">
+<script src="app.js" defer>
+</script>
+</head>
+<body data-project="cyberdesk">
+<a class="skip" href="#main">Skip to content</a>
+<header class="top">
+<div class="wrap bar">
+<a class="brand" href="#top">
+<img src="assets/mark.svg" alt="">
+<span>
+<strong>CYBERDESK</strong>
+<small>A CYBERCORE SYSTEM</small>
+</span>
+</a>
+<nav aria-label="Primary">
+<a href="#capabilities">Capabilities</a>
+<a href="#workflow">Workflow</a>
+<a href="#setup">Get started ↗</a>
+</nav>
+<label class="theme">
+<span>PALETTE</span>
+<select id="theme" aria-label="Site palette">
+<option>Cybercore</option>
+<option>Dracula</option>
+<option>Tokyo Night</option>
+<option>Outrun</option>
+</select>
+</label>
+</div>
+</header>
+<main id="main">
+<div class="wrap" id="top">
+<section class="hero">
+<div>
+<p class="eyebrow">THE CYBERCORE KNOWLEDGE WORKSPACE</p>
+<h1>Your thoughts.<br>Your projects.<br>
+<em>Your command.</em>
+</h1>
+<p class="lede">Give your Markdown a place to work. A local workspace for notes, project blueprints, and the details that deserve to survive the next terminal session.</p>
+<div class="actions">
+<a class="button primary" href="#setup">Get started <span>↗</span>
+</a>
+<a class="button" href="https://github.com/cybercore-tech/cyberdesk">View source <span>↗</span>
+</a>
+</div>
+<p class="footnote">
+<span class="dot">
+</span>LOCAL FIRST &nbsp; / &nbsp; RUST + GIT &nbsp; / &nbsp; OPEN SOURCE</p>
+</div>
+<div class="window">
+<div class="chrome">
+<span>
+<span class="lights">● ● ●</span> &nbsp; cyberdesk / workspace</span>
+<span>PREVIEW</span>
+</div>
+<div class="tabs" role="group" aria-label="Workspace preview">
+<button data-demo="notes" aria-pressed="true" aria-controls="notes">01 NOTES</button>
+<button data-demo="editor" aria-pressed="false" aria-controls="editor">02 EDITOR</button>
+<button data-demo="blueprints" aria-pressed="false" aria-controls="blueprints">03 BLUEPRINTS</button>
+</div>
+<div class="demo" id="notes">
+<p class="micro">VAULT / FIELD NOTES</p>
+<h3>A little order.<br>A lot of possibility.</h3>
+<p>Your next idea is already in good company.</p>
+<div class="demo-row">
+<b>↳ projects / launch-plan.md</b>
+<span class="tag">PROJECT</span>
+</div>
+<div class="demo-row">
+<b>↳ notes / late-night-ideas.md</b>
+<span class="tag">NOTE</span>
+</div>
+<div class="demo-row">
+<b>↳ systems / runbook.md</b>
+<span class="tag">REFERENCE</span>
+</div>
+</div>
+<div class="demo" id="editor" hidden>
+<p class="micro">EDITOR / LAUNCH-PLAN.MD</p>
+<div class="editor">
+<pre>
+<b># Next transmission</b>
+
+A small release. A clear direction.
+
+<strong>- [x] Write the project brief
+- [x] Connect the pieces</strong>
+- [ ] Ship something useful
+
+{{title}} / {{date}} / {{slug}}</pre>
+</div>
+<p class="notice">CodeMirror editing · Markdown preview · Git history</p>
+</div>
+<div class="demo" id="blueprints" hidden>
+<p class="micro">BLUEPRINT / NEXT TRANSMISSION</p>
+<h3>Intent becomes structure.</h3>
+<p>Capture the contract before the first commit.</p>
+<div class="demo-row">
+<b>PROJECT_SPEC.md</b>
+<span class="tag">PROJECT INTENT</span>
+</div>
+<div class="demo-row">
+<b>AGENTS.md</b>
+<span class="tag">WORKING RULES</span>
+</div>
+<div class="demo-row">
+<b>Architecture + API contract</b>
+<span class="tag">DEFINED</span>
+</div>
+<div class="demo-row">
+<b>Handoff</b>
+<span class="tag">NEXT STEPS</span>
+</div>
+</div>
+<div class="demo-foot">
+<span>ILLUSTRATIVE DATA · SELECT A VIEW ABOVE</span>
+<span>CYBERCORE / 01</span>
+</div>
+</div>
+</section>
+<div class="metrics">
+<div>
+<b>Markdown</b>
+<small>Your files, directly</small>
+</div>
+<div>
+<b>Git-backed</b>
+<small>History built in</small>
+</div>
+<div>
+<b>Rust</b>
+<small>One local server</small>
+</div>
+<div>
+<b>Cybercore</b>
+<small>Shared theme system</small>
+</div>
+</div>
+<section class="section" id="capabilities">
+<div class="heading">
+<div>
+<p class="eyebrow">01 / BUILT WITH INTENT</p>
+<h2>A place for every<br>
+<em>working thought.</em>
+</h2>
+</div>
+<p>Tools earn their place by making the next step easier. Cyberdesk brings your knowledge and project structure into one local workspace.</p>
+</div>
+<div class="cards">
+<article class="card">
+<span class="number">01 /</span>
+<h3>A vault with a view.</h3>
+<p>Browse folders, search notes, follow tags, and bring recently edited work back into focus.</p>
+</article>
+<article class="card">
+<span class="number">02 /</span>
+<h3>Write. Preview. Save.</h3>
+<p>A CodeMirror editor, rendered Markdown, and Git-backed saves keep writing and revision together.</p>
+</article>
+<article class="card">
+<span class="number">03 /</span>
+<h3>Projects with a blueprint.</h3>
+<p>Create project templates, define architecture and API contracts, and generate project specifications and agent instructions.</p>
+</article>
+<article class="card">
+<span class="number">04 /</span>
+<h3>Find the rough edges.</h3>
+<p>Built-in lint views and a JSON diagnostics endpoint help surface issues in your vault.</p>
+</article>
+<article class="card">
+<span class="number">05 /</span>
+<h3>Make the surface yours.</h3>
+<p>Cybercore palettes, local fonts, and a theme picker bring the family’s visual language into your workspace.</p>
+</article>
+<article class="card">
+<span class="number">06 /</span>
+<h3>Files are the foundation.</h3>
+<p>Markdown lives on disk. Git records changes. The application serves your workspace without a database.</p>
+</article>
+</div>
+</section>
+<section class="section wide" id="workflow">
+<div>
+<p class="eyebrow">02 / IN YOUR ELEMENT</p>
+<h2>Open the vault.<br>
+<em>Find your flow.</em>
+</h2>
+<p class="lede">The filesystem is the model. Git is the history. Cyberdesk is the surface that helps you work with both.</p>
+<a class="button" href="https://github.com/cybercore-tech/cyberdesk/tree/main/src">Explore the implementation ↗</a>
+</div>
+<div class="steps">
+<article class="step">
+<div>
+<h3>Start with your own files.</h3>
+<p>Point CYBERDESK_ROOT at your Markdown vault and run the local Rust server.</p>
+</div>
+</article>
+<article class="step">
+<div>
+<h3>Move between ideas and implementation.</h3>
+<p>Browse notes, edit Markdown, inspect diagnostics, or develop a project blueprint.</p>
+</div>
+</article>
+<article class="step">
+<div>
+<h3>Keep the work and its history.</h3>
+<p>Save changes into your vault with Git history. Optional push is configured separately.</p>
+</div>
+</article>
+</div>
+</section>
+<section class="section" id="setup">
+<div class="heading">
+<div>
+<p class="eyebrow">03 / MAKE IT YOURS</p>
+<h2>Your next session<br>
+<em>starts here.</em>
+</h2>
+</div>
+<p>Bring a Rust toolchain, Git, and a Markdown vault. The checkout layout below matches Cyberdesk’s current Cybercore path dependency.</p>
+</div>
+<div class="codebox">
+<div class="chrome">
+<span>TERMINAL / INSTALL</span>
+<button class="copy" data-copy="install" aria-label="Copy TERMINAL / INSTALL">COPY</button>
+</div>
+<pre>
+<code id="install"># Run from a new workspace directory
+mkdir -p core framework
+git clone https://github.com/cybercore-tech/cybercore.git framework/cybercore
+git clone https://github.com/cybercore-tech/cyberdesk.git core/cyberdesk
+cd core/cyberdesk
+CYBERDESK_ROOT=&quot;$HOME/Vaults/notes&quot; cargo run --release
+# Open http://127.0.0.1:8765</code>
+</pre>
+</div>
+<div class="wide" style="margin-top:36px">
+<div>
+<p class="micro">ENVIRONMENT / THE ESSENTIALS</p>
+<div class="codebox">
+<div class="chrome">
+<span>CONFIGURATION</span>
+<button class="copy" data-copy="config" aria-label="Copy CONFIGURATION">COPY</button>
+</div>
+<pre>
+<code id="config">CYBERDESK_ROOT=&quot;$HOME/Vaults/notes&quot;
+CYBERDESK_BIND=&quot;127.0.0.1:8765&quot;
+CYBERDESK_PUSH=0</code>
+</pre>
+</div>
+<p class="notice">Set environment variables when starting the server. The local address defaults to 127.0.0.1:8765.</p>
+<p class="copy-status" role="status" aria-live="polite">
+</p>
+</div>
+<div>
+<details>
+<summary>Is this the running application?</summary>
+<p>This page is a project site with an illustrative workspace preview. The editor and vault run locally through the Rust application.</p>
+</details>
+<details>
+<summary>Where do my notes live?</summary>
+<p>In the directory you set with CYBERDESK_ROOT. Its default is ~/Vaults/darknotes. Start with a backed-up or scratch vault when trying the application.</p>
+</details>
+<details>
+<summary>Does saving push to GitHub?</summary>
+<p>Git pushes are off by default. CYBERDESK_PUSH=1 enables pushing after commits; it requires a configured repository and remote.</p>
+</details>
+</div>
+</div>
+</section>
+<section class="endcap">
+<div>
+<p class="eyebrow">PART OF THE CYBERCORE FAMILY</p>
+<h2>Independent tools.<br>
+<em>One shared language.</em>
+</h2>
+</div>
+<div class="actions">
+<a class="button primary" href="https://cybercore-tech.github.io/">Explore Cybercore ↗</a>
+<a class="button" href="https://cybercore-tech.github.io/chronicle/">Meet Chronicle ↗</a>
+</div>
+</section>
+</div>
+</main>
+<footer>
+<div class="wrap footer-inner">
+<span>CYBERDESK / BUILT IN RUST · PART OF CYBERCORE</span>
+<div>
+<a href="https://github.com/cybercore-tech/cyberdesk">GITHUB ↗</a>
+<a href="#top">BACK TO TOP ↑</a>
+</div>
+</div>
+</footer>
+</body>
+</html>
