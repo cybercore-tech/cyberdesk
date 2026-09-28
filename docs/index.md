@@ -1,0 +1,53 @@
+---
+layout: default
+title: Cyberdesk
+---
+
+# 🗒 cyberdesk
+
+A local, git-backed **markdown notes portal + editor** for the
+[`darknotes`](https://github.com/darkstardevx/darknotes) vault. One Rust binary,
+server-rendered, no npm, no database — the filesystem is the model, git is the
+history.
+
+- Rust · `axum` 0.7 · MiniJinja · `comrak` (GitHub-flavored markdown)
+- Theme from the shared `cybercore` schema (CYBERGRID) — `CYBERGRID_THEME` picks it
+- "Terminal window" UI: monospace, dark, the cyber\* aesthetic
+
+## What's built (Pass 1)
+
+- **Portal** (`/`) — note count · needs-review list · recently edited · `＋ new`
+  with template chips + folder picker
+- **Tree sidebar** of the whole vault
+- **View** (`/n/<path>`) — rendered markdown + a contents outline, `edit` / `del`
+- **Editor** (`/e/<path>`) — full-height textarea in a terminal frame;
+  `Ctrl/⌘+S` saves. Every save = write file + `git commit`
+- **New from template** — `_templates/*.md` with `{{title}}` / `{{date}}` / `{{slug}}`
+- **Delete** — removes the file + commits
+- **Search** (`/search?q=`) — title / body / tag substring, with snippets
+
+Roadmap: rename/move · CodeMirror editor + split live preview · `[[wikilinks]]` +
+backlinks · tag filter · `/settings` theme picker · `cyberdesk build` → static site.
+
+## Run
+
+```bash
+cargo run
+# then http://127.0.0.1:8765
+```
+
+| env | default | |
+|---|---|---|
+| `CYBERDESK_ROOT` | `~/Vaults/darknotes` | vault working tree |
+| `CYBERDESK_BIND` | `127.0.0.1:8765` | |
+| `CYBERDESK_PUSH` | `0` | `git push` after each commit (else commit locally only) |
+| `CYBERGRID_THEME` | schema default | e.g. `dracula`, `tokyo-night`, `neon-night` |
+
+Needs `../cybercore` present (path dependency) and `git` on `PATH`.
+
+## License
+
+MIT
+
+
+[Source on GitHub](https://github.com/cybercore-tech/cyberdesk)
