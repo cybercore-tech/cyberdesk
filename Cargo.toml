@@ -27,7 +27,7 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
 anyhow = "1"
 
-cybercore = { path = "../../framework/cybercore" }
+cybercore = "0.5"
 
 [profile.release]
 strip = true
