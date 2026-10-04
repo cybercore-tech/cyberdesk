@@ -39,14 +39,15 @@ cargo run
 | `CYBERDESK_PUSH` | `0` | `git push` after each commit (else commit locally only) |
 | `CYBERGRID_THEME` | unset: shared saved selection, then schema default | e.g. `dracula`, `tokyo-night`, `neon-night`; overrides saved selection |
 
-Needs `../cybercore` present (path dependency) and `git` on `PATH`.
+Requires `git` on `PATH`. Cargo fetches the pinned Cybercore revision that
+provides the shared theme-document catalog.
 
 The active theme and appearance are shared through Cybercore's user config
 directory (`$XDG_CONFIG_HOME/cybercore`, or `~/.config/cybercore`). The app's
 theme picker includes built-in and custom catalog entries, and its sidebar
 links to the standalone Theme Studio at `http://127.0.0.1:8761/`. Start it
-from the Cybercore checkout with `cargo run -p cybercore-theme-studio`. See the
-[Cybercore theme engine guide](../../framework/cybercore/docs/theme-engine.md)
+from a Cybercore checkout with `cargo run -p cybercore-theme-studio`. See the
+[Cybercore theme engine guide](https://github.com/cybercore-tech/cybercore/blob/main/docs/theme-engine.md)
 for the portable JSON format and storage contract.
 
 ## License

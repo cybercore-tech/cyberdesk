@@ -343,9 +343,8 @@ dependencies = [
 
 [[package]]
 name = "cybercore"
-version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "44d45acf886e3bf7ea23614d0f12ae6f23889cb5ac96c59376d1b3ef947e984e"
+version = "0.6.0"
+source = "git+https://github.com/cybercore-tech/cybercore?rev=614a5864cac14b43996e5fe7c003a93a8d5f1dad#614a5864cac14b43996e5fe7c003a93a8d5f1dad"
 dependencies = [
  "serde",
  "serde_json",
