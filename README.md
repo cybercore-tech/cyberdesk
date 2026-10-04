@@ -6,7 +6,8 @@ server-rendered, no npm, no database — the filesystem is the model, git is the
 history.
 
 - Rust · `axum` 0.7 · MiniJinja · `comrak` (GitHub-flavored markdown)
-- Theme from the shared `cybercore` schema (CYBERGRID) — `CYBERGRID_THEME` picks it
+- Themes from the shared Cybercore catalog (CYBERGRID), including locally
+  saved custom themes and the shared active dark/light appearance
 - "Terminal window" UI: monospace, dark, the cyber\* aesthetic
 
 ## What's built (Pass 1)
@@ -22,7 +23,7 @@ history.
 - **Search** (`/search?q=`) — title / body / tag substring, with snippets
 
 Roadmap: rename/move · CodeMirror editor + split live preview · `[[wikilinks]]` +
-backlinks · tag filter · `/settings` theme picker · `cyberdesk build` → static site.
+backlinks · tag filter · `cyberdesk build` → static site.
 
 ## Run
 
@@ -36,9 +37,15 @@ cargo run
 | `CYBERDESK_ROOT` | `~/Vaults/darknotes` | vault working tree |
 | `CYBERDESK_BIND` | `127.0.0.1:8765` | |
 | `CYBERDESK_PUSH` | `0` | `git push` after each commit (else commit locally only) |
-| `CYBERGRID_THEME` | schema default | e.g. `dracula`, `tokyo-night`, `neon-night` |
+| `CYBERGRID_THEME` | unset: shared saved selection, then schema default | e.g. `dracula`, `tokyo-night`, `neon-night`; overrides saved selection |
 
 Needs `../cybercore` present (path dependency) and `git` on `PATH`.
+
+The active theme and appearance are shared through Cybercore's user config
+directory (`$XDG_CONFIG_HOME/cybercore`, or `~/.config/cybercore`). The app's
+theme picker includes built-in and custom catalog entries. See the
+[Cybercore theme engine guide](../../framework/cybercore/docs/theme-engine.md)
+for the portable JSON format and storage contract.
 
 ## License
 

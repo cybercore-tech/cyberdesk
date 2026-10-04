@@ -1,46 +1,43 @@
-//! CYBERGRID theme -> `:root{}` CSS custom properties, from the shared
-//! `cybercore` schema (v2). `CYBERGRID_THEME` env picks the compile-time
-//! default; the in-app switcher overrides it per browser via a cookie
-//! (see `routes::theme_css`).
+//! CYBERGRID theme adapters backed by the shared Cybercore theme engine.
 
-use cybercore::schema::{self, Palette};
+use cybercore::theme::{Appearance, ThemeCatalog};
 
 pub fn css() -> String {
-    css_for(schema::load().active_theme())
+    if let Ok(catalog) = ThemeCatalog::load() {
+        if let Some(entry) = catalog.get(catalog.active_id()) {
+            return entry.document.to_css(catalog.active_appearance());
+        }
+    }
+    let schema = cybercore::schema::load();
+    let fallback = cybercore::theme::ThemeDocument::new(
+        schema.active.clone(),
+        schema.active.clone(),
+        schema.active_theme().clone(),
+    );
+    fallback.to_css(Appearance::Dark)
 }
 
-/// `:root{}` for a theme chosen by slug, or `None` if the slug is unknown.
 pub fn css_for_slug(slug: &str) -> Option<String> {
-    schema::load().theme(slug).map(css_for)
+    let catalog = ThemeCatalog::load().ok()?;
+    catalog
+        .get(slug)
+        .map(|entry| entry.document.to_css(catalog.active_appearance()))
 }
 
-/// Every theme slug the schema defines, in sorted order.
-pub fn names() -> Vec<&'static str> {
-    schema::load().theme_names().collect()
+pub fn names() -> Vec<String> {
+    ThemeCatalog::load()
+        .map(|catalog| catalog.iter().map(|(id, _)| id.to_string()).collect())
+        .unwrap_or_default()
 }
 
-pub fn css_for(p: &Palette) -> String {
-    format!(
-        ":root{{\
---bg:#{bg};--fg:#{white};\
---acid:#{acid};--pink:#{pink};--purple:#{purple};--cyan:#{cyan};\
---orange:#{orange};--red:#{red};\
---panel:#{panel};--line:#{line};--muted:#{muted};\
-}}",
-        bg = p.bg,
-        white = p.white,
-        acid = p.acid_green,
-        pink = p.hot_pink,
-        purple = p.purple,
-        cyan = p.cyan,
-        orange = p.orange,
-        red = p.red,
-        panel = p.panel,
-        line = p.line,
-        muted = p.muted,
-    )
+pub fn active_name() -> String {
+    ThemeCatalog::load()
+        .map(|catalog| catalog.active_id().to_string())
+        .unwrap_or_else(|_| cybercore::schema::load().active.clone())
 }
 
-pub fn active_name() -> &'static str {
-    schema::load().active.as_str()
+pub fn select(slug: &str) -> bool {
+    ThemeCatalog::load()
+        .and_then(|mut catalog| catalog.select(slug))
+        .is_ok()
 }

@@ -587,7 +587,7 @@ pub async fn theme_css(State(st): State<AppState>, headers: HeaderMap) -> Respon
 
 /// Set (or, for an unknown slug, clear) the theme cookie, then bounce back.
 pub async fn theme_set(Path(slug): Path<String>, headers: HeaderMap) -> Response {
-    let known = theme::names().contains(&slug.as_str());
+    let known = theme::select(&slug);
     let set_cookie = if known {
         format!("cyberdesk_theme={slug}; Path=/; Max-Age=31536000; SameSite=Lax")
     } else {
@@ -614,6 +614,7 @@ pub async fn api_theme_css(Path(slug): Path<String>) -> Response {
     let Some(css) = theme::css_for_slug(&slug) else {
         return (StatusCode::NOT_FOUND, format!("unknown theme: {slug}")).into_response();
     };
+    theme::select(&slug);
     let set_cookie = format!("cyberdesk_theme={slug}; Path=/; Max-Age=31536000; SameSite=Lax");
     let mut res = (
         [
