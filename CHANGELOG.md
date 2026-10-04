@@ -7,6 +7,7 @@
 - Cyberdesk now reads built-in and user-created themes from the shared
   Cybercore `ThemeCatalog`, and persists theme selection across Cybercore
   apps.
+- Added a sidebar launch link to the standalone Cybercore Theme Studio.
 - Theme CSS includes the shared typography, density, corner, and motion
   design tokens, plus the currently selected dark/light palette variant.
 

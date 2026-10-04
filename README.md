@@ -43,7 +43,9 @@ Needs `../cybercore` present (path dependency) and `git` on `PATH`.
 
 The active theme and appearance are shared through Cybercore's user config
 directory (`$XDG_CONFIG_HOME/cybercore`, or `~/.config/cybercore`). The app's
-theme picker includes built-in and custom catalog entries. See the
+theme picker includes built-in and custom catalog entries, and its sidebar
+links to the standalone Theme Studio at `http://127.0.0.1:8761/`. Start it
+from the Cybercore checkout with `cargo run -p cybercore-theme-studio`. See the
 [Cybercore theme engine guide](../../framework/cybercore/docs/theme-engine.md)
 for the portable JSON format and storage contract.
 
