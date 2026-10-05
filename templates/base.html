@@ -935,8 +935,8 @@ body::after { content: ""; position: fixed; inset: 0; z-index: 500; pointer-even
 
   // ── cybercore theme switcher — ported from cyberdeck's dropdown ──
   // (see cyberdeck/src/views.rs for the source this mirrors). Applies
-  // instantly via localStorage + a <style id="theme-vars"> override, no
-  // page reload — /api/theme/css/:slug also sets the cyberdesk_theme
+  // instantly via a <style id="theme-vars"> override, no page reload —
+  // /api/theme/css/:slug also sets the cyberdesk_theme
   // cookie server-side, so a plain reload without JS still lands on the
   // same theme via the existing /theme.css cookie fallback.
   //
@@ -954,7 +954,6 @@ body::after { content: ""; position: fixed; inset: 0; z-index: 500; pointer-even
         if (!el) { el = document.createElement('style'); el.id = 'theme-vars'; document.head.appendChild(el); }
         el.textContent = css;
       });
-    localStorage.setItem('cyberdesk-theme', name);
     var label = g('theme-picker-label');
     if (label) label.textContent = name;
     document.querySelectorAll('#theme-dropdown .theme-item').forEach(function (el) {
@@ -984,12 +983,6 @@ body::after { content: ""; position: fixed; inset: 0; z-index: 500; pointer-even
   document.addEventListener('click', function (e) {
     if (!e.target.closest('.theme-dropdown-wrap')) closeAllDropdowns();
   });
-  (function () {
-    var saved = localStorage.getItem('cyberdesk-theme');
-    if (saved && document.querySelector('#theme-dropdown .theme-item[data-value="' + CSS.escape(saved) + '"]')) {
-      applyTheme(saved);
-    }
-  })();
   // Follow the shared catalog so Theme Studio and selections in other apps
   // update Cyberdesk pages without a reload.
   (function () {
