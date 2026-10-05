@@ -1006,7 +1006,8 @@ body::after { content: ""; position: fixed; inset: 0; z-index: 500; pointer-even
       finally { busy = false; }
     }
     syncSharedTheme();
-    setInterval(syncSharedTheme, 2000);
+    var themeEvents = new EventSource('/api/theme/events');
+    themeEvents.addEventListener('theme-change', syncSharedTheme);
     document.addEventListener('visibilitychange', syncSharedTheme);
   })();
 

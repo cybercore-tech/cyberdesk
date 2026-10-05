@@ -343,9 +343,9 @@ dependencies = [
 
 [[package]]
 name = "cybercore"
-version = "0.7.0"
+version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4db9933c531f01590356bfaf08651993177d132228ce5993253ccf8fb9228683"
+checksum = "112b5c4b63ba37d34bb309b13a7272b8a73aa7ae4b1336baa9b7017a99e73546"
 dependencies = [
  "serde",
  "serde_json",
@@ -360,6 +360,7 @@ dependencies = [
  "chrono",
  "comrak",
  "cybercore",
+ "futures-util",
  "minijinja",
  "serde",
  "serde_json",
@@ -530,6 +531,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "92d699e522242e69e3003b94ecc1f960f3a5e015aa7c5d7486e65ad01dd94f5e"
 
 [[package]]
+name = "futures-macro"
+version = "0.3.34"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9fb9654ba8355388abeb8dcb4fc62f511300867002afc858860463bdd9fe0c44"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 3.0.5",
+]
+
+[[package]]
 name = "futures-task"
 version = "0.3.34"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -542,6 +554,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0d50a92467f8ba5dd6e3ee5d4bd04d73ab2e4e1c44474a0674821dfce14b79bc"
 dependencies = [
  "futures-core",
+ "futures-macro",
  "futures-task",
  "pin-project-lite",
  "slab",

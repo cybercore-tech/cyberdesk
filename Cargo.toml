@@ -11,7 +11,8 @@ path = "src/main.rs"
 
 [dependencies]
 axum = { version = "0.7", features = ["macros"] }
-tokio = { version = "1", features = ["rt-multi-thread", "macros", "net", "signal", "fs"] }
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "net", "signal", "fs", "time"] }
+futures-util = "0.3"
 tower-http = { version = "0.5", features = ["trace", "catch-panic"] }
 
 minijinja = { version = "2", features = ["loader", "json"] }
@@ -27,7 +28,7 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
 anyhow = "1"
 
-cybercore = "0.7"
+cybercore = "0.8"
 
 [profile.release]
 strip = true

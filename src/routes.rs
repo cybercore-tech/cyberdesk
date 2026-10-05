@@ -4,10 +4,13 @@ use std::collections::HashMap;
 
 use axum::extract::{Path, Query, State};
 use axum::http::{header, HeaderMap, HeaderValue, StatusCode};
+use axum::response::sse::{Event, KeepAlive, Sse};
 use axum::response::{Html, IntoResponse, Redirect, Response};
 use axum::Form;
+use futures_util::stream::{self, Stream};
 use minijinja::{context, Value};
 use serde::Deserialize;
+use std::{convert::Infallible, time::Duration};
 
 use crate::{blueprints, git, lint, render, theme, vault, AppState};
 
@@ -652,6 +655,25 @@ pub async fn api_theme_state() -> Response {
     ([(header::CONTENT_TYPE, "application/json"), (header::CACHE_CONTROL, "no-store")],
      serde_json::json!({"active": catalog.active_id(), "appearance": catalog.active_appearance(), "themes": themes}).to_string())
         .into_response()
+}
+
+/// Push a lightweight event when the shared theme catalog changes.
+pub async fn api_theme_events() -> Sse<impl Stream<Item = Result<Event, Infallible>>> {
+    let events = stream::unfold(None, |last_revision| async move {
+        loop {
+            if let Ok(catalog) = cybercore::theme::ThemeCatalog::load() {
+                let revision = catalog.revision();
+                if last_revision != Some(revision) {
+                    let event = Event::default()
+                        .event("theme-change")
+                        .data(revision.to_string());
+                    return Some((Ok(event), Some(revision)));
+                }
+            }
+            tokio::time::sleep(Duration::from_millis(500)).await;
+        }
+    });
+    Sse::new(events).keep_alive(KeepAlive::default())
 }
 
 // ── repo activity ─────────────────────────────────────────────────────────
