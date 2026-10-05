@@ -49,6 +49,9 @@ links to the standalone Theme Studio at `http://127.0.0.1:8761/`. Start it
 from a Cybercore checkout with `cargo run -p cybercore-theme-studio`. See the
 [Cybercore theme engine guide](https://github.com/cybercore-tech/cybercore/blob/main/docs/theme-engine.md)
 for the portable JSON format and storage contract.
+Open Cyberdesk pages pick up shared theme or appearance changes in the
+background while visible; installing or removing catalog themes refreshes
+the picker on the next poll.
 
 ## License
 

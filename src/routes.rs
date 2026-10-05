@@ -630,6 +630,30 @@ pub async fn api_theme_css(Path(slug): Path<String>) -> Response {
     res
 }
 
+/// Shared catalog snapshot used by pages to pick up Theme Studio changes live.
+pub async fn api_theme_state() -> Response {
+    let Ok(catalog) = cybercore::theme::ThemeCatalog::load() else {
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "theme catalog unavailable",
+        )
+            .into_response();
+    };
+    let themes: Vec<_> = catalog
+        .iter()
+        .map(|(id, entry)| {
+            serde_json::json!({
+                "id": id,
+                "name": entry.document.metadata.name,
+                "family": entry.document.metadata.family,
+            })
+        })
+        .collect();
+    ([(header::CONTENT_TYPE, "application/json"), (header::CACHE_CONTROL, "no-store")],
+     serde_json::json!({"active": catalog.active_id(), "appearance": catalog.active_appearance(), "themes": themes}).to_string())
+        .into_response()
+}
+
 // ── repo activity ─────────────────────────────────────────────────────────
 pub async fn repo_page(State(st): State<AppState>) -> Response {
     let app_dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));

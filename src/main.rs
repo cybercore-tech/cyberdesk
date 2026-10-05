@@ -72,6 +72,7 @@ async fn main() -> anyhow::Result<()> {
         .route("/theme.css", get(routes::theme_css))
         .route("/theme/set/:slug", get(routes::theme_set))
         .route("/api/theme/css/:slug", get(routes::api_theme_css))
+        .route("/api/theme/state", get(routes::api_theme_state))
         .route("/vendor/components.css", get(routes::components_css))
         .route("/blueprints", get(routes::blueprints_list))
         .route(

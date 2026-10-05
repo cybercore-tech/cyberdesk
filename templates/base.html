@@ -990,6 +990,32 @@ body::after { content: ""; position: fixed; inset: 0; z-index: 500; pointer-even
       applyTheme(saved);
     }
   })();
+  // Follow the shared catalog so Theme Studio and selections in other apps
+  // update Cyberdesk pages without a reload.
+  (function () {
+    var active = null, appearance = null, ids = null, busy = false;
+    async function syncSharedTheme() {
+      if (busy || document.hidden) return;
+      busy = true;
+      try {
+        var response = await fetch('/api/theme/state', { cache: 'no-store' });
+        if (!response.ok) return;
+        var state = await response.json();
+        var nextIds = state.themes.map(function (theme) { return theme.id; }).join('\0');
+        if (ids !== null && nextIds !== ids) { location.reload(); return; }
+        ids = nextIds;
+        if (state.active !== active || state.appearance !== appearance) {
+          active = state.active;
+          appearance = state.appearance;
+          window.applyTheme(state.active);
+        }
+      } catch (error) { console.debug('Shared theme refresh deferred', error); }
+      finally { busy = false; }
+    }
+    syncSharedTheme();
+    setInterval(syncSharedTheme, 2000);
+    document.addEventListener('visibilitychange', syncSharedTheme);
+  })();
 
   // ── pop-up file editor ──────────────────────────────────
   var fed = g('fed'), ta = g('fed-ta'), tt = g('fed-tt'),
